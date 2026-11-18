@@ -2,9 +2,9 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 1 — Project setup.** The frontend, backend, Tailwind CSS v4,
-> MongoDB configuration, health API and frontend/backend communication are in place.
-> Storefront and commerce features are implemented in later phases.
+> **Current status: Phase 2 — Frontend UI complete.** The storefront, authentication
+> screens, and admin console are implemented with clearly labelled demo data.
+> Backend APIs, real authentication, and payments arrive in later phases.
 
 ## Repository structure
 
@@ -77,8 +77,9 @@ cd client
 npm run dev
 ```
 
-Open http://localhost:5173. The Phase 1 screen calls `GET /api/health` and displays
-the API response.
+Open http://localhost:5173. The Phase 2 storefront loads with demo data. Use the
+sign-in page's **Customer demo** or **Admin demo** button to explore guarded areas.
+No real authentication or payment is performed.
 
 ## Phase 1 verification
 
@@ -118,3 +119,4 @@ npm run build
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Phase 2 UI](docs/phase-2-ui.md)

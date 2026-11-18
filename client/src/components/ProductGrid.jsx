@@ -1,0 +1,17 @@
+import ProductCard from './ProductCard.jsx'
+
+export default function ProductGrid({ products = [], columns = 4 }) {
+  const columnClass = {
+    2: 'sm:grid-cols-2',
+    3: 'sm:grid-cols-2 lg:grid-cols-3',
+    4: 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+  }[columns]
+
+  return (
+    <div className={`grid grid-cols-1 gap-5 ${columnClass}`}>
+      {products.map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  )
+}

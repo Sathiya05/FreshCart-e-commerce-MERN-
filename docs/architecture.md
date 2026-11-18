@@ -27,6 +27,37 @@ freshcart/
 └── docs/                   Living project documentation
 ```
 
+## Phase 2 frontend architecture
+
+The React application is organized by responsibility:
+
+```text
+client/src/
+├── components/   Reusable UI and shared stateful widgets
+├── data/         Clearly labelled DEMO_* catalog/account/admin fixtures
+├── hooks/        useAsync helper for demo service loading states
+├── layouts/      Customer, auth, and admin shells plus route guards
+├── pages/        customer/, auth/, and admin/ route screens
+├── redux/        Store and auth/cart/wishlist/UI slices
+├── routes/       AppRoutes route tree with lazy admin pages
+├── services/     Phase 3-ready service modules (demo implementations now)
+└── utils/        Formatting helpers
+```
+
+Phase 2 uses three layout branches:
+
+1. `CustomerLayout` — announcement bar, navigation, storefront footer, toasts.
+2. `AuthLayout` — split-screen shell for sign-in and account recovery.
+3. `AdminRoute` → `AdminLayout` — role guard, sidebar, top bar, toasts.
+
+`/account/*` is wrapped in `ProtectedRoute`. All admin pages are lazy-loaded so
+charting code is fetched only when the console is opened. Demo data is never
+mixed into production-shaped services: each service file is documented as a
+Phase 2 placeholder and will be replaced by Axios calls in Phase 3.
+
+See [Phase 2 UI](phase-2-ui.md) for the route map, demo boundaries, and payment
+safety notes.
+
 ## Request flow in Phase 1
 
 ```text
@@ -64,7 +95,8 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 
 ## Planned evolution
 
-- Phase 2: design system, reusable components, customer and admin UI shells.
+- Phase 2 (complete): design system, reusable components, customer storefront,
+  and admin console UI. See [phase-2-ui.md](phase-2-ui.md).
 - Phase 3: Mongoose models and authenticated CRUD APIs.
 - Phase 4: cart, inventory, coupons, addresses, delivery slots and orders.
 - Phase 5: Razorpay order creation, verification and webhooks.
