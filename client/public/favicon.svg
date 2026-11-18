@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FreshCart">
+  <rect width="64" height="64" rx="16" fill="#16834A"/>
+  <path d="M20 24h24l-2.4 24a4 4 0 0 1-4 3.6H26.4a4 4 0 0 1-4-3.6L20 24Z" fill="#F8FAF7"/>
+  <path d="M25 24a7 7 0 0 1 14 0" fill="none" stroke="#F9C74F" stroke-width="4" stroke-linecap="round"/>
+  <path d="M39 17c4-5 9-5 11-4-1 5-5 9-10 9" fill="#E8F5E9" stroke="#E8F5E9" stroke-width="2" stroke-linejoin="round"/>
+</svg>
