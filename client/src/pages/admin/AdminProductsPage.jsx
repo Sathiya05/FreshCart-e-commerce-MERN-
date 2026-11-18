@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Plus, Search, Trash2, Upload } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
@@ -196,11 +197,11 @@ export default function AdminProductsPage() {
         description="Add, edit and monitor the live grocery catalog."
         actions={
           <>
-            <Button variant="outline" onClick={() => dispatch(pushToast({ type: 'info', message: 'Image uploads connect to Amazon S3 in Phase 6.' }))}>
+            <Button variant="outline" onClick={() => dispatch(pushToast({ type: 'info', message: 'File uploads need AWS storage in Phase 6. Paste an image URL for now.' }))}>
               <Upload size={16} aria-hidden="true" />
               Upload images
             </Button>
-            <Button onClick={openCreate} disabled={categories.length === 0}>
+            <Button onClick={openCreate}>
               <Plus size={16} aria-hidden="true" />
               Add product
             </Button>
@@ -236,6 +237,11 @@ export default function AdminProductsPage() {
       {categoriesState.isError && (
         <div className="mb-4">
           <ErrorState message={categoriesState.error} onRetry={categoriesState.refetch} />
+        </div>
+      )}
+      {categoriesState.status === 'success' && categories.length === 0 && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Add a <Link to="/admin/categories" className="font-semibold underline">category</Link> first — every product needs one.
         </div>
       )}
       {productsState.isLoading && <TableSkeleton rows={6} columns={5} />}
@@ -288,7 +294,10 @@ export default function AdminProductsPage() {
           </div>
           <div>
             <label htmlFor="product-image" className="mb-1.5 block text-sm font-medium">Image URL</label>
-            <input id="product-image" type="url" required value={form.image} onChange={update('image')} placeholder="https://…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+            <input id="product-image" type="url" required value={form.image} onChange={update('image')} placeholder="https://images.unsplash.com/…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+            <p className="mt-1.5 text-xs text-text-secondary">
+              Paste a public image URL. File uploads need AWS storage in Phase 6.
+            </p>
           </div>
           {formError && <p className="text-sm text-red-600" role="alert">{formError}</p>}
         </form>
