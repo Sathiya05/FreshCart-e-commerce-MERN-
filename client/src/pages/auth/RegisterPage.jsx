@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthFormCard from '../../components/AuthFormCard.jsx'
 import Button from '../../components/Button.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
-import { signInDemo } from '../../redux/authSlice.js'
+import { clearAuthError, registerUser } from '../../redux/authSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
 
 const fields = [
@@ -15,13 +15,18 @@ const fields = [
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    dispatch(clearAuthError())
+  }, [dispatch])
 
   const update = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }))
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
     if (form.password.length < 8) {
@@ -33,21 +38,29 @@ export default function RegisterPage() {
       return
     }
 
-    dispatch(
-      signInDemo({
-        id: 'demo-new-customer',
-        name: form.name,
-        email: form.email,
-        role: 'customer',
-      }),
-    )
-    dispatch(
-      pushToast({
-        title: 'Account preview created',
-        message: 'Registration will be secured with bcrypt and JWT in Phase 3.',
-      }),
-    )
-    navigate('/', { replace: true })
+    setSubmitting(true)
+    try {
+      await dispatch(
+        registerUser({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          password: form.password,
+        }),
+      ).unwrap()
+
+      dispatch(
+        pushToast({
+          title: 'Account created',
+          message: 'Your FreshCart account is ready.',
+        }),
+      )
+      navigate('/', { replace: true })
+    } catch (message) {
+      setError(typeof message === 'string' ? message : 'Could not create your account. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -74,7 +87,7 @@ export default function RegisterPage() {
               id={`register-${field.name}`}
               type={field.type}
               autoComplete={field.autoComplete}
-              required
+              required={field.name !== 'phone'}
               value={form[field.name]}
               onChange={update(field.name)}
               placeholder={field.placeholder}
@@ -115,11 +128,11 @@ export default function RegisterPage() {
 
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg">
-          Create account
+        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+          {submitting ? 'Creating account…' : 'Create account'}
         </Button>
         <p className="text-center text-xs text-text-secondary">
-          Demo only — no account is persisted yet.
+          New accounts are created as customers with a secure, hashed password.
         </p>
       </form>
     </AuthFormCard>

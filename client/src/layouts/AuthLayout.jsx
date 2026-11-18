@@ -42,7 +42,7 @@ export default function AuthLayout() {
         </div>
         <div className="relative z-10 flex items-center gap-2 text-xs text-green-200">
           <CheckCircle2 size={15} aria-hidden="true" />
-          Phase 2 demo authentication — real JWT arrives in Phase 3
+          Secure JWT sessions are active — password recovery arrives later
         </div>
       </div>
 

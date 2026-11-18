@@ -1,61 +1,36 @@
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import {
   AlertTriangle,
-  BarChart3,
-  ClipboardList,
-  DollarSign,
+  Boxes,
+  CheckCircle2,
+  CircleDashed,
   Package,
-  ShoppingCart,
+  Tags,
   Users,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
-import OrderStatusBadge from '../../components/OrderStatusBadge.jsx'
 import StatCard from '../../components/StatCard.jsx'
 import { TableSkeleton } from '../../components/Skeleton.jsx'
-import { formatCurrency, formatNumber } from '../../utils/format.js'
+import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import {
-  getAdminDashboard,
-  getAdminOrders,
-} from '../../services/admin.service.js'
-
-const pieColors = ['#16834A', '#F9C74F', '#105C36', '#8BC34A', '#CBD5C1']
+import { getAdminOverview, getAdminProducts } from '../../services/admin.service.js'
 
 export default function AdminDashboardPage() {
-  const dashboard = useAsync(getAdminDashboard, [])
-  const orders = useAsync(getAdminOrders, [])
+  const overview = useAsync(getAdminOverview, [])
+  const products = useAsync(getAdminProducts, [])
 
   return (
     <>
       <AdminPageHeader
         title="Overview"
-        description="A snapshot of your FreshCart store performance."
-        actions={
-          <Link to="/admin/reports" className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-dark">
-            <BarChart3 size={16} aria-hidden="true" />
-            View reports
-          </Link>
-        }
+        description="Live counts from your FreshCart database."
       />
 
-      {dashboard.isError && <ErrorState message={dashboard.error} onRetry={dashboard.refetch} />}
+      {overview.isError && <ErrorState message={overview.error} onRetry={overview.refetch} />}
 
-      {dashboard.isLoading && (
+      {overview.isLoading && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <div key={index} className="h-32 animate-pulse rounded-2xl bg-app-border/60" />
@@ -63,123 +38,83 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {dashboard.status === 'success' && (
+      {overview.status === 'success' && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard label="Total revenue" value={formatCurrency(dashboard.data.totalRevenue)} prefix="" icon={DollarSign} change={dashboard.data.revenueChange} />
-            <StatCard label="Total orders" value={dashboard.data.totalOrders} icon={ShoppingCart} change={dashboard.data.ordersChange} tone="info" />
-            <StatCard label="Total customers" value={dashboard.data.totalCustomers} icon={Users} change={dashboard.data.customersChange} />
-            <StatCard label="Total products" value={dashboard.data.totalProducts} icon={Package} />
-            <StatCard label="Low stock products" value={dashboard.data.lowStockProducts} icon={AlertTriangle} tone="warning" />
-            <StatCard label="Pending orders" value={dashboard.data.pendingOrders} icon={ClipboardList} tone="info" />
+            <StatCard label="Total products" value={overview.data.products} icon={Package} />
+            <StatCard label="Active products" value={overview.data.activeProducts} icon={CheckCircle2} tone="info" />
+            <StatCard label="Categories" value={overview.data.categories} icon={Tags} />
+            <StatCard label="Customers" value={overview.data.customers} icon={Users} />
+            <StatCard label="Low stock" value={overview.data.lowStock} icon={AlertTriangle} tone="warning" />
+            <StatCard label="Out of stock" value={overview.data.outOfStock} icon={CircleDashed} tone="warning" />
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
             <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-text-primary">Revenue trend</h2>
-                  <p className="mt-1 text-xs text-text-secondary">Monthly revenue in demo currency</p>
+                  <h2 className="font-semibold text-text-primary">Recent products</h2>
+                  <p className="mt-1 text-xs text-text-secondary">Latest items in the catalog</p>
                 </div>
-                <Badge tone="success">+{dashboard.data.revenueChange}%</Badge>
-              </div>
-              <div className="mt-6 h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dashboard.data.revenueSeries} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#16834A" stopOpacity={0.32} />
-                        <stop offset="100%" stopColor="#16834A" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5EAE3" vertical={false} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#718071', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#718071', fontSize: 12 }} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Area type="monotone" dataKey="revenue" stroke="#16834A" strokeWidth={2.5} fill="url(#revenueFill)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
-              <h2 className="font-semibold text-text-primary">Sales by category</h2>
-              <p className="mt-1 text-xs text-text-secondary">Share of demo revenue</p>
-              <div className="mt-4 h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={dashboard.data.categorySales}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={3}
-                    >
-                      {dashboard.data.categorySales.map((entry, index) => (
-                        <Cell key={entry.name} fill={pieColors[index % pieColors.length]} />
-                      ))}
-                    </Pie>
-                    <Legend />
-                    <Tooltip formatter={(value) => `${value}%`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-          </div>
-
-          <div className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-            <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-text-primary">Recent orders</h2>
-                <Link to="/admin/orders" className="text-sm font-semibold text-brand-primary hover:text-brand-dark">
-                  View all
+                <Link to="/admin/products" className="text-sm font-semibold text-brand-primary hover:text-brand-dark">
+                  Manage products
                 </Link>
               </div>
-              {orders.isLoading && <div className="mt-4"><TableSkeleton rows={4} columns={4} /></div>}
-              {orders.isError && <div className="mt-4"><ErrorState message={orders.error} onRetry={orders.refetch} /></div>}
-              {orders.status === 'success' && (
+
+              {products.isLoading && <div className="mt-4"><TableSkeleton rows={5} columns={4} /></div>}
+              {products.isError && <div className="mt-4"><ErrorState message={products.error} onRetry={products.refetch} /></div>}
+              {products.status === 'success' && (
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full min-w-[520px] text-left text-sm">
                     <thead className="border-b border-app-border text-xs uppercase text-text-secondary">
                       <tr>
-                        <th className="py-2">Order</th>
-                        <th className="py-2">Date</th>
-                        <th className="py-2">Status</th>
-                        <th className="py-2 text-right">Total</th>
+                        <th className="py-2">Product</th>
+                        <th className="py-2">Category</th>
+                        <th className="py-2">Stock</th>
+                        <th className="py-2 text-right">Price</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.data.slice(0, 5).map((order) => (
-                        <tr key={order.id} className="border-b border-app-border last:border-0">
-                          <td className="py-3 font-medium text-text-primary">{order.id}</td>
-                          <td className="py-3 text-text-secondary">{order.date}</td>
-                          <td className="py-3"><OrderStatusBadge status={order.status} /></td>
-                          <td className="py-3 text-right font-semibold">{formatCurrency(order.totalAmount)}</td>
+                      {products.data.items.slice(0, 5).map((product) => (
+                        <tr key={product.id} className="border-b border-app-border last:border-0">
+                          <td className="py-3 font-medium text-text-primary">{product.name}</td>
+                          <td className="py-3 text-text-secondary">{product.categoryName}</td>
+                          <td className="py-3">
+                            <Badge tone={product.stock === 0 ? 'danger' : product.stock <= 20 ? 'warning' : 'success'}>
+                              {product.stock} units
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-right font-semibold">
+                            {formatCurrency(product.discountPrice || product.price)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  {products.data.items.length === 0 && (
+                    <p className="py-6 text-center text-sm text-text-secondary">
+                      No products yet. Add one from the Products page.
+                    </p>
+                  )}
                 </div>
               )}
             </section>
 
             <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
-              <h2 className="font-semibold text-text-primary">Best-selling products</h2>
-              <div className="mt-4 space-y-4">
-                {dashboard.data.bestSellers.map((item, index) => (
-                  <div key={item.name} className="flex items-center gap-3">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-secondary text-xs font-bold text-brand-dark">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-text-primary">{item.name}</p>
-                      <p className="text-xs text-text-secondary">{formatNumber(item.units)} units sold</p>
-                    </div>
-                    <p className="text-sm font-semibold">{formatCurrency(item.revenue)}</p>
-                  </div>
-                ))}
-              </div>
+              <h2 className="flex items-center gap-2 font-semibold text-text-primary">
+                <Boxes size={18} className="text-brand-primary" aria-hidden="true" />
+                What is live
+              </h2>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-text-secondary">
+                <li>✓ Secure customer registration and login</li>
+                <li>✓ Public product and category browsing</li>
+                <li>✓ Admin product and category management</li>
+                <li>✓ Real MongoDB stock and customer counts</li>
+              </ul>
+              <p className="mt-5 rounded-xl bg-app-background p-4 text-xs leading-5 text-text-secondary">
+                Revenue, orders and sales charts will appear when the commerce and payment APIs
+                are added. No placeholder figures are shown here.
+              </p>
             </section>
           </div>
         </>

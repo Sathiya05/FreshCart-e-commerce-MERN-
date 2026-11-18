@@ -1,8 +1,12 @@
 # Phase 2 — Frontend UI
 
 Phase 2 turns the Phase 1 verification screen into the full FreshCart storefront
-and admin console UI. No commerce backend is introduced in this phase: all data
-is clearly labelled demo data, and all mutations stay in local React/Redux state.
+and admin console UI. No commerce backend was introduced in that phase: data was
+clearly labelled demo data, and mutations stayed in local React/Redux state.
+
+> **Current status:** this document describes the original Phase 2 UI. The Phase 3
+> API is now connected to authentication, catalog browsing, admin catalog CRUD and
+> inventory. Remaining screens still use labelled demo services.
 
 ## Scope delivered
 
@@ -51,22 +55,18 @@ is clearly labelled demo data, and all mutations stay in local React/Redux state
 
 ## Demo boundary
 
-Everything that represents server data lives in
-`client/src/data/demoData.js` under `DEMO_*` names. Async placeholder services
-wrap that data so loading, empty, and error states can be designed now:
+During Phase 2, everything representing server data lived in
+`client/src/data/demoData.js` under `DEMO_*` names. Those fixtures remain for
+flows that do not have APIs yet:
 
-- `services/catalog.service.js`
-- `services/account.service.js`
-- `services/admin.service.js`
+- `services/account.service.js` — addresses, orders, coupons, contact form.
+- `services/admin.service.js` — `getDemoAdmin*` order/customer/coupon/review previews.
+- Redux cart and wishlist slices — in-memory only.
 
-Phase 3 adds authenticated API endpoints for catalog and admin data. Migrating
-these UI adapters to Axios is the next integration step. Redux currently stores
-cart, wishlist, and demo session state in memory; persistence and backend
-synchronisation are intentionally deferred.
-
-The login page still exposes **Customer demo** and **Admin demo** buttons. They
-set local Redux state and do not call an API or issue a JWT; the real auth API is
-documented in [Phase 3 API](phase-3-api.md).
+Phase 3 replaced the old demo implementations of `catalog.service.js` and the
+admin catalog/overview functions with Axios calls. Sign-in and registration now
+call the real auth API; the demo sign-in buttons were removed. See
+[Phase 3 API](phase-3-api.md#react-integration) for the current integration map.
 
 ## Payment safety
 
@@ -109,4 +109,5 @@ remain clean. The Vite 6 pin documented in `architecture.md` is unchanged.
 - AWS infrastructure or deployment
 - Automated tests (Phase 8)
 
-Do not begin Phase 3 without explicit confirmation.
+Phase 3 and its React integration are complete. Do not begin Phase 4 without
+explicit confirmation.

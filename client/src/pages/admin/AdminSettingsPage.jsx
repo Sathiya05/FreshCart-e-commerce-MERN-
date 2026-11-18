@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
     dispatch(
       pushToast({
         type: 'info',
-        message: 'Settings saved for this demo session. Persistence arrives with the Phase 3 API.',
+        message: 'Settings saved for this preview. Settings persistence is not part of the current API.',
       }),
     )
   }

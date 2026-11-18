@@ -1,48 +1,60 @@
-import { useState } from 'react'
-import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthFormCard from '../../components/AuthFormCard.jsx'
 import Button from '../../components/Button.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
-import { signInDemo } from '../../redux/authSlice.js'
+import { clearAuthError, loginUser } from '../../redux/authSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
 
   const destination = location.state?.from || '/'
 
-  const startDemoSession = (role) => {
-    dispatch(
-      signInDemo({
-        id: role === 'admin' ? 'demo-admin' : 'demo-customer',
-        name: role === 'admin' ? 'FreshCart Admin' : 'Santhosh Kumar',
-        email: role === 'admin' ? 'admin@freshcart.demo' : 'shopper@freshcart.demo',
-        role,
-      }),
-    )
-    dispatch(
-      pushToast({
-        title: 'Demo session started',
-        message: role === 'admin' ? 'You are viewing the admin console.' : 'Welcome back to FreshCart.',
-      }),
-    )
-    navigate(role === 'admin' && destination === '/' ? '/admin' : destination, { replace: true })
-  }
+  useEffect(() => {
+    dispatch(clearAuthError())
+  }, [dispatch])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
     if (!form.email.trim() || !form.password.trim()) {
       setError('Enter both email and password to continue.')
       return
     }
-    startDemoSession('customer')
+
+    setSubmitting(true)
+    try {
+      const result = await dispatch(
+        loginUser({ email: form.email.trim(), password: form.password }),
+      ).unwrap()
+
+      const isAdmin = result.user?.role === 'admin'
+      const target = isAdmin
+        ? '/admin'
+        : destination.startsWith('/admin')
+          ? '/'
+          : destination
+
+      dispatch(
+        pushToast({
+          title: 'Welcome back',
+          message: isAdmin ? 'Signed in to the admin console.' : 'You are signed in.',
+        }),
+      )
+      navigate(target, { replace: true })
+    } catch (message) {
+      setError(typeof message === 'string' ? message : 'Could not sign in. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -113,31 +125,15 @@ export default function LoginPage() {
 
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg">
-          Sign in
+        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+          {submitting ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
 
-      <div className="mt-7">
-        <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-app-border" />
-          <span className="text-xs text-text-secondary">Phase 2 demo access</span>
-          <span className="h-px flex-1 bg-app-border" />
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Button variant="outline" onClick={() => startDemoSession('customer')}>
-            <UserRound size={16} aria-hidden="true" />
-            Customer demo
-          </Button>
-          <Button variant="outline" onClick={() => startDemoSession('admin')}>
-            <ShieldCheck size={16} aria-hidden="true" />
-            Admin demo
-          </Button>
-        </div>
-        <p className="mt-3 text-center text-xs text-text-secondary">
-          Demo sign-in sets local UI state only. Real JWT authentication arrives in Phase 3.
-        </p>
-      </div>
+      <p className="mt-6 text-center text-xs leading-5 text-text-secondary">
+        Use your FreshCart account. Admin access requires an administrator account created with
+        the server setup script.
+      </p>
     </AuthFormCard>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Eye, Search } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
+import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -12,13 +13,13 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminCustomers } from '../../services/admin.service.js'
+import { getDemoAdminCustomers } from '../../services/admin.service.js'
 
 const statusTone = { Active: 'success', Inactive: 'neutral' }
 
 export default function AdminCustomersPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getAdminCustomers, [])
+  const { status, data, error, refetch } = useAsync(getDemoAdminCustomers, [])
   const [customers, setCustomers] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -124,7 +125,8 @@ export default function AdminCustomersPage() {
     <>
       <AdminPageHeader
         title="Customers"
-        description="View demo customer accounts and their order history summary."
+        description="Preview layout only — customer APIs arrive with Phase 4."
+        actions={<DemoBadge />}
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -161,7 +163,7 @@ export default function AdminCustomersPage() {
         open={Boolean(selectedCustomer)}
         onClose={() => setSelectedCustomer(null)}
         title={selectedCustomer?.name || 'Customer'}
-        description="Demo customer profile. Real account data arrives with authenticated APIs in Phase 3."
+        description="Demo customer profile. Customer management APIs are planned for Phase 4."
         footer={<Button variant="outline" onClick={() => setSelectedCustomer(null)}>Close</Button>}
       >
         {selectedCustomer && (

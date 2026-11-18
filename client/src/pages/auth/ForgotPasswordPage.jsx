@@ -15,8 +15,8 @@ export default function ForgotPasswordPage() {
     setSent(true)
     dispatch(
       pushToast({
-        title: 'Demo reset link requested',
-        message: 'Nodemailer email delivery is implemented in Phase 4.',
+        title: 'Recovery not connected',
+        message: 'Password reset APIs and email delivery are not implemented yet.',
       }),
     )
   }
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     <AuthFormCard
       eyebrow="Account recovery"
       title="Forgot your password?"
-      description="Enter your email and we will prepare a reset link."
+      description="Password recovery is not connected yet. No email will be sent."
       footer={
         <Link to="/login" className="font-semibold text-brand-primary hover:text-brand-dark">
           ← Back to sign in
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-800">
           If an account exists for <strong>{email}</strong>, a reset link would be
-          sent. This is a Phase 2 preview — no email has been delivered.
+          sent. Password recovery is not connected yet — no email has been delivered.
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">

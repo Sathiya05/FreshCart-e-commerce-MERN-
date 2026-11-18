@@ -7,7 +7,7 @@ const sections = [
   },
   {
     title: 'Products and pricing',
-    body: 'Product availability, images, units and prices are shown for demonstration purposes in this Phase 2 build. In production, stock, pricing, discounts and order totals are validated and calculated by the backend before payment.',
+    body: 'Product availability, images, units and prices come from the live catalog API. Checkout totals are not final until server-side order validation and payment confirmation are connected.',
   },
   {
     title: 'Orders and delivery',
@@ -35,7 +35,7 @@ export default function TermsConditionsPage() {
         <div className="rounded-2xl border border-app-border bg-surface p-6 shadow-sm sm:p-8">
           <p className="text-sm leading-7 text-text-secondary">
             These terms describe the intended production behavior of FreshCart.
-            The current interface is a Phase 2 preview and does not create real
+            The current interface uses a live catalog but does not create real
             orders or collect payments.
           </p>
           <div className="mt-8 space-y-7">

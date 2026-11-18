@@ -76,7 +76,7 @@ export default function ShopPage() {
     <>
       <PageHeader
         title="Shop fresh groceries"
-        description="Browse our full demo catalog, filter by category and price, and find exactly what you need."
+        description="Browse the live catalog, filter by category and price, and find exactly what you need."
         breadcrumbs={[{ label: 'Shop' }]}
       />
 

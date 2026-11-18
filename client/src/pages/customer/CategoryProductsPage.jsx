@@ -33,7 +33,7 @@ export default function CategoryProductsPage() {
         {status === 'success' && !data && (
           <EmptyState
             title="Category not found"
-            description="This category does not exist in the demo catalog."
+            description="This category does not exist in the catalog."
             actionLabel="Browse all categories"
             actionTo="/categories"
           />

@@ -4,9 +4,9 @@ Phase 3 replaces the Phase 1 verification-only backend with a MongoDB-backed API
 It adds real password hashing, JWT sessions, role-based admin access, validated
 category/product CRUD, and clear service errors.
 
-The React UI still uses its clearly labelled Phase 2 demo services. Wiring those
-screens to these endpoints is the next integration step; no hidden fallback is
-built into the API.
+The React UI is now wired to these endpoints for authentication, catalog browsing,
+admin catalog CRUD and inventory. Other screens keep clearly labelled demo data
+until their own phases; no hidden fallback is built into the API.
 
 ## Configuration
 
@@ -66,6 +66,40 @@ Errors use:
 Database-backed routes return `503 DATABASE_UNAVAILABLE` when `MONGODB_URI` is
 missing or the connection is down. `GET /api/health` always reports the real
 database state and never fakes connectivity.
+
+## React integration
+
+All browser requests go through `client/src/services/api.js`:
+
+```text
+React page
+  -> Redux thunk or service function
+  -> Axios client (baseURL /api, withCredentials: true)
+  -> Vite proxy in development / VITE_API_URL in production
+  -> Express API
+```
+
+The client unwraps `{ success: true, data }`, sends `error.message` to toasts and
+error states, and retries a failed request once after `POST /auth/refresh` when an
+access cookie has expired. Authentication state is restored on app mount with
+`GET /auth/me`, so protected and admin routes wait for the real session before
+rendering.
+
+| UI area | Service | Endpoints |
+| --- | --- | --- |
+| Sign in, register, sign out, profile | `auth.service.js` + `authSlice.js` | `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/me` |
+| Home, shop, search, categories, product details | `catalog.service.js` | `/categories`, `/products`, `/categories/:slug`, `/products/:id` |
+| Admin overview, products, categories | `admin.service.js` | `/admin/overview`, `/admin/products`, `/admin/categories` |
+| Admin inventory | `admin.service.js` | `GET/PATCH /admin/products` |
+
+The server returns `images[]`, `categoryId`, `categoryName`, `categorySlug` and
+`effectivePrice`; small normalizers in `catalog.service.js` add the legacy `image`,
+`badge` and numeric fields the Phase 2 cards expect. No catalog fixture is queried
+by these screens.
+
+The following remain demo/preview screens because their APIs are not in Phase 3:
+cart, checkout, payment results, customer orders, addresses, coupons, reviews,
+admin orders/customers/reviews, password recovery and sales reports.
 
 ## Authentication
 
@@ -176,6 +210,6 @@ slugs, or SKUs return `409 DUPLICATE_VALUE`.
 - Payment orders, Razorpay verification and webhooks (Phase 5)
 - AWS infrastructure and deployment (Phase 6/7)
 - Automated API tests (Phase 8)
-- Frontend service migration from `DEMO_*` fixtures to these endpoints
+- Replacing the remaining demo UI screens with real cart/order/coupon/review/payment APIs
 
 Do not begin those phases without explicit confirmation.

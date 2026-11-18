@@ -19,10 +19,9 @@ import {
 } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
-import { selectCurrentUser, signOut } from '../redux/authSlice.js'
+import { logoutUser, selectCurrentUser } from '../redux/authSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
 import BrandLogo from '../components/BrandLogo.jsx'
-import DemoBadge from '../components/DemoBadge.jsx'
 import ToastHost from '../components/ToastHost.jsx'
 
 const navItems = [
@@ -51,9 +50,9 @@ export default function AdminLayout() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const handleSignOut = () => {
-    dispatch(signOut())
-    dispatch(pushToast({ type: 'info', message: 'Admin demo session ended.' }))
+  const handleSignOut = async () => {
+    await dispatch(logoutUser())
+    dispatch(pushToast({ type: 'info', message: 'You have signed out.' }))
     navigate('/login')
   }
 
@@ -149,7 +148,6 @@ export default function AdminLayout() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <DemoBadge className="hidden sm:inline-flex" />
             <button type="button" className="relative grid h-10 w-10 place-items-center rounded-xl text-text-secondary hover:bg-app-background" aria-label="Notifications">
               <Bell size={19} aria-hidden="true" />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-accent" />

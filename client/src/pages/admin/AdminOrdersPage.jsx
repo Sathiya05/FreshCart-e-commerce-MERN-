@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Eye, Search } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
+import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -13,7 +14,7 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminOrders } from '../../services/admin.service.js'
+import { getDemoAdminOrders } from '../../services/admin.service.js'
 
 const statuses = [
   'Pending',
@@ -33,7 +34,7 @@ const paymentTone = {
 
 export default function AdminOrdersPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getAdminOrders, [])
+  const { status, data, error, refetch } = useAsync(getDemoAdminOrders, [])
   const [orders, setOrders] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -125,7 +126,8 @@ export default function AdminOrdersPage() {
     <>
       <AdminPageHeader
         title="Orders"
-        description="Review order details, update statuses and handle demo cancellations."
+        description="Preview layout only — order APIs arrive with Phase 4."
+        actions={<DemoBadge />}
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">

@@ -15,7 +15,7 @@ const groups = [
       },
       {
         q: 'Are the prices final at checkout?',
-        a: 'In this Phase 2 preview, prices are demo values. In the finished platform, all totals and discounts are calculated on the backend before payment.',
+        a: 'Catalog prices come from the live backend. Checkout totals and discounts are still a preview until the commerce API is added.',
       },
     ],
   },

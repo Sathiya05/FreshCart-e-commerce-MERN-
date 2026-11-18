@@ -21,8 +21,8 @@ export default function AdminRoute({ children }) {
           </span>
           <h1 className="mt-5 text-xl font-bold">Admin access required</h1>
           <p className="mt-2 text-sm leading-6 text-text-secondary">
-            Your current demo session does not have administrator privileges.
-            Sign in with the admin demo account to view this area.
+            Your account does not have administrator privileges. Sign in with a
+            FreshCart admin account to view this area.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Button as={Link} to="/">Back to store</Button>

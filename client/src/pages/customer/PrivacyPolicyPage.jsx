@@ -34,9 +34,9 @@ export default function PrivacyPolicyPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="rounded-2xl border border-app-border bg-surface p-6 shadow-sm sm:p-8">
           <p className="text-sm leading-7 text-text-secondary">
-            This page describes the intended privacy practices for FreshCart. The
-            current Phase 2 build is an interface preview and does not submit real
-            personal data to a server.
+            This page describes the intended privacy practices for FreshCart. Account
+            details are sent to the live API, but checkout and order flows are still
+            previews and do not create real orders.
           </p>
           <div className="mt-8 space-y-7">
             {sections.map((section, index) => (

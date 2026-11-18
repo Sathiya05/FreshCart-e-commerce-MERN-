@@ -12,15 +12,32 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminCategories, getAdminProducts } from '../../services/admin.service.js'
+import { getApiErrorMessage } from '../../services/api.js'
+import {
+  createAdminProduct,
+  deleteAdminProduct,
+  getAdminCategories,
+  getAdminProducts,
+  updateAdminProduct,
+} from '../../services/admin.service.js'
 
 const emptyProduct = {
   name: '',
-  categoryId: 'cat-vegetables',
+  categoryId: '',
   price: '',
   stock: '',
   unit: '1 kg',
+  image: '',
 }
+
+const toPayload = (form) => ({
+  name: form.name.trim(),
+  category: form.categoryId,
+  price: Number(form.price),
+  stock: Number(form.stock),
+  unit: form.unit.trim(),
+  images: form.image.trim() ? [form.image.trim()] : [],
+})
 
 export default function AdminProductsPage() {
   const dispatch = useAppDispatch()
@@ -32,10 +49,12 @@ export default function AdminProductsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyProduct)
+  const [formError, setFormError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [productToDelete, setProductToDelete] = useState(null)
 
   useEffect(() => {
-    if (productsState.data) setProducts(productsState.data)
+    if (productsState.data) setProducts(productsState.data.items)
   }, [productsState.data])
 
   const categories = categoriesState.data || []
@@ -56,7 +75,8 @@ export default function AdminProductsPage() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm(emptyProduct)
+    setForm({ ...emptyProduct, categoryId: categories[0]?.id || '' })
+    setFormError('')
     setModalOpen(true)
   }
 
@@ -67,54 +87,65 @@ export default function AdminProductsPage() {
       categoryId: product.categoryId,
       price: product.price,
       stock: product.stock,
-      unit: product.unit,
+      unit: product.unit || '1 kg',
+      image: product.image || '',
     })
+    setFormError('')
     setModalOpen(true)
   }
 
   const update = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }))
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    const category = categories.find((item) => item.id === form.categoryId)
-    if (editing) {
-      setProducts((current) =>
-        current.map((item) =>
-          item.id === editing.id
-            ? {
-                ...item,
-                ...form,
-                price: Number(form.price),
-                stock: Number(form.stock),
-                categoryName: category?.name || item.categoryName,
-              }
-            : item,
-        ),
-      )
-      dispatch(pushToast({ title: 'Product updated', message: 'Demo product changes saved locally.' }))
-    } else {
-      setProducts((current) => [
-        {
-          id: `p-demo-${Date.now()}`,
-          slug: form.name.toLowerCase().replace(/\s+/g, '-'),
-          name: form.name,
-          categoryId: form.categoryId,
-          categoryName: category?.name || 'Uncategorized',
-          price: Number(form.price),
-          stock: Number(form.stock),
-          unit: form.unit,
-          sku: `FC-DEMO-${current.length + 1}`,
-          image: category?.image || '',
-          rating: 0,
-          reviewCount: 0,
-          isActive: true,
-        },
-        ...current,
-      ])
-      dispatch(pushToast({ title: 'Product added', message: 'New demo product created.' }))
+    setFormError('')
+
+    if (!form.categoryId) {
+      setFormError('Choose a category before saving.')
+      return
     }
-    setModalOpen(false)
+    if (!form.image.trim()) {
+      setFormError('An image URL is required.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      if (editing) {
+        await updateAdminProduct(editing.id, toPayload(form))
+        dispatch(pushToast({ title: 'Product updated', message: `${form.name} was saved.` }))
+      } else {
+        await createAdminProduct(toPayload(form))
+        dispatch(pushToast({ title: 'Product added', message: `${form.name} was created.` }))
+      }
+      setModalOpen(false)
+      productsState.refetch()
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, 'Could not save this product.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!productToDelete) return
+    setSaving(true)
+    try {
+      await deleteAdminProduct(productToDelete.id)
+      dispatch(pushToast({ title: 'Product deleted', message: `${productToDelete.name} was removed.` }))
+      setProductToDelete(null)
+      productsState.refetch()
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Delete failed',
+        message: getApiErrorMessage(error, 'Could not delete this product.'),
+      }))
+      setProductToDelete(null)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const columns = [
@@ -126,7 +157,7 @@ export default function AdminProductsPage() {
           <img src={row.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
           <div>
             <p className="font-medium text-text-primary">{row.name}</p>
-            <p className="text-xs text-text-secondary">{row.sku}</p>
+            <p className="text-xs text-text-secondary">{row.sku || 'No SKU'}</p>
           </div>
         </div>
       ),
@@ -162,14 +193,14 @@ export default function AdminProductsPage() {
     <>
       <AdminPageHeader
         title="Products"
-        description="Add, edit and monitor your grocery catalog."
+        description="Add, edit and monitor the live grocery catalog."
         actions={
           <>
-            <Button variant="outline" onClick={() => dispatch(pushToast({ type: 'info', message: 'Image uploads connect to Amazon S3 in Phase 7.' }))}>
+            <Button variant="outline" onClick={() => dispatch(pushToast({ type: 'info', message: 'Image uploads connect to Amazon S3 in Phase 6.' }))}>
               <Upload size={16} aria-hidden="true" />
               Upload images
             </Button>
-            <Button onClick={openCreate}>
+            <Button onClick={openCreate} disabled={categories.length === 0}>
               <Plus size={16} aria-hidden="true" />
               Add product
             </Button>
@@ -202,6 +233,11 @@ export default function AdminProductsPage() {
         </select>
       </div>
 
+      {categoriesState.isError && (
+        <div className="mb-4">
+          <ErrorState message={categoriesState.error} onRetry={categoriesState.refetch} />
+        </div>
+      )}
       {productsState.isLoading && <TableSkeleton rows={6} columns={5} />}
       {productsState.isError && <ErrorState message={productsState.error} onRetry={productsState.refetch} />}
       {productsState.status === 'success' && (
@@ -212,11 +248,13 @@ export default function AdminProductsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editing ? 'Edit product' : 'Add a product'}
-        description="Product changes are local to this Phase 2 demo."
+        description="Changes are saved directly to the API."
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button type="submit" form="product-form">Save product</Button>
+            <Button type="submit" form="product-form" disabled={saving}>
+              {saving ? 'Saving…' : 'Save product'}
+            </Button>
           </>
         }
       >
@@ -227,7 +265,8 @@ export default function AdminProductsPage() {
           </div>
           <div>
             <label htmlFor="product-category" className="mb-1.5 block text-sm font-medium">Category</label>
-            <select id="product-category" value={form.categoryId} onChange={update('categoryId')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary">
+            <select id="product-category" required value={form.categoryId} onChange={update('categoryId')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary">
+              <option value="">Select a category</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
@@ -236,30 +275,32 @@ export default function AdminProductsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label htmlFor="product-price" className="mb-1.5 block text-sm font-medium">Price</label>
-              <input id="product-price" type="number" min="0" required value={form.price} onChange={update('price')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+              <input id="product-price" type="number" min="0" step="0.01" required value={form.price} onChange={update('price')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
             </div>
             <div>
               <label htmlFor="product-stock" className="mb-1.5 block text-sm font-medium">Stock</label>
-              <input id="product-stock" type="number" min="0" required value={form.stock} onChange={update('stock')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+              <input id="product-stock" type="number" min="0" step="1" required value={form.stock} onChange={update('stock')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
             </div>
             <div>
               <label htmlFor="product-unit" className="mb-1.5 block text-sm font-medium">Unit</label>
               <input id="product-unit" required value={form.unit} onChange={update('unit')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
             </div>
           </div>
+          <div>
+            <label htmlFor="product-image" className="mb-1.5 block text-sm font-medium">Image URL</label>
+            <input id="product-image" type="url" required value={form.image} onChange={update('image')} placeholder="https://…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+          </div>
+          {formError && <p className="text-sm text-red-600" role="alert">{formError}</p>}
         </form>
       </Modal>
 
       <ConfirmDialog
         open={Boolean(productToDelete)}
         onClose={() => setProductToDelete(null)}
-        onConfirm={() => {
-          setProducts((current) => current.filter((item) => item.id !== productToDelete.id))
-          dispatch(pushToast({ type: 'info', message: `${productToDelete.name} deleted from demo catalog.` }))
-        }}
+        onConfirm={handleDelete}
         title="Delete this product?"
-        message={`${productToDelete?.name || 'This product'} will be removed from the demo catalog.`}
-        confirmLabel="Delete product"
+        message={`${productToDelete?.name || 'This product'} will be permanently removed from the catalog.`}
+        confirmLabel={saving ? 'Deleting…' : 'Delete product'}
       />
     </>
   )

@@ -1,7 +1,6 @@
 import { BriefcaseBusiness, Camera, Globe2, Mail, MapPin, Phone } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import BrandLogo from './BrandLogo.jsx'
-import DemoBadge from './DemoBadge.jsx'
 
 const groups = [
   {
@@ -84,9 +83,8 @@ export default function Footer() {
 
         <div className="mt-10 flex flex-col gap-4 border-t border-app-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-text-secondary">
-            © {new Date().getFullYear()} FreshCart. Phase 2 UI preview.
+            © {new Date().getFullYear()} FreshCart. Live catalog and secure accounts.
           </p>
-          <DemoBadge />
         </div>
       </div>
     </footer>

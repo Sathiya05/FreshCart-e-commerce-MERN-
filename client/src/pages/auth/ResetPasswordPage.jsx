@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
     dispatch(
       pushToast({
         title: 'Password reset preview',
-        message: `Token ${token || 'demo-token'} would be verified by the API in Phase 3.`,
+        message: `Token ${token || 'provided'} cannot be verified because password reset APIs are not implemented yet.`,
       }),
     )
   }

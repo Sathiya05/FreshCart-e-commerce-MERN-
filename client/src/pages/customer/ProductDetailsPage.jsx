@@ -74,7 +74,7 @@ export default function ProductDetailsPage() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <EmptyState
           title="Product not found"
-          description="This item is not available in the demo catalog."
+          description="This item is not available in the catalog."
           actionLabel="Back to shop"
           actionTo="/shop"
         />
@@ -113,7 +113,10 @@ export default function ProductDetailsPage() {
       <Breadcrumbs
         items={[
           { label: 'Shop', to: '/shop' },
-          { label: product.categoryName, to: `/categories/${product.categoryId.replace('cat-', '')}` },
+          {
+            label: product.categoryName,
+            to: `/categories/${product.categorySlug || product.categoryId}`,
+          },
           { label: product.name },
         ]}
       />

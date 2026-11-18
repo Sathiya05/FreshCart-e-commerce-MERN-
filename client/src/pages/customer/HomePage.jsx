@@ -13,7 +13,6 @@ import {
 import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import CategoryCard from '../../components/CategoryCard.jsx'
-import DemoBadge from '../../components/DemoBadge.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
 import Newsletter from '../../components/Newsletter.jsx'
 import { ProductGridSkeleton } from '../../components/Skeleton.jsx'
@@ -67,7 +66,6 @@ export default function HomePage() {
                   <Sprout size={14} aria-hidden="true" />
                   Fresh from local farms
                 </span>
-                <DemoBadge className="border-white/20 bg-white/10 text-green-100" />
               </div>
               <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
                 Groceries that feel

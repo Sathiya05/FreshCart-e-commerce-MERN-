@@ -80,7 +80,7 @@ export default function WishlistPage() {
         {status === 'success' && products.length === 0 && (
           <EmptyState
             title="Saved products unavailable"
-            description="These items are no longer in the demo catalog."
+            description="These items are no longer available in the catalog."
             actionLabel="Browse products"
             actionTo="/shop"
           />

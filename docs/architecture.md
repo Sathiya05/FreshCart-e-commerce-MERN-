@@ -40,7 +40,7 @@ client/src/
 ├── pages/        customer/, auth/, and admin/ route screens
 ├── redux/        Store and auth/cart/wishlist/UI slices
 ├── routes/       AppRoutes route tree with lazy admin pages
-├── services/     Phase 3-ready service modules (demo implementations now)
+├── services/     Axios-backed auth/catalog/admin services; demo services for later phases
 └── utils/        Formatting helpers
 ```
 
@@ -51,9 +51,9 @@ Phase 2 uses three layout branches:
 3. `AdminRoute` → `AdminLayout` — role guard, sidebar, top bar, toasts.
 
 `/account/*` is wrapped in `ProtectedRoute`. All admin pages are lazy-loaded so
-charting code is fetched only when the console is opened. Demo data is never
-mixed into production-shaped services. Phase 3 adds the real API behind those
-service shapes; migrating the UI adapters to Axios is the next integration step.
+charting code is fetched only when the console is opened. Phase 3 migrated the
+catalog and admin catalog adapters to the real API; remaining demo services keep
+explicit `DEMO_*` names so preview data is never mistaken for live results.
 
 See [Phase 2 UI](phase-2-ui.md) for the route map, demo boundaries, and payment
 safety notes.
@@ -89,6 +89,33 @@ credentials. Production startup still fails fast when MongoDB is unreachable.
 See [Phase 3 API](phase-3-api.md) for endpoints, environment variables and
 bootstrap instructions.
 
+## Phase 3 UI integration
+
+The React app calls the API through one Axios instance with `/api` as its default
+base URL and `withCredentials: true`. In development Vite proxies `/api` to the
+Express server; in production `VITE_API_URL` can point to a separate API origin.
+
+```text
+Component
+  -> useAsync or Redux async thunk
+  -> service module (api.js)
+  -> Express endpoint
+  -> normalized response / error message
+  -> loading, empty, error, or success UI
+```
+
+`authSlice.restoreSession()` runs before routes render, so guards use the real
+signed-in user rather than local demo state. A 401 on a non-auth request triggers
+one silent `/auth/refresh` and then retries the original request. Service
+normalizers translate server product/category fields into the shapes used by the
+existing cards and tables.
+
+Live UI areas: registration/login/logout/profile, public catalog and search,
+admin dashboard overview, product/category CRUD, and stock adjustments.
+Preview-only areas: cart, checkout, payments, orders, addresses, coupons,
+reviews, password recovery and sales reports. See the integration table in
+[Phase 3 API](phase-3-api.md#react-integration).
+
 ## Request flow in Phase 1
 
 ```text
@@ -109,9 +136,8 @@ In production, `VITE_API_URL` can point to a separate API origin such as
   scaled and debugged independently.
 - **Environment-driven configuration:** no credentials are committed. Both apps
   ship `.env.example` files that document required variables.
-- **Axios service module:** one configured client prevents duplicated base URLs
-  and gives future interceptors (auth token, retries, error normalization) one
-  place to live.
+- **Axios service module:** one configured client owns the base URL, credentials
+  and the silent refresh/error-normalization interceptors.
 - **Security baseline now:** Helmet, restricted CORS, rate limiting and safe error
   responses are installed in Phase 1 so later features inherit them.
 - **Database state in health output:** the API can start without MongoDB in local
@@ -129,7 +155,8 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 - Phase 2 (complete): design system, reusable components, customer storefront,
   and admin console UI. See [phase-2-ui.md](phase-2-ui.md).
 - Phase 3 (complete): Mongoose models, JWT authentication, validated category
-  and product CRUD. See [phase-3-api.md](phase-3-api.md).
+  and product CRUD, and React integration for those endpoints. See
+  [phase-3-api.md](phase-3-api.md).
 - Phase 4: cart, inventory, coupons, addresses, delivery slots and orders.
 - Phase 5: Razorpay order creation, verification and webhooks.
 - Phase 6/7: AWS fundamentals and deployment.

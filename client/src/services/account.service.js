@@ -8,16 +8,6 @@ import {
 /** PHASE 2 DEMO SERVICE. Replace with real account/order APIs in Phase 4. */
 const wait = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const getDemoProfile = async () => {
-  await wait(120)
-  return {
-    name: 'Santhosh Kumar',
-    email: 'santhosh@freshcart.demo',
-    phone: '98765 43210',
-    joinedOn: '2025-06-14',
-  }
-}
-
 export const getDemoAddresses = async () => {
   await wait()
   return DEMO_ADDRESSES

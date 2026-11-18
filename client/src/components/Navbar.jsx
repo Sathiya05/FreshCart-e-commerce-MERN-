@@ -13,10 +13,9 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { selectCartCount } from '../redux/cartSlice.js'
 import { selectWishlistIds } from '../redux/wishlistSlice.js'
-import { selectCurrentUser, signOut } from '../redux/authSlice.js'
+import { logoutUser, selectCurrentUser } from '../redux/authSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
 import BrandLogo from './BrandLogo.jsx'
-import DemoBadge from './DemoBadge.jsx'
 
 const links = [
   { label: 'Home', to: '/' },
@@ -53,9 +52,9 @@ export default function Navbar() {
     setQuery('')
   }
 
-  const handleSignOut = () => {
-    dispatch(signOut())
-    dispatch(pushToast({ type: 'info', message: 'You have signed out of the demo session.' }))
+  const handleSignOut = async () => {
+    await dispatch(logoutUser())
+    dispatch(pushToast({ type: 'info', message: 'You have signed out.' }))
     navigate('/')
   }
 
@@ -183,9 +182,6 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <div className="border-t border-app-border pt-3">
-              <DemoBadge />
-            </div>
           </nav>
         </div>
       )}

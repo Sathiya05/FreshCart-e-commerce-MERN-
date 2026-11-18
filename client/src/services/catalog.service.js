@@ -1,149 +1,129 @@
-import {
-  DEMO_CATEGORIES,
-  DEMO_PRODUCTS,
-  DEMO_REVIEWS,
-} from '../data/demoData.js'
+import api from './api.js'
 
 /**
- * PHASE 2 DEMO SERVICE.
- * Mimics async API calls so loading/empty/error states can be designed now.
- * Replace these functions with Axios calls to the Express API in Phase 3.
+ * Public catalog service backed by the Phase 3 REST API.
+ *
+ * The server returns Mongoose-friendly fields (`images`, `category`, etc.).
+ * These mappers adapt them to the simpler shape used by the existing UI cards.
  */
-const wait = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms))
+const getData = (response) => response.data.data
 
-const effectivePrice = (product) => product.discountPrice || product.price
-
-const matchesSearch = (product, search = '') => {
-  const term = search.trim().toLowerCase()
-  if (!term) return true
-  return [product.name, product.categoryName, product.description, product.brand]
-    .join(' ')
-    .toLowerCase()
-    .includes(term)
+const pickBadge = (product) => {
+  if (product.dailyDeal) return 'Daily deal'
+  if (product.bestSeller) return 'Best seller'
+  if (product.featured) return 'Featured'
+  return null
 }
 
-const sortProducts = (items, sort = 'featured') => {
-  const sorted = [...items]
-  switch (sort) {
-    case 'price-asc':
-      return sorted.sort((a, b) => effectivePrice(a) - effectivePrice(b))
-    case 'price-desc':
-      return sorted.sort((a, b) => effectivePrice(b) - effectivePrice(a))
-    case 'rating':
-      return sorted.sort((a, b) => b.rating - a.rating)
-    case 'name':
-      return sorted.sort((a, b) => a.name.localeCompare(b.name))
-    default:
-      return sorted.sort((a, b) => {
-        const scoreA = Number(b.featured) * 3 + Number(b.bestSeller) * 2 + b.rating
-        const scoreB = Number(a.featured) * 3 + Number(a.bestSeller) * 2 + a.rating
-        return scoreA - scoreB
-      })
+export const normalizeProduct = (product = {}) => ({
+  ...product,
+  id: product.id,
+  image: product.image || product.images?.[0] || '',
+  images: product.images || (product.image ? [product.image] : []),
+  categoryId: product.categoryId || product.category || '',
+  categoryName: product.categoryName || '',
+  categorySlug: product.categorySlug || '',
+  badge: product.badge || pickBadge(product),
+  rating: Number(product.rating) || 0,
+  reviewCount: Number(product.reviewCount) || 0,
+  stock: Number(product.stock) || 0,
+  price: Number(product.price) || 0,
+  discountPrice: product.discountPrice ? Number(product.discountPrice) : null,
+  effectivePrice: Number(
+    product.effectivePrice || product.discountPrice || product.price || 0,
+  ),
+})
+
+export const normalizeCategory = (category = {}) => ({
+  ...category,
+  id: category.id,
+  shortName: category.shortName || category.name,
+  image: category.image || '',
+  icon: category.icon || 'Carrot',
+})
+
+const normalizeProductPage = (page = {}) => ({
+  ...page,
+  items: (page.items || []).map(normalizeProduct),
+})
+
+const buildQuery = (params = {}) => {
+  const query = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '' || value === 'all') continue
+    query[key] = Array.isArray(value) ? value.join(',') : value
   }
+  return query
 }
 
 export const getCategories = async () => {
-  await wait(160)
-  return DEMO_CATEGORIES.filter((category) => category.isActive)
+  const categories = await api.get('/categories').then(getData)
+  return categories.map(normalizeCategory)
 }
 
 export const getCategoryBySlug = async (slug) => {
-  await wait(160)
-  return DEMO_CATEGORIES.find((category) => category.slug === slug) || null
+  try {
+    const category = await api.get(`/categories/${encodeURIComponent(slug)}`).then(getData)
+    return normalizeCategory(category)
+  } catch (error) {
+    if (error.response?.status === 404) return null
+    throw error
+  }
 }
 
 export const getProducts = async (params = {}) => {
-  await wait()
-
-  const {
-    category,
-    q = '',
-    minPrice,
-    maxPrice,
-    availability = 'all',
-    sort = 'featured',
-    page = 1,
-    limit = 8,
-    ids,
-  } = params
-
-  let items = [...DEMO_PRODUCTS]
-
-  if (Array.isArray(ids) && ids.length) {
-    items = items.filter((product) => ids.includes(product.id))
-  }
-  if (category) {
-    items = items.filter((product) => product.categoryId === category)
-  }
-  if (q) {
-    items = items.filter((product) => matchesSearch(product, q))
-  }
-  if (minPrice !== undefined && minPrice !== '') {
-    items = items.filter((product) => effectivePrice(product) >= Number(minPrice))
-  }
-  if (maxPrice !== undefined && maxPrice !== '') {
-    items = items.filter((product) => effectivePrice(product) <= Number(maxPrice))
-  }
-  if (availability === 'in-stock') {
-    items = items.filter((product) => product.stock > 0)
-  }
-  if (availability === 'low-stock') {
-    items = items.filter((product) => product.stock > 0 && product.stock <= 20)
-  }
-
-  items = sortProducts(items, sort)
-
-  const pageNumber = Math.max(Number(page) || 1, 1)
-  const pageSize = Math.max(Number(limit) || 8, 1)
-  const total = items.length
-  const start = (pageNumber - 1) * pageSize
-
-  return {
-    items: items.slice(start, start + pageSize),
-    total,
-    page: pageNumber,
-    limit: pageSize,
-    pages: Math.max(Math.ceil(total / pageSize), 1),
-  }
+  const page = await api.get('/products', { params: buildQuery(params) }).then(getData)
+  return normalizeProductPage(page)
 }
 
 export const getProductById = async (id) => {
-  await wait(180)
-  return DEMO_PRODUCTS.find((product) => product.id === id || product.slug === id) || null
+  try {
+    const product = await api.get(`/products/${encodeURIComponent(id)}`).then(getData)
+    return normalizeProduct(product)
+  } catch (error) {
+    if (error.response?.status === 404) return null
+    throw error
+  }
 }
 
-export const getReviewsByProduct = async (productId) => {
-  await wait(140)
-  return DEMO_REVIEWS.filter((review) => review.productId === productId)
-}
+/** Reviews are not part of the Phase 3 API; empty means "not available yet". */
+export const getReviewsByProduct = async () => []
 
 export const getRelatedProducts = async (productId) => {
-  await wait(180)
-  const product = DEMO_PRODUCTS.find((item) => item.id === productId)
+  const product = await getProductById(productId)
   if (!product) return []
-  return DEMO_PRODUCTS.filter(
-    (item) => item.categoryId === product.categoryId && item.id !== product.id,
-  ).slice(0, 4)
+
+  const params = product.categoryId
+    ? { category: product.categoryId, limit: 5 }
+    : product.categorySlug
+      ? { categorySlug: product.categorySlug, limit: 5 }
+      : { limit: 5 }
+
+  const page = await getProducts(params)
+  return page.items.filter((item) => item.id !== product.id).slice(0, 4)
 }
 
 export const getHomePageData = async () => {
-  await wait(260)
+  const [categories, featured, deals, vegetables, fruits, bestSellers] = await Promise.all([
+    getCategories(),
+    getProducts({ featured: true, limit: 8 }),
+    getProducts({ dailyDeal: true, limit: 4 }),
+    getProducts({ categorySlug: 'vegetables', limit: 4 }),
+    getProducts({ categorySlug: 'fruits', limit: 4 }),
+    getProducts({ bestSeller: true, limit: 4 }),
+  ])
 
   return {
-    categories: DEMO_CATEGORIES.filter((category) => category.isActive).slice(0, 8),
-    featured: DEMO_PRODUCTS.filter((product) => product.featured).slice(0, 8),
-    deals: DEMO_PRODUCTS.filter((product) => product.dailyDeal).slice(0, 4),
-    vegetables: DEMO_PRODUCTS.filter(
-      (product) => product.categoryId === 'cat-vegetables',
-    ).slice(0, 4),
-    fruits: DEMO_PRODUCTS.filter((product) => product.categoryId === 'cat-fruits').slice(0, 4),
-    bestSellers: DEMO_PRODUCTS.filter((product) => product.bestSeller).slice(0, 4),
+    categories: categories.slice(0, 8),
+    featured: featured.items,
+    deals: deals.items,
+    vegetables: vegetables.items,
+    fruits: fruits.items,
+    bestSellers: bestSellers.items,
   }
 }
 
 export const searchProducts = async (query, limit = 8) => {
-  await wait(200)
-  return sortProducts(
-    DEMO_PRODUCTS.filter((product) => matchesSearch(product, query)),
-  ).slice(0, limit)
+  const page = await getProducts({ q: query, limit })
+  return page.items
 }

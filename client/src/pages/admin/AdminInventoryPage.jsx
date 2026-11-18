@@ -11,16 +11,17 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminInventory } from '../../services/admin.service.js'
+import { getApiErrorMessage } from '../../services/api.js'
+import { getAdminInventory, updateAdminProduct } from '../../services/admin.service.js'
 
 const statusTone = {
   Healthy: 'success',
-  Moderate: 'warning',
-  'Low stock': 'danger',
+  'Low stock': 'warning',
+  'Out of stock': 'danger',
 }
 
 const getStatus = (stock) =>
-  stock <= 15 ? 'Low stock' : stock <= 30 ? 'Moderate' : 'Healthy'
+  stock <= 0 ? 'Out of stock' : stock <= 20 ? 'Low stock' : 'Healthy'
 
 export default function AdminInventoryPage() {
   const dispatch = useAppDispatch()
@@ -30,6 +31,7 @@ export default function AdminInventoryPage() {
   const [stockFilter, setStockFilter] = useState('all')
   const [adjusting, setAdjusting] = useState(null)
   const [newStock, setNewStock] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (data) setItems(data)
@@ -40,7 +42,7 @@ export default function AdminInventoryPage() {
       items.filter((item) => {
         const matchesSearch =
           item.name.toLowerCase().includes(search.toLowerCase()) ||
-          item.sku.toLowerCase().includes(search.toLowerCase())
+          (item.sku || '').toLowerCase().includes(search.toLowerCase())
         const matchesStatus =
           stockFilter === 'all' || item.status === stockFilter
         return matchesSearch && matchesStatus
@@ -55,23 +57,37 @@ export default function AdminInventoryPage() {
     setNewStock(String(item.stock))
   }
 
-  const handleAdjust = (event) => {
+  const handleAdjust = async (event) => {
     event.preventDefault()
+    if (!adjusting) return
+
     const quantity = Math.max(Number(newStock) || 0, 0)
-    setItems((current) =>
-      current.map((item) =>
-        item.id === adjusting.id
-          ? { ...item, stock: quantity, status: getStatus(quantity) }
-          : item,
-      ),
-    )
-    dispatch(
-      pushToast({
-        title: 'Stock updated',
-        message: `${adjusting.name} now shows ${formatNumber(quantity)} units in this demo.`,
-      }),
-    )
-    setAdjusting(null)
+    setSaving(true)
+    try {
+      await updateAdminProduct(adjusting.id, { stock: quantity })
+      setItems((current) =>
+        current.map((item) =>
+          item.id === adjusting.id
+            ? { ...item, stock: quantity, status: getStatus(quantity) }
+            : item,
+        ),
+      )
+      dispatch(
+        pushToast({
+          title: 'Stock updated',
+          message: `${adjusting.name} now has ${formatNumber(quantity)} units.`,
+        }),
+      )
+      setAdjusting(null)
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Update failed',
+        message: getApiErrorMessage(error, 'Could not update stock.'),
+      }))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const columns = [
@@ -113,7 +129,7 @@ export default function AdminInventoryPage() {
     <>
       <AdminPageHeader
         title="Inventory"
-        description="Monitor stock levels and record quick demo adjustments."
+        description="Monitor live stock levels saved directly to the catalog."
       />
 
       <div className="mb-5 grid gap-4 sm:grid-cols-3">
@@ -174,8 +190,8 @@ export default function AdminInventoryPage() {
         >
           <option value="all">All statuses</option>
           <option value="Healthy">Healthy</option>
-          <option value="Moderate">Moderate</option>
           <option value="Low stock">Low stock</option>
+          <option value="Out of stock">Out of stock</option>
         </select>
       </div>
 
@@ -193,11 +209,13 @@ export default function AdminInventoryPage() {
         open={Boolean(adjusting)}
         onClose={() => setAdjusting(null)}
         title="Adjust stock"
-        description={`Demo stock level for ${adjusting?.name || 'this product'}.`}
+        description={`Stock level for ${adjusting?.name || 'this product'}.`}
         footer={
           <>
             <Button variant="outline" onClick={() => setAdjusting(null)}>Cancel</Button>
-            <Button type="submit" form="inventory-form">Save adjustment</Button>
+            <Button type="submit" form="inventory-form" disabled={saving}>
+              {saving ? 'Saving…' : 'Save adjustment'}
+            </Button>
           </>
         }
       >
@@ -215,7 +233,7 @@ export default function AdminInventoryPage() {
             className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary"
           />
           <p className="mt-3 text-xs text-text-secondary">
-            Inventory persistence connects to the backend in Phase 4. This change is local only.
+            Stock is updated through the protected product API and is reflected on the storefront.
           </p>
         </form>
       </Modal>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Copy, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
+import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -12,7 +13,7 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminCoupons } from '../../services/admin.service.js'
+import { getDemoAdminCoupons } from '../../services/admin.service.js'
 
 const emptyCoupon = {
   code: '',
@@ -32,7 +33,7 @@ const discountLabel = (coupon) =>
 
 export default function AdminCouponsPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getAdminCoupons, [])
+  const { status, data, error, refetch } = useAsync(getDemoAdminCoupons, [])
   const [coupons, setCoupons] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -208,8 +209,13 @@ export default function AdminCouponsPage() {
     <>
       <AdminPageHeader
         title="Coupons"
-        description="Create and manage promotional codes for the demo store."
-        actions={<Button onClick={openCreate}><Plus size={16} aria-hidden="true" /> Add coupon</Button>}
+        description="Preview layout only — coupon APIs arrive with Phase 4."
+        actions={
+          <>
+            <DemoBadge />
+            <Button onClick={openCreate}><Plus size={16} aria-hidden="true" /> Add coupon</Button>
+          </>
+        }
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -246,7 +252,7 @@ export default function AdminCouponsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editing ? 'Edit coupon' : 'Add a coupon'}
-        description="Coupon changes are local to this Phase 2 demo. Backend validation arrives in Phase 4."
+        description="Coupon changes are local preview actions. Backend validation arrives in Phase 4."
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Small async-state helper for demo data fetching.
+ * Small async-state helper for service/API-backed data fetching.
  * Returns { status, data, error, isLoading, isError, refetch }.
  */
 export const useAsync = (factory, dependencies = []) => {

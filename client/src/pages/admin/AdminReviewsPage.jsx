@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Search, Trash2, X } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
+import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -12,7 +13,7 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { truncate } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminReviews } from '../../services/admin.service.js'
+import { getDemoAdminReviews } from '../../services/admin.service.js'
 
 const statusTone = {
   approved: 'success',
@@ -22,7 +23,7 @@ const statusTone = {
 
 export default function AdminReviewsPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getAdminReviews, [])
+  const { status, data, error, refetch } = useAsync(getDemoAdminReviews, [])
   const [reviews, setReviews] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -139,7 +140,8 @@ export default function AdminReviewsPage() {
     <>
       <AdminPageHeader
         title="Reviews"
-        description="Moderate customer feedback and keep product ratings trustworthy."
+        description="Preview layout only — review APIs arrive with Phase 4."
+        actions={<DemoBadge />}
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -193,14 +195,14 @@ export default function AdminReviewsPage() {
             dispatch(
               pushToast({
                 type: 'info',
-                message: 'Review moderation connects to the API in Phase 3.',
+                message: 'Review moderation connects to the API in Phase 4.',
               }),
             )
           }
         >
           About moderation
         </Button>
-        All actions in this table are local to the Phase 2 demo.
+        All actions in this table are local preview actions; review APIs arrive in Phase 4.
       </div>
     </>
   )

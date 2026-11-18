@@ -38,9 +38,11 @@ export default function CategoryCard({ category }) {
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">
           {category.description}
         </p>
-        <p className="mt-3 text-xs font-semibold text-brand-primary">
-          {category.productCount} products
-        </p>
+        {category.productCount !== undefined && (
+          <p className="mt-3 text-xs font-semibold text-brand-primary">
+            {category.productCount} products
+          </p>
+        )}
       </div>
     </Link>
   )

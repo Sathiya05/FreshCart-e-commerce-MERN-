@@ -9,11 +9,16 @@ import Modal from '../../components/Modal.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
-import { slugify } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminCategories } from '../../services/admin.service.js'
+import { getApiErrorMessage } from '../../services/api.js'
+import {
+  createAdminCategory,
+  deleteAdminCategory,
+  getAdminCategories,
+  updateAdminCategory,
+} from '../../services/admin.service.js'
 
-const emptyCategory = { name: '', description: '', image: '' }
+const emptyCategory = { name: '', description: '', image: '', isActive: true }
 
 export default function AdminCategoriesPage() {
   const dispatch = useAppDispatch()
@@ -22,6 +27,8 @@ export default function AdminCategoriesPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyCategory)
+  const [formError, setFormError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState(null)
 
   useEffect(() => {
@@ -31,50 +38,79 @@ export default function AdminCategoriesPage() {
   const openCreate = () => {
     setEditing(null)
     setForm(emptyCategory)
+    setFormError('')
     setModalOpen(true)
   }
 
   const openEdit = (category) => {
     setEditing(category)
-    setForm({ name: category.name, description: category.description, image: category.image })
+    setForm({
+      name: category.name,
+      description: category.description || '',
+      image: category.image || '',
+      isActive: category.isActive !== false,
+    })
+    setFormError('')
     setModalOpen(true)
   }
 
   const update = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }))
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    if (editing) {
-      setCategories((current) =>
-        current.map((item) => (item.id === editing.id ? { ...item, ...form, slug: slugify(form.name) } : item)),
-      )
-      dispatch(pushToast({ title: 'Category updated', message: 'Demo changes saved locally.' }))
-    } else {
-      setCategories((current) => [
-        ...current,
-        {
-          id: `cat-demo-${Date.now()}`,
-          slug: slugify(form.name),
-          name: form.name,
-          shortName: form.name,
-          description: form.description,
-          image: form.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
-          productCount: 0,
-          icon: 'Carrot',
-          isActive: true,
-        },
-      ])
-      dispatch(pushToast({ title: 'Category added', message: 'New demo category created.' }))
+    setFormError('')
+    setSaving(true)
+
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      image: form.image.trim(),
+      isActive: form.isActive,
     }
-    setModalOpen(false)
+
+    try {
+      if (editing) {
+        await updateAdminCategory(editing.id, payload)
+        dispatch(pushToast({ title: 'Category updated', message: `${form.name} was saved.` }))
+      } else {
+        await createAdminCategory(payload)
+        dispatch(pushToast({ title: 'Category added', message: `${form.name} was created.` }))
+      }
+      setModalOpen(false)
+      refetch()
+    } catch (apiError) {
+      setFormError(getApiErrorMessage(apiError, 'Could not save this category.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!categoryToDelete) return
+    setSaving(true)
+    try {
+      await deleteAdminCategory(categoryToDelete.id)
+      dispatch(pushToast({ title: 'Category deleted', message: `${categoryToDelete.name} was removed.` }))
+      setCategoryToDelete(null)
+      refetch()
+    } catch (apiError) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Delete failed',
+        message: getApiErrorMessage(apiError, 'Could not delete this category.'),
+      }))
+      setCategoryToDelete(null)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <>
       <AdminPageHeader
         title="Categories"
-        description="Organize products into clear, shoppable groups."
+        description="Organize the live catalog into clear, shoppable groups."
         actions={<Button onClick={openCreate}><Plus size={16} aria-hidden="true" /> Add category</Button>}
       />
 
@@ -88,14 +124,22 @@ export default function AdminCategoriesPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => (
             <article key={category.id} className="overflow-hidden rounded-2xl border border-app-border bg-surface shadow-sm">
-              <img src={category.image} alt={category.name} className="h-32 w-full object-cover" />
+              <img
+                src={category.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'}
+                alt={category.name}
+                className="h-32 w-full object-cover"
+              />
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-semibold text-text-primary">{category.name}</h2>
-                  <Badge tone="success">Active</Badge>
+                  <Badge tone={category.isActive === false ? 'warning' : 'success'}>
+                    {category.isActive === false ? 'Inactive' : 'Active'}
+                  </Badge>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{category.description}</p>
-                <p className="mt-3 text-xs text-text-secondary">{category.productCount} products · /{category.slug}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">
+                  {category.description || 'No description provided.'}
+                </p>
+                <p className="mt-3 text-xs text-text-secondary">/{category.slug}</p>
                 <div className="mt-4 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => openEdit(category)}>
                     <Pencil size={14} aria-hidden="true" /> Edit
@@ -107,6 +151,9 @@ export default function AdminCategoriesPage() {
               </div>
             </article>
           ))}
+          {categories.length === 0 && (
+            <p className="text-sm text-text-secondary">No categories yet. Add your first one.</p>
+          )}
         </div>
       )}
 
@@ -117,7 +164,9 @@ export default function AdminCategoriesPage() {
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button type="submit" form="category-form">Save category</Button>
+            <Button type="submit" form="category-form" disabled={saving}>
+              {saving ? 'Saving…' : 'Save category'}
+            </Button>
           </>
         }
       >
@@ -132,21 +181,28 @@ export default function AdminCategoriesPage() {
           </div>
           <div>
             <label htmlFor="category-image" className="mb-1.5 block text-sm font-medium">Image URL</label>
-            <input id="category-image" value={form.image} onChange={update('image')} placeholder="https://…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+            <input id="category-image" type="url" value={form.image} onChange={update('image')} placeholder="https://…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
           </div>
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+              className="accent-brand-primary"
+            />
+            Active category
+          </label>
+          {formError && <p className="text-sm text-red-600" role="alert">{formError}</p>}
         </form>
       </Modal>
 
       <ConfirmDialog
         open={Boolean(categoryToDelete)}
         onClose={() => setCategoryToDelete(null)}
-        onConfirm={() => {
-          setCategories((current) => current.filter((item) => item.id !== categoryToDelete.id))
-          dispatch(pushToast({ type: 'info', message: 'Category removed from demo catalog.' }))
-        }}
+        onConfirm={handleDelete}
         title="Delete this category?"
-        message={`${categoryToDelete?.name || 'This category'} will be removed. Products should be reassigned before real deletion.`}
-        confirmLabel="Delete category"
+        message={`${categoryToDelete?.name || 'This category'} will be removed. Products using it must be reassigned first.`}
+        confirmLabel={saving ? 'Deleting…' : 'Delete category'}
       />
     </>
   )

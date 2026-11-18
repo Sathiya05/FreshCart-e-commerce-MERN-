@@ -2,10 +2,12 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 3 — Authenticated API complete.** MongoDB models, JWT
-> authentication, role-based admin access and validated catalog CRUD are ready.
-> The React UI still uses clearly labelled demo services until the next integration
-> step; commerce and payments arrive in later phases.
+> **Current status: Phase 3 — API and React integration complete.** MongoDB
+> models, JWT authentication, role-based admin access and validated catalog CRUD
+> are live. The React UI now uses these endpoints for sessions, catalog browsing,
+> admin catalog management and inventory. Cart, checkout, orders, addresses,
+> coupons, reviews, reports and payments remain clearly labelled demos until their
+> own phases.
 
 ## Repository structure
 
@@ -86,9 +88,10 @@ cd client
 npm run dev
 ```
 
-Open http://localhost:5173. The Phase 2 storefront loads with demo data. Use the
-sign-in page's **Customer demo** or **Admin demo** button to explore guarded areas.
-The Phase 3 API is available separately; the UI adapters have not been migrated yet.
+Open http://localhost:5173. The storefront reads the live catalog once MongoDB is
+connected. Register a customer account in the UI, or create an admin locally with
+`npm run create-admin` from `server/`, then sign in normally — there are no demo
+sign-in buttons. Sessions are restored from HttpOnly cookies on reload.
 
 ## Verification
 
@@ -129,7 +132,12 @@ curl -X POST http://localhost:5000/api/auth/login \
   -d '{"email":"you@example.com","password":"your-password"}'
 ```
 
-See [Phase 3 API](docs/phase-3-api.md) for admin routes and request bodies.
+In the browser, confirm the home page shows database-backed categories/products,
+sign in with a real account, then open `/admin` with an admin account and change a
+product or category. Those writes go straight to MongoDB through the protected API.
+
+See [Phase 3 API](docs/phase-3-api.md) for routes, request bodies and the React
+integration map.
 
 Production build check:
 
