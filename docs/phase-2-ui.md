@@ -59,12 +59,14 @@ wrap that data so loading, empty, and error states can be designed now:
 - `services/account.service.js`
 - `services/admin.service.js`
 
-Phase 3 replaces these services with authenticated Axios calls. Redux currently
-stores cart, wishlist, and demo session state in memory; persistence and backend
+Phase 3 adds authenticated API endpoints for catalog and admin data. Migrating
+these UI adapters to Axios is the next integration step. Redux currently stores
+cart, wishlist, and demo session state in memory; persistence and backend
 synchronisation are intentionally deferred.
 
-The login page exposes **Customer demo** and **Admin demo** buttons. They only
-set local Redux state and do not call an API or issue a JWT.
+The login page still exposes **Customer demo** and **Admin demo** buttons. They
+set local Redux state and do not call an API or issue a JWT; the real auth API is
+documented in [Phase 3 API](phase-3-api.md).
 
 ## Payment safety
 
