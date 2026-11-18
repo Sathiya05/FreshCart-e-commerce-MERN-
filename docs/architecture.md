@@ -55,6 +55,12 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 - **Database state in health output:** the API can start without MongoDB in local
   development, which makes UI-only work possible. Production startup fails fast
   if MongoDB is unavailable. The health response always reports the real state.
+- **No Nodemon dependency:** the server's `dev` script uses Node's built-in
+  `--watch` flag, avoiding vulnerable transitive file-watcher packages.
+- **Vite version pin:** Vite 6.4.4 and `@vitejs/plugin-react` 5.2.0 are pinned.
+  Current Vite releases depend on `picomatch` versions covered by an unpatched
+  upstream ReDoS advisory. The finding affects the local development server only;
+  `npm audit --omit=dev` reports zero vulnerabilities for shipped dependencies.
 
 ## Planned evolution
 
