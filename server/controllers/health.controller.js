@@ -10,7 +10,7 @@ export const getHealth = (_req, res) => {
       environment: env.nodeEnv,
       timestamp: new Date().toISOString(),
       uptimeSeconds: Math.round(process.uptime()),
-      database: getDatabaseState(),
+      database: env.mongodbUri ? getDatabaseState() : 'not_configured',
     },
   })
 }

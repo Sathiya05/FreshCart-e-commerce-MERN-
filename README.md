@@ -2,9 +2,10 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 2 — Frontend UI complete.** The storefront, authentication
-> screens, and admin console are implemented with clearly labelled demo data.
-> Backend APIs, real authentication, and payments arrive in later phases.
+> **Current status: Phase 3 — Authenticated API complete.** MongoDB models, JWT
+> authentication, role-based admin access and validated catalog CRUD are ready.
+> The React UI still uses clearly labelled demo services until the next integration
+> step; commerce and payments arrive in later phases.
 
 ## Repository structure
 
@@ -59,7 +60,15 @@ cp server/.env.example server/.env
 ```
 
 For database-backed development, replace the `MONGODB_URI` placeholder in
-`server/.env` with your MongoDB Atlas connection string. Never commit this file.
+`server/.env` with your MongoDB Atlas connection string. Set distinct
+`JWT_SECRET` and `JWT_REFRESH_SECRET` values, then create the first admin:
+
+```bash
+cd server
+npm run create-admin
+```
+
+Never commit `server/.env` or real credentials.
 
 ### 3. Start both applications
 
@@ -79,9 +88,9 @@ npm run dev
 
 Open http://localhost:5173. The Phase 2 storefront loads with demo data. Use the
 sign-in page's **Customer demo** or **Admin demo** button to explore guarded areas.
-No real authentication or payment is performed.
+The Phase 3 API is available separately; the UI adapters have not been migrated yet.
 
-## Phase 1 verification
+## Verification
 
 API directly:
 
@@ -109,6 +118,19 @@ If `database` is `not_configured` or `disconnected`, the API is still running, b
 `MONGODB_URI` is missing or the Atlas connection needs attention. Check the server
 terminal for a detailed warning.
 
+With MongoDB connected, verify the catalog and authentication:
+
+```bash
+curl http://localhost:5000/api/categories
+curl http://localhost:5000/api/products?limit=8
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{"email":"you@example.com","password":"your-password"}'
+```
+
+See [Phase 3 API](docs/phase-3-api.md) for admin routes and request bodies.
+
 Production build check:
 
 ```bash
@@ -120,3 +142,4 @@ npm run build
 
 - [Architecture](docs/architecture.md)
 - [Phase 2 UI](docs/phase-2-ui.md)
+- [Phase 3 API](docs/phase-3-api.md)

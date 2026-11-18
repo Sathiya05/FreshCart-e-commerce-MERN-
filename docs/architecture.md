@@ -52,11 +52,42 @@ Phase 2 uses three layout branches:
 
 `/account/*` is wrapped in `ProtectedRoute`. All admin pages are lazy-loaded so
 charting code is fetched only when the console is opened. Demo data is never
-mixed into production-shaped services: each service file is documented as a
-Phase 2 placeholder and will be replaced by Axios calls in Phase 3.
+mixed into production-shaped services. Phase 3 adds the real API behind those
+service shapes; migrating the UI adapters to Axios is the next integration step.
 
 See [Phase 2 UI](phase-2-ui.md) for the route map, demo boundaries, and payment
 safety notes.
+
+## Phase 3 API architecture
+
+```text
+Browser/API client
+  -> Express route module
+  -> express-validator chain (writes)
+  -> database guard + JWT protect + role authorize
+  -> controller
+  -> service/query helper
+  -> Mongoose model
+  -> MongoDB
+```
+
+Authentication uses two JWTs in HttpOnly cookies: a 15-minute access token and
+a 7-day refresh token. The access token is also available in a Bearer header for
+non-browser clients. `POST /api/auth/logout` rotates the user's `tokenVersion`,
+which invalidates previously issued refresh tokens.
+
+Public route modules (`/api/categories`, `/api/products`) expose only active
+records. Admin route modules (`/api/admin/*`) are guarded by `protect` and
+`authorize('admin')` and can read inactive records. Validation errors are
+normalized to `422 VALIDATION_ERROR`; Mongoose cast, validation and duplicate
+errors are normalized by the shared error middleware.
+
+Data endpoints return `503 DATABASE_UNAVAILABLE` when MongoDB is not connected,
+so the API can still start locally for health checks and UI development without
+credentials. Production startup still fails fast when MongoDB is unreachable.
+
+See [Phase 3 API](phase-3-api.md) for endpoints, environment variables and
+bootstrap instructions.
 
 ## Request flow in Phase 1
 
@@ -97,7 +128,8 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 
 - Phase 2 (complete): design system, reusable components, customer storefront,
   and admin console UI. See [phase-2-ui.md](phase-2-ui.md).
-- Phase 3: Mongoose models and authenticated CRUD APIs.
+- Phase 3 (complete): Mongoose models, JWT authentication, validated category
+  and product CRUD. See [phase-3-api.md](phase-3-api.md).
 - Phase 4: cart, inventory, coupons, addresses, delivery slots and orders.
 - Phase 5: Razorpay order creation, verification and webhooks.
 - Phase 6/7: AWS fundamentals and deployment.
