@@ -8,14 +8,15 @@ import { env } from './config/env.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import { notFound } from './middleware/notFound.middleware.js'
 import routes from './routes/index.js'
-
 const app = express()
-const allowedOrigins = env.clientUrl
-console.log('[CORS] Allowed origins:', allowedOrigins)
 
+const allowedOrigins = env.clientUrl
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean)
+
+console.log('[CORS] Allowed origins:', allowedOrigins)
+
 app.set('trust proxy', 1)
 
 // Security and request-parsing middleware.
