@@ -75,6 +75,10 @@ export default function Navbar() {
     setQuery('')
   }
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }
+
   const handleSignOut = async () => {
     await dispatch(logoutUser())
     dispatch(pushToast({ type: 'info', message: 'You have signed out.' }))
@@ -98,7 +102,7 @@ export default function Navbar() {
 
         <nav className="ml-4 hidden items-center gap-6 lg:flex" aria-label="Main navigation">
           {links.map((link) => (
-            <NavLink key={link.to} to={link.to} className={navClass} end={link.to === '/'}>
+            <NavLink key={link.to} to={link.to} onClick={scrollToTop} className={navClass} end={link.to === '/'}>
               {link.label}
             </NavLink>
           ))}
@@ -206,7 +210,7 @@ export default function Navbar() {
           </form>
           <nav className="space-y-1 px-4 pb-2" aria-label="Mobile navigation">
             {links.map((link) => (
-              <NavLink key={link.to} to={link.to} className={({ isActive }) => `block rounded-lg px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-secondary text-brand-dark' : 'text-text-secondary'}`} end={link.to === '/'}>
+              <NavLink key={link.to} to={link.to} onClick={() => { scrollToTop(); setMobileOpen(false) }} className={({ isActive }) => `block rounded-lg px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-secondary text-brand-dark' : 'text-text-secondary'}`} end={link.to === '/'}>
                 {link.label}
               </NavLink>
             ))}

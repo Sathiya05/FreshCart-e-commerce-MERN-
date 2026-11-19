@@ -3,6 +3,7 @@ import { Check, Heart, RotateCcw, ShieldCheck, ShoppingCart, Truck, Zap } from '
 import { useNavigate, useParams } from 'react-router-dom'
 import Badge from '../../components/Badge.jsx'
 import Breadcrumbs from '../../components/Breadcrumbs.jsx'
+import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
 import ProductGrid from '../../components/ProductGrid.jsx'
@@ -205,43 +206,46 @@ export default function ProductDetailsPage() {
             </p>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 space-y-3">
             <QuantitySelector
               value={quantity}
               onChange={setQuantity}
               max={product.stock || 1}
             />
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={product.stock <= 0}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-app-border bg-surface px-5 text-sm font-semibold text-text-primary hover:border-brand-primary hover:text-brand-dark disabled:opacity-50 sm:flex-none"
-            >
-              <ShoppingCart size={17} aria-hidden="true" />
-              Add to cart
-            </button>
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              disabled={product.stock <= 0}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 sm:flex-none"
-            >
-              <Zap size={17} aria-hidden="true" />
-              Buy now
-            </button>
-            <button
-              type="button"
-              onClick={handleWishlist}
-              className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold ${
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                size="compact"
+                variant="outline"
+                className="w-full"
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+              >
+                <ShoppingCart size={17} className="shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">Add to cart</span>
+              </Button>
+              <Button
+                size="compact"
+                className="w-full"
+                onClick={handleBuyNow}
+                disabled={product.stock <= 0}
+              >
+                <Zap size={17} className="shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">Buy now</span>
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              className={`w-full sm:w-auto ${
                 isWishlisted
-                  ? 'border-red-200 bg-red-50 text-red-600'
-                  : 'border-app-border text-text-secondary hover:border-brand-primary hover:text-brand-primary'
+                  ? 'border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:text-red-700'
+                  : ''
               }`}
+              onClick={handleWishlist}
               aria-pressed={isWishlisted}
             >
               <Heart size={17} className={isWishlisted ? 'fill-current' : ''} aria-hidden="true" />
-              {isWishlisted ? 'Saved' : 'Wishlist'}
-            </button>
+              {isWishlisted ? 'Saved to wishlist' : 'Save to wishlist'}
+            </Button>
           </div>
 
           <div className="mt-8 grid gap-3 border-t border-app-border pt-6 sm:grid-cols-3">

@@ -16,7 +16,7 @@ import {
   Warehouse,
   X,
 } from 'lucide-react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { logoutUser, selectCurrentUser } from '../redux/authSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
@@ -46,6 +46,7 @@ const linkClass = ({ isActive }) =>
 
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation()
   const user = useAppSelector(selectCurrentUser)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -80,7 +81,10 @@ export default function AdminLayout() {
             to={to}
             end={end}
             className={linkClass}
-            onClick={() => setMobileOpen(false)}
+            onClick={() => {
+              setMobileOpen(false)
+              window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+            }}
           >
             <Icon size={17} aria-hidden="true" />
             {label}
@@ -170,7 +174,9 @@ export default function AdminLayout() {
         </header>
 
         <main className="p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          <div key={location.pathname} className="animate-page-in">
+            <Outlet />
+          </div>
         </main>
       </div>
       <ToastHost />

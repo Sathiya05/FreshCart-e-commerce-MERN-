@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import AnnouncementBar from '../components/AnnouncementBar.jsx'
 import Footer from '../components/Footer.jsx'
 import Navbar from '../components/Navbar.jsx'
@@ -9,6 +9,7 @@ import { syncGuestCart } from '../redux/cartSlice.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 
 export default function CustomerLayout() {
+  const location = useLocation()
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
   const initialized = useAppSelector(selectAuthInitialized)
@@ -24,7 +25,9 @@ export default function CustomerLayout() {
       <AnnouncementBar />
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        <div key={location.pathname} className="animate-page-in">
+          <Outlet />
+        </div>
       </main>
       <Footer />
       <ToastHost />

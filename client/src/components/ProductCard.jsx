@@ -116,14 +116,14 @@ export default function ProductCard({ product }) {
         </p>
 
         {product.stock > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
-            <Button variant="outline" onClick={handleAddToCart}>
-              <ShoppingCart size={16} aria-hidden="true" />
-              Add to cart
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button size="compact" variant="outline" className="w-full" onClick={handleAddToCart}>
+              <ShoppingCart size={16} className="shrink-0" aria-hidden="true" />
+              <span className="min-w-0 truncate">Add to cart</span>
             </Button>
-            <Button onClick={handleBuyNow}>
-              <Zap size={16} aria-hidden="true" />
-              Buy now
+            <Button size="compact" className="w-full" onClick={handleBuyNow}>
+              <Zap size={16} className="shrink-0" aria-hidden="true" />
+              <span className="min-w-0 truncate">Buy now</span>
             </Button>
           </div>
         ) : (

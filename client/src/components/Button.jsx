@@ -9,6 +9,8 @@ const variants = {
 
 const sizes = {
   sm: 'h-9 px-3 text-sm',
+  // Tight padding for side-by-side card actions so labels never overflow.
+  compact: 'h-11 px-2 text-[13px] whitespace-nowrap min-[360px]:px-3',
   md: 'h-11 px-5 text-sm',
   lg: 'h-12 px-6 text-base',
   icon: 'h-10 w-10',
@@ -24,7 +26,7 @@ export default function Button({
 }) {
   return (
     <Component
-      className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex min-w-0 max-w-full items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}

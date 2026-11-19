@@ -48,4 +48,29 @@
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-page-in {
+    animation: page-in 240ms ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .animate-page-in {
+      animation: none;
+    }
+  }
 }
