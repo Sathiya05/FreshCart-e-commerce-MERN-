@@ -111,10 +111,12 @@ normalizers translate server product/category fields into the shapes used by the
 existing cards and tables.
 
 Live UI areas: registration/login/logout/profile, public catalog and search,
-admin dashboard overview, product/category CRUD, and stock adjustments.
-Preview-only areas: cart, checkout, payments, orders, addresses, coupons,
-reviews, password recovery and sales reports. See the integration table in
-[Phase 3 API](phase-3-api.md#react-integration).
+admin dashboard overview, product/category CRUD, stock adjustments, persistent
+cart, address book, COD checkout, order history/tracking and admin order status.
+Preview-only areas: coupons, reviews, customers, password recovery, sales
+reports, online payments and image uploads. See the integration tables in
+[Phase 3 API](phase-3-api.md#react-integration) and
+[Phase 4 Commerce](phase-4-commerce.md).
 
 ## Request flow in Phase 1
 
@@ -157,7 +159,8 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 - Phase 3 (complete): Mongoose models, JWT authentication, validated category
   and product CRUD, and React integration for those endpoints. See
   [phase-3-api.md](phase-3-api.md).
-- Phase 4: cart, inventory, coupons, addresses, delivery slots and orders.
+- Phase 4 (current): persistent cart, addresses, COD checkout, order history,
+  tracking and admin order status. See [phase-4-commerce.md](phase-4-commerce.md).
 - Phase 5: Razorpay order creation, verification and webhooks.
 - Phase 6/7: AWS fundamentals and deployment.
 - Phase 8/9: testing and portfolio presentation.

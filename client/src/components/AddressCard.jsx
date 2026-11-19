@@ -8,6 +8,7 @@ export default function AddressCard({
   onSelect,
   onEdit,
   onDelete,
+  onSetDefault,
 }) {
   return (
     <div
@@ -26,7 +27,7 @@ export default function AddressCard({
           </div>
         </div>
         <div className="flex flex-wrap justify-end gap-1.5">
-          <Badge tone="brand">{address.addressType}</Badge>
+          <Badge tone="brand">{address.addressType || address.label || 'Home'}</Badge>
           {address.isDefault && <Badge tone="success">Default</Badge>}
         </div>
       </div>
@@ -44,6 +45,11 @@ export default function AddressCard({
           >
             {selected && <Check size={14} aria-hidden="true" />}
             {selected ? 'Selected' : 'Deliver here'}
+          </Button>
+        )}
+        {onSetDefault && !address.isDefault && (
+          <Button size="sm" variant="ghost" onClick={() => onSetDefault(address)}>
+            Set default
           </Button>
         )}
         {onEdit && (

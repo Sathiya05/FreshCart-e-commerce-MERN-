@@ -38,12 +38,12 @@ export default function OrderSummary({
 
       <div className="mt-5 flex items-start gap-2 rounded-xl bg-brand-secondary/60 p-3 text-xs text-brand-dark">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-        <span>Prices shown are demo prices. Final totals will be calculated on the backend.</span>
+        <span>Prices are calculated from the live catalog at checkout.</span>
       </div>
 
       <div className="mt-4 flex items-center gap-2 text-xs text-text-secondary">
         <Truck size={15} aria-hidden="true" />
-        Free delivery on orders above ₹499 in Phase 4.
+        Free delivery on orders above ₹499.
       </div>
 
       {action && <div className="mt-5">{action}</div>}

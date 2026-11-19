@@ -7,6 +7,11 @@ import {
   updateCategory,
 } from '../controllers/category.controller.js'
 import {
+  getAdminOrder,
+  listAdminOrders,
+  updateAdminOrderStatus,
+} from '../controllers/order.controller.js'
+import {
   createProduct,
   deleteProduct,
   getAdminProduct,
@@ -24,6 +29,10 @@ import {
   updateCategoryValidator,
   updateProductValidator,
 } from '../validators/catalog.validator.js'
+import {
+  orderIdValidator,
+  updateOrderStatusValidator,
+} from '../validators/order.validator.js'
 
 const router = Router()
 
@@ -42,5 +51,14 @@ router.get('/products/:id', productIdValidator, validate, getAdminProduct)
 router.post('/products', createProductValidator, validate, createProduct)
 router.patch('/products/:id', updateProductValidator, validate, updateProduct)
 router.delete('/products/:id', productIdValidator, validate, deleteProduct)
+
+router.get('/orders', listAdminOrders)
+router.get('/orders/:id', orderIdValidator, validate, getAdminOrder)
+router.patch(
+  '/orders/:id/status',
+  updateOrderStatusValidator,
+  validate,
+  updateAdminOrderStatus,
+)
 
 export default router

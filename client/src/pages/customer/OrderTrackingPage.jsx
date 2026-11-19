@@ -7,12 +7,12 @@ import ErrorState from '../../components/ErrorState.jsx'
 import OrderStatusBadge from '../../components/OrderStatusBadge.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoOrderById } from '../../services/account.service.js'
+import { getOrderTracking } from '../../services/commerce.service.js'
 
 export default function OrderTrackingPage() {
   const { id } = useParams()
   const { status, data: order, error, refetch } = useAsync(
-    () => getDemoOrderById(id),
+    () => getOrderTracking(id),
     [id],
   )
 
@@ -38,7 +38,7 @@ export default function OrderTrackingPage() {
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <EmptyState
           title="Order not found"
-          description="We could not find this demo order."
+          description="We could not find this order or it does not belong to your account."
           actionLabel="View all orders"
           actionTo="/account/orders"
         />
@@ -59,7 +59,7 @@ export default function OrderTrackingPage() {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">Track your order</h1>
-          <p className="mt-2 text-sm text-text-secondary">Order {order.id}</p>
+          <p className="mt-2 text-sm text-text-secondary">Order {order.orderNumber || order.id}</p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
@@ -121,10 +121,10 @@ export default function OrderTrackingPage() {
           </section>
 
           <section className="rounded-2xl border border-brand-primary bg-brand-secondary/50 p-5">
-            <Badge tone="brand">Demo tracking</Badge>
+            <Badge tone="brand">Live order status</Badge>
             <p className="mt-3 text-sm leading-6 text-brand-dark">
-              Live rider tracking and status webhooks will be connected after the
-              order and payment APIs are implemented.
+              Status updates come from the live order record. Live rider location
+              and payment webhooks arrive with later phases.
             </p>
           </section>
 

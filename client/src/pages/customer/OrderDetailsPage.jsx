@@ -8,12 +8,12 @@ import OrderStatusBadge from '../../components/OrderStatusBadge.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoOrderById } from '../../services/account.service.js'
+import { getOrderById } from '../../services/commerce.service.js'
 
 export default function OrderDetailsPage() {
   const { id } = useParams()
   const { status, data: order, error, refetch } = useAsync(
-    () => getDemoOrderById(id),
+    () => getOrderById(id),
     [id],
   )
 
@@ -39,7 +39,7 @@ export default function OrderDetailsPage() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <EmptyState
           title="Order not found"
-          description="This demo order reference does not exist."
+          description="This order reference does not exist or does not belong to your account."
           actionLabel="View all orders"
           actionTo="/account/orders"
         />
@@ -53,13 +53,13 @@ export default function OrderDetailsPage() {
         items={[
           { label: 'Account', to: '/account/profile' },
           { label: 'Orders', to: '/account/orders' },
-          { label: order.id },
+          { label: order.orderNumber || order.id },
         ]}
       />
 
       <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Order {order.id}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Order {order.orderNumber || order.id}</h1>
           <p className="mt-2 text-sm text-text-secondary">Placed on {order.date}</p>
         </div>
         <div className="flex flex-wrap gap-2">

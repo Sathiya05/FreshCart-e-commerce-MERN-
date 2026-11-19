@@ -2,12 +2,11 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 3 — API and React integration complete.** MongoDB
-> models, JWT authentication, role-based admin access and validated catalog CRUD
-> are live. The React UI now uses these endpoints for sessions, catalog browsing,
-> admin catalog management and inventory. Cart, checkout, orders, addresses,
-> coupons, reviews, reports and payments remain clearly labelled demos until their
-> own phases.
+> **Current status: Phase 4 — core commerce is live.** Auth, catalog, admin
+> catalog, persistent carts, address book, server-calculated checkout, COD order
+> creation, order history/tracking and admin order status updates use real APIs.
+> Coupons, customer reviews, sales reports, online payments (Razorpay) and image
+> uploads (AWS) remain clearly labelled demos until their own phases.
 
 ## Repository structure
 

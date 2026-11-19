@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Eye, Search } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
-import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -14,7 +13,10 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoAdminOrders } from '../../services/admin.service.js'
+import {
+  getAdminOrders,
+  updateAdminOrderStatus,
+} from '../../services/commerce.service.js'
 
 const statuses = [
   'Pending',
@@ -34,50 +36,69 @@ const paymentTone = {
 
 export default function AdminOrdersPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getDemoAdminOrders, [])
-  const [orders, setOrders] = useState([])
+  const { status, data, error, refetch } = useAsync(
+    () => getAdminOrders({ limit: 60 }),
+    [],
+  )
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [orderToCancel, setOrderToCancel] = useState(null)
+  const [updating, setUpdating] = useState(false)
 
-  useEffect(() => {
-    if (data) setOrders(data)
-  }, [data])
-
-  useEffect(() => {
-    if (!selectedOrder) return
-    const latest = orders.find((order) => order.id === selectedOrder.id)
-    if (latest) setSelectedOrder(latest)
-  }, [orders, selectedOrder])
+  const orders = data?.items || []
+  const selectedOrder = orders.find((order) => order.id === selectedOrderId) || null
 
   const filtered = useMemo(
     () =>
       orders.filter((order) => {
-        const matchesSearch = order.id.toLowerCase().includes(search.toLowerCase())
+        const orderId = (order.orderNumber || order.id || '').toLowerCase()
+        const matchesSearch = orderId.includes(search.toLowerCase())
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter
         return matchesSearch && matchesStatus
       }),
     [orders, search, statusFilter],
   )
 
-  const updateStatus = (id, nextStatus) => {
-    setOrders((current) =>
-      current.map((order) => (order.id === id ? { ...order, status: nextStatus } : order)),
-    )
-    dispatch(
-      pushToast({
-        title: 'Order status updated',
-        message: `${id} is now ${nextStatus} in this demo.`,
-      }),
-    )
+  const updateStatus = async (id, nextStatus) => {
+    setUpdating(true)
+    try {
+      await updateAdminOrderStatus(id, nextStatus)
+      dispatch(
+        pushToast({
+          title: 'Order status updated',
+          message: `${id} is now ${nextStatus}.`,
+        }),
+      )
+      await refetch()
+    } catch (apiError) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Could not update status',
+          message: apiError?.message || 'Please try again.',
+        }),
+      )
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleCancel = async (order) => {
+    await updateStatus(order.id, 'Cancelled')
+    setOrderToCancel(null)
   }
 
   const columns = [
     {
       key: 'id',
       label: 'Order',
-      render: (row) => <p className="font-medium text-text-primary">{row.id}</p>,
+      render: (row) => (
+        <div>
+          <p className="font-medium text-text-primary">{row.orderNumber || row.id}</p>
+          <p className="text-xs text-text-secondary">{row.customer?.name || 'Customer'}</p>
+        </div>
+      ),
     },
     { key: 'date', label: 'Date', render: (row) => row.date },
     {
@@ -106,9 +127,9 @@ export default function AdminOrdersPage() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setSelectedOrder(row)}
+            onClick={() => setSelectedOrderId(row.id)}
             className="rounded-lg p-2 text-text-secondary hover:bg-app-background hover:text-brand-primary"
-            aria-label={`View ${row.id}`}
+            aria-label={`View ${row.orderNumber || row.id}`}
           >
             <Eye size={16} aria-hidden="true" />
           </button>
@@ -126,8 +147,7 @@ export default function AdminOrdersPage() {
     <>
       <AdminPageHeader
         title="Orders"
-        description="Preview layout only — order APIs arrive with Phase 4."
-        actions={<DemoBadge />}
+        description="Review live orders and update fulfilment status."
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -137,7 +157,7 @@ export default function AdminOrdersPage() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search order ID…"
+            placeholder="Search order number…"
             aria-label="Search orders"
             className="h-11 w-full rounded-xl border border-app-border bg-surface pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
           />
@@ -163,10 +183,10 @@ export default function AdminOrdersPage() {
 
       <Modal
         open={Boolean(selectedOrder)}
-        onClose={() => setSelectedOrder(null)}
-        title={`Order ${selectedOrder?.id || ''}`}
-        description="Demo order detail. Real order APIs arrive in Phase 4."
-        footer={<Button variant="outline" onClick={() => setSelectedOrder(null)}>Close</Button>}
+        onClose={() => setSelectedOrderId(null)}
+        title={`Order ${selectedOrder?.orderNumber || selectedOrder?.id || ''}`}
+        description="Live order record from the API."
+        footer={<Button variant="outline" onClick={() => setSelectedOrderId(null)}>Close</Button>}
       >
         {selectedOrder && (
           <div className="space-y-6">
@@ -190,12 +210,13 @@ export default function AdminOrdersPage() {
             </div>
 
             <div>
-              <label htmlFor="demo-order-status" className="mb-2 block text-sm font-medium">
+              <label htmlFor="admin-order-status" className="mb-2 block text-sm font-medium">
                 Update status
               </label>
               <select
-                id="demo-order-status"
+                id="admin-order-status"
                 value={selectedOrder.status}
+                disabled={updating}
                 onChange={(event) => updateStatus(selectedOrder.id, event.target.value)}
                 className="h-11 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
               >
@@ -203,6 +224,14 @@ export default function AdminOrdersPage() {
                   <option key={item} value={item}>{item}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold">Customer</h3>
+              <p className="mt-2 text-sm text-text-secondary">
+                {selectedOrder.customer?.name || 'Customer'}
+                {selectedOrder.customer?.email ? ` · ${selectedOrder.customer.email}` : ''}
+              </p>
             </div>
 
             <div>
@@ -226,13 +255,15 @@ export default function AdminOrdersPage() {
             <div>
               <h3 className="text-sm font-semibold">Delivery address</h3>
               <p className="mt-2 text-sm leading-6 text-text-secondary">
-                {selectedOrder.address.fullName}<br />
-                {selectedOrder.address.addressLine}<br />
-                {selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.pincode}
+                {selectedOrder.address?.fullName}<br />
+                {selectedOrder.address?.addressLine}<br />
+                {selectedOrder.address?.city}, {selectedOrder.address?.state} {selectedOrder.address?.pincode}
               </p>
-              <p className="mt-2 text-xs text-text-secondary">
-                Slot: {selectedOrder.deliverySlot}
-              </p>
+              {selectedOrder.deliverySlot && (
+                <p className="mt-2 text-xs text-text-secondary">
+                  Slot: {selectedOrder.deliverySlot}
+                </p>
+              )}
             </div>
 
             <div>
@@ -259,23 +290,9 @@ export default function AdminOrdersPage() {
       <ConfirmDialog
         open={Boolean(orderToCancel)}
         onClose={() => setOrderToCancel(null)}
-        onConfirm={() => {
-          setOrders((current) =>
-            current.map((order) =>
-              order.id === orderToCancel.id
-                ? { ...order, status: 'Cancelled', paymentStatus: 'Refunded' }
-                : order,
-            ),
-          )
-          dispatch(
-            pushToast({
-              type: 'info',
-              message: `${orderToCancel.id} cancelled in the demo. Refunds are processed in Phase 5.`,
-            }),
-          )
-        }}
+        onConfirm={() => handleCancel(orderToCancel)}
         title="Cancel this order?"
-        message={`${orderToCancel?.id || 'This order'} will be marked cancelled and its demo payment shown as refunded.`}
+        message={`${orderToCancel?.orderNumber || orderToCancel?.id || 'This order'} will be marked cancelled and its stock restored. Paid-order refunds are handled manually until Phase 5.`}
         confirmLabel="Cancel order"
       />
     </>

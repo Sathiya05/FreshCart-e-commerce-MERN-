@@ -9,15 +9,18 @@ import PageHeader from '../../components/PageHeader.jsx'
 import { TableSkeleton } from '../../components/Skeleton.jsx'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoOrders } from '../../services/account.service.js'
+import { getOrders } from '../../services/commerce.service.js'
 
 const filters = ['All orders', 'In progress', 'Delivered', 'Cancelled']
 
 export default function MyOrdersPage() {
   const [activeFilter, setActiveFilter] = useState('All orders')
-  const { status, data, error, refetch } = useAsync(getDemoOrders, [])
+  const { status, data, error, refetch } = useAsync(
+    () => getOrders({ limit: 60 }),
+    [],
+  )
 
-  const orders = (data || []).filter((order) => {
+  const orders = (data?.items || []).filter((order) => {
     if (activeFilter === 'In progress') return !['Delivered', 'Cancelled'].includes(order.status)
     if (activeFilter === 'Delivered') return order.status === 'Delivered'
     if (activeFilter === 'Cancelled') return order.status === 'Cancelled'
@@ -28,7 +31,7 @@ export default function MyOrdersPage() {
     <>
       <PageHeader
         title="My orders"
-        description="Review your previous and current demo orders."
+        description="Review your previous and current orders."
         breadcrumbs={[{ label: 'Account', to: '/account/profile' }, { label: 'Orders' }]}
       />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -66,7 +69,7 @@ export default function MyOrdersPage() {
               <article key={order.id} className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border pb-4">
                   <div>
-                    <p className="font-semibold text-text-primary">{order.id}</p>
+                    <p className="font-semibold text-text-primary">{order.orderNumber || order.id}</p>
                     <p className="mt-1 text-xs text-text-secondary">
                       Placed on {order.date} · {order.itemCount} items
                     </p>

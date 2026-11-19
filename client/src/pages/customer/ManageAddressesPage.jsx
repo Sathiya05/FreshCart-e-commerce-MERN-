@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import AddressCard from '../../components/AddressCard.jsx'
 import Button from '../../components/Button.jsx'
@@ -11,7 +11,13 @@ import { SkeletonLine } from '../../components/Skeleton.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoAddresses } from '../../services/account.service.js'
+import {
+  createAddress,
+  deleteAddress,
+  getAddresses,
+  setDefaultAddress,
+  updateAddress,
+} from '../../services/commerce.service.js'
 
 const emptyForm = {
   fullName: '',
@@ -21,20 +27,19 @@ const emptyForm = {
   state: '',
   pincode: '',
   addressType: 'Home',
+  isDefault: false,
 }
 
 export default function ManageAddressesPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getDemoAddresses, [])
-  const [addresses, setAddresses] = useState([])
+  const { status, data, error, refetch } = useAsync(getAddresses, [])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [addressToDelete, setAddressToDelete] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (data) setAddresses(data)
-  }, [data])
+  const addresses = data || []
 
   const openCreate = () => {
     setEditing(null)
@@ -44,35 +49,81 @@ export default function ManageAddressesPage() {
 
   const openEdit = (address) => {
     setEditing(address)
-    setForm(address)
+    setForm({
+      fullName: address.fullName || '',
+      phone: address.phone || '',
+      addressLine: address.addressLine || '',
+      city: address.city || '',
+      state: address.state || '',
+      pincode: address.pincode || '',
+      addressType: address.addressType || address.label || 'Home',
+      isDefault: Boolean(address.isDefault),
+    })
     setModalOpen(true)
   }
 
   const update = (field) => (event) =>
-    setForm((current) => ({ ...current, [field]: event.target.value }))
+    setForm((current) => ({
+      ...current,
+      [field]: event.target.type === 'checkbox' ? event.target.checked : event.target.value,
+    }))
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    if (editing) {
-      setAddresses((current) =>
-        current.map((address) =>
-          address.id === editing.id ? { ...address, ...form } : address,
-        ),
+    setSubmitting(true)
+    try {
+      if (editing) {
+        await updateAddress(editing.id, form)
+        dispatch(pushToast({ title: 'Address updated', message: 'Your changes are saved.' }))
+      } else {
+        await createAddress(form)
+        dispatch(pushToast({ title: 'Address added', message: 'Your new address is ready to use.' }))
+      }
+      setModalOpen(false)
+      await refetch()
+    } catch (apiError) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Could not save address',
+          message: apiError?.message || 'Please try again.',
+        }),
       )
-      dispatch(pushToast({ title: 'Address updated', message: 'Changes saved in this demo session.' }))
-    } else {
-      setAddresses((current) => [
-        ...current,
-        { ...form, id: `addr-${Date.now()}`, isDefault: current.length === 0 },
-      ])
-      dispatch(pushToast({ title: 'Address added', message: 'Your new address is ready to use.' }))
+    } finally {
+      setSubmitting(false)
     }
-    setModalOpen(false)
   }
 
-  const handleDelete = (address) => {
-    setAddresses((current) => current.filter((item) => item.id !== address.id))
-    dispatch(pushToast({ type: 'info', message: 'Address removed.' }))
+  const handleDelete = async (address) => {
+    try {
+      await deleteAddress(address.id)
+      dispatch(pushToast({ type: 'info', message: 'Address removed.' }))
+      await refetch()
+    } catch (apiError) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Could not delete address',
+          message: apiError?.message || 'Please try again.',
+        }),
+      )
+    }
+  }
+
+  const handleSetDefault = async (address) => {
+    try {
+      await setDefaultAddress(address.id)
+      dispatch(pushToast({ title: 'Default updated', message: 'Checkout will use this address.' }))
+      await refetch()
+    } catch (apiError) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Could not set default',
+          message: apiError?.message || 'Please try again.',
+        }),
+      )
+    }
   }
 
   return (
@@ -112,6 +163,7 @@ export default function ManageAddressesPage() {
                 address={address}
                 onEdit={openEdit}
                 onDelete={setAddressToDelete}
+                onSetDefault={handleSetDefault}
               />
             ))}
           </div>
@@ -122,11 +174,13 @@ export default function ManageAddressesPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editing ? 'Edit address' : 'Add a new address'}
-        description="Address changes are stored locally in this Phase 2 preview."
+        description="Saved addresses are available at checkout."
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button type="submit" form="address-form">Save address</Button>
+            <Button type="submit" form="address-form" disabled={submitting}>
+              {submitting ? 'Saving…' : 'Save address'}
+            </Button>
           </>
         }
       >
@@ -159,10 +213,14 @@ export default function ManageAddressesPage() {
             <label htmlFor="address-state" className="mb-1.5 block text-sm font-medium">State</label>
             <input id="address-state" required value={form.state} onChange={update('state')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <label htmlFor="address-pincode" className="mb-1.5 block text-sm font-medium">Pincode</label>
             <input id="address-pincode" required value={form.pincode} onChange={update('pincode')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
           </div>
+          <label className="flex items-center gap-2 self-end sm:col-span-2">
+            <input type="checkbox" checked={form.isDefault} onChange={update('isDefault')} className="h-4 w-4 accent-brand-primary" />
+            <span className="text-sm text-text-secondary">Use as my default address</span>
+          </label>
         </form>
       </Modal>
 
@@ -171,7 +229,7 @@ export default function ManageAddressesPage() {
         onClose={() => setAddressToDelete(null)}
         onConfirm={() => handleDelete(addressToDelete)}
         title="Delete this address?"
-        message="It will no longer be available for checkout in this demo session."
+        message="It will no longer be available for checkout."
         confirmLabel="Delete address"
       />
     </>

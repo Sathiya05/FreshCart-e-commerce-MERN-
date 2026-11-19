@@ -28,12 +28,16 @@ export default function WishlistPage() {
 
   const products = data?.items || []
 
-  const addAllToCart = () => {
-    products.forEach((product) => dispatch(addToCart(product, 1)))
+  const addAllToCart = async () => {
+    const results = await Promise.all(
+      products.map((product) => dispatch(addToCart(product, 1))),
+    )
+    const added = results.filter((result) => result !== null).length
+    if (!added) return
     dispatch(
       pushToast({
         title: 'Moved to cart',
-        message: `${products.length} wishlist item${products.length === 1 ? '' : 's'} added to your cart.`,
+        message: `${added} wishlist item${added === 1 ? '' : 's'} added to your cart.`,
       }),
     )
   }

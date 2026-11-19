@@ -64,7 +64,14 @@ export default function AppRoutes() {
         <Route path="products/:id" element={<ProductDetailsPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="wishlist" element={<WishlistPage />} />
-        <Route path="checkout" element={<CheckoutPage />} />
+        <Route
+          path="checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="payment/success" element={<PaymentSuccessPage />} />
         <Route path="payment/failure" element={<PaymentFailurePage />} />
         <Route path="about" element={<AboutUsPage />} />

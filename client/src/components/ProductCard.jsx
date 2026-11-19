@@ -14,9 +14,10 @@ export default function ProductCard({ product }) {
   const isWishlisted = useAppSelector(selectIsWishlisted(product.id))
   const discount = formatDiscount(product.price, product.discountPrice)
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.stock <= 0) return
-    dispatch(addToCart(product, 1))
+    const result = await dispatch(addToCart(product, 1))
+    if (result === null) return
     dispatch(
       pushToast({
         title: 'Added to cart',

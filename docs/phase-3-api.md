@@ -97,9 +97,10 @@ The server returns `images[]`, `categoryId`, `categoryName`, `categorySlug` and
 `badge` and numeric fields the Phase 2 cards expect. No catalog fixture is queried
 by these screens.
 
-The following remain demo/preview screens because their APIs are not in Phase 3:
-cart, checkout, payment results, customer orders, addresses, coupons, reviews,
-admin orders/customers/reviews, password recovery and sales reports.
+Phase 4 has since replaced cart, checkout, addresses, customer orders and admin
+orders with live APIs. See [phase-4-commerce.md](phase-4-commerce.md). Coupons,
+reviews, customers, password recovery, sales reports and payment results remain
+demo/preview screens.
 
 ## Authentication
 

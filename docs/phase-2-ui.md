@@ -65,8 +65,9 @@ flows that do not have APIs yet:
 
 Phase 3 replaced the old demo implementations of `catalog.service.js` and the
 admin catalog/overview functions with Axios calls. Sign-in and registration now
-call the real auth API; the demo sign-in buttons were removed. See
-[Phase 3 API](phase-3-api.md#react-integration) for the current integration map.
+call the real auth API; the demo sign-in buttons were removed. Phase 4 replaced
+the demo cart, address, checkout and order screens with the live commerce API;
+see [Phase 4 Commerce](phase-4-commerce.md).
 
 ## Payment safety
 
@@ -109,5 +110,5 @@ remain clean. The Vite 6 pin documented in `architecture.md` is unchanged.
 - AWS infrastructure or deployment
 - Automated tests (Phase 8)
 
-Phase 3 and its React integration are complete. Do not begin Phase 4 without
-explicit confirmation.
+Phase 3 and its React integration are complete. Phase 4 core commerce is now
+implemented; later phases still require explicit confirmation.

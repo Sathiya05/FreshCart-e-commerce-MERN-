@@ -86,8 +86,9 @@ export default function ProductDetailsPage() {
   const gallery = getGalleryImages(product.image)
   const discount = formatDiscount(product.price, product.discountPrice)
 
-  const handleAddToCart = () => {
-    dispatch(addToCart(product, quantity))
+  const handleAddToCart = async () => {
+    const result = await dispatch(addToCart(product, quantity))
+    if (result === null) return
     dispatch(
       pushToast({
         title: 'Added to cart',
