@@ -221,7 +221,7 @@ export default function CheckoutPage() {
                       Razorpay
                     </span>
                     <span className="mt-2 block text-xs text-text-secondary">
-                      Cards, UPI and net banking. Verified by FreshCart.
+                      Cards, UPI apps (Google Pay / PhonePe) and net banking. Verified by FreshCart.
                     </span>
                   </button>
                 ) : (
