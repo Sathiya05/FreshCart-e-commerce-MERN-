@@ -126,11 +126,11 @@ const notifyCartError = (dispatch, error) => {
 }
 
 export const addToCart = (product, quantity = 1) => async (dispatch, getState) => {
-  if (!isCustomer(getState())) {
-    return dispatch(addToCartLocal(product, quantity))
-  }
-
   try {
+    if (!isCustomer(getState())) {
+      return dispatch(addToCartLocal(product, quantity))
+    }
+
     return await dispatch(
       addCartItemAsync({ productId: product.id, quantity }),
     ).unwrap()
@@ -141,11 +141,11 @@ export const addToCart = (product, quantity = 1) => async (dispatch, getState) =
 }
 
 export const updateCartQuantity = (payload) => async (dispatch, getState) => {
-  if (!isCustomer(getState())) {
-    return dispatch(updateCartQuantityLocal(payload))
-  }
-
   try {
+    if (!isCustomer(getState())) {
+      return dispatch(updateCartQuantityLocal(payload))
+    }
+
     return await dispatch(updateCartItemAsync(payload)).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -154,11 +154,11 @@ export const updateCartQuantity = (payload) => async (dispatch, getState) => {
 }
 
 export const removeFromCart = (productId) => async (dispatch, getState) => {
-  if (!isCustomer(getState())) {
-    return dispatch(removeFromCartLocal(productId))
-  }
-
   try {
+    if (!isCustomer(getState())) {
+      return dispatch(removeFromCartLocal(productId))
+    }
+
     return await dispatch(removeCartItemAsync(productId)).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -167,11 +167,11 @@ export const removeFromCart = (productId) => async (dispatch, getState) => {
 }
 
 export const clearCart = () => async (dispatch, getState) => {
-  if (!isCustomer(getState())) {
-    return dispatch(clearCartLocal())
-  }
-
   try {
+    if (!isCustomer(getState())) {
+      return dispatch(clearCartLocal())
+    }
+
     return await dispatch(clearCartAsync()).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -180,11 +180,11 @@ export const clearCart = () => async (dispatch, getState) => {
 }
 
 export const syncGuestCart = () => async (dispatch, getState) => {
-  if (!isCustomer(getState())) return
-
-  const guestItems = [...getState().cart.items]
-
   try {
+    if (!isCustomer(getState())) return
+
+    const guestItems = [...getState().cart.items]
+
     for (const item of guestItems) {
       if (item.product?.id) {
         await commerce.addCartItem(item.product.id, item.quantity)

@@ -10,8 +10,10 @@ import axios from 'axios'
  * Sessions use HttpOnly cookies. An expired access token triggers one silent
  * refresh request before the original call is retried.
  */
+const configuredBaseUrl = import.meta.env.VITE_API_URL || '/api'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: configuredBaseUrl.trim(),
   timeout: 10000,
   withCredentials: true,
   headers: {
