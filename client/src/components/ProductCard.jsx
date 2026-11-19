@@ -116,7 +116,7 @@ export default function ProductCard({ product }) {
         </p>
 
         {product.stock > 0 ? (
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
             <Button variant="outline" onClick={handleAddToCart}>
               <ShoppingCart size={16} aria-hidden="true" />
               Add to cart

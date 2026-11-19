@@ -60,14 +60,14 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 sm:pt-10">
         <div className="relative overflow-hidden rounded-3xl bg-brand-dark text-white">
           <div className="grid items-center gap-8 lg:grid-cols-[1.02fr_0.98fr]">
-            <div className="p-8 sm:p-12 lg:py-16">
+            <div className="p-6 sm:p-12 lg:py-16">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-brand-accent">
                   <Sprout size={14} aria-hidden="true" />
                   Fresh from local farms
                 </span>
               </div>
-              <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 text-[2rem] font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
                 Groceries that feel
                 <span className="block text-brand-accent">fresh every day.</span>
               </h1>
@@ -75,8 +75,8 @@ export default function HomePage() {
                 Shop vegetables, fruits, dairy, bakery and pantry essentials from
                 trusted sources — delivered on your schedule.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button as={Link} to="/shop" size="lg" variant="accent">
+              <div className="mt-8 flex flex-col gap-3 min-[380px]:flex-row">
+                <Button as={Link} to="/shop" size="lg" variant="accent" className="w-full min-[380px]:w-auto">
                   Start shopping
                   <ArrowRight size={18} aria-hidden="true" />
                 </Button>
@@ -84,12 +84,12 @@ export default function HomePage() {
                   as={Link}
                   to="/categories"
                   size="lg"
-                  className="border border-white/25 bg-white/10 text-white hover:bg-white/20"
+                  className="w-full border border-white/25 bg-white/10 text-white hover:bg-white/20 min-[380px]:w-auto"
                 >
                   Browse categories
                 </Button>
               </div>
-              <div className="mt-10 flex flex-wrap gap-6 text-sm text-green-100">
+              <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-green-100">
                 <span className="inline-flex items-center gap-2"><BadgeCheck size={17} aria-hidden="true" /> Quality guaranteed</span>
                 <span className="inline-flex items-center gap-2"><Clock3 size={17} aria-hidden="true" /> Easy delivery slots</span>
               </div>
@@ -135,7 +135,7 @@ export default function HomePage() {
               description="Everything you need for a well-stocked kitchen, neatly organised."
               action={{ label: 'View all categories', to: '/categories' }}
             />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {data.categories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}

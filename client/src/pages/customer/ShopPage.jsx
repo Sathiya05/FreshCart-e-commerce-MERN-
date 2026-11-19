@@ -85,10 +85,11 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => setMobileFiltersOpen((value) => !value)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-app-border bg-surface px-4 text-sm font-semibold"
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-app-border bg-surface px-4 text-sm font-semibold"
+            aria-expanded={mobileFiltersOpen}
           >
             <SlidersHorizontal size={16} aria-hidden="true" />
-            Filters
+            {mobileFiltersOpen ? 'Hide filters' : 'Filters'}
             {activeFilterCount > 0 && (
               <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand-primary px-1 text-xs text-white">
                 {activeFilterCount}
@@ -107,6 +108,7 @@ export default function ShopPage() {
               categories={categoriesState.data || []}
               onChange={updateFilters}
               onReset={resetFilters}
+              onApply={() => setMobileFiltersOpen(false)}
               resultCount={productsState.data?.total || 0}
             />
           </div>

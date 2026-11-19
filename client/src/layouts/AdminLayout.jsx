@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   BarChart3,
-  Bell,
   ExternalLink,
   LayoutDashboard,
   LogOut,
@@ -21,6 +20,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { logoutUser, selectCurrentUser } from '../redux/authSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
+import AdminNotifications from '../components/AdminNotifications.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
 import ToastHost from '../components/ToastHost.jsx'
 
@@ -63,6 +63,15 @@ export default function AdminLayout() {
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary">
           Admin console
         </p>
+        <div className="relative mt-4 lg:hidden">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+          <input
+            type="search"
+            placeholder="Search admin…"
+            aria-label="Search admin"
+            className="h-11 w-full rounded-xl border border-app-border bg-app-background/60 pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
+          />
+        </div>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5" aria-label="Admin navigation">
         {navItems.map(({ label, to, icon: Icon, end }) => (
@@ -147,11 +156,8 @@ export default function AdminLayout() {
               />
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <button type="button" className="relative grid h-10 w-10 place-items-center rounded-xl text-text-secondary hover:bg-app-background" aria-label="Notifications">
-              <Bell size={19} aria-hidden="true" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-accent" />
-            </button>
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <AdminNotifications />
             <div className="flex items-center gap-2 rounded-xl border border-app-border px-2 py-1.5">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-secondary text-xs font-bold text-brand-dark">
                 {user?.name?.charAt(0) || 'A'}

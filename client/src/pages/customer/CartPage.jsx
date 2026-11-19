@@ -54,7 +54,7 @@ export default function CartPage() {
         description="Review your items and adjust quantities before checkout."
         breadcrumbs={[{ label: 'Cart' }]}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 pb-32 pt-8 sm:px-6 lg:pb-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           <div>
             <div className="mb-4 flex items-center justify-between">
@@ -133,6 +133,20 @@ export default function CartPage() {
             }
             note="Cash on delivery and verified Razorpay payments are available at checkout."
           />
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-4 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-text-secondary">{items.length} items · total</p>
+            <p className="text-lg font-bold text-text-primary">
+              {formatCurrency(subtotal + deliveryCharge)}
+            </p>
+          </div>
+          <Button as={Link} to="/checkout" className="ml-auto flex-1 sm:max-w-xs" size="lg">
+            Checkout
+          </Button>
         </div>
       </div>
 

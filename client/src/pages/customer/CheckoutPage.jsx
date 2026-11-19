@@ -67,6 +67,13 @@ export default function CheckoutPage() {
     [slots, selectedSlotId],
   )
   const deliveryCharge = subtotal >= 499 ? 0 : 30
+  const placeOrderDisabled =
+    !selectedAddressId || submitting || (paymentMethod === 'razorpay' && !paymentEnabled)
+  const placeOrderLabel = submitting
+    ? 'Creating order…'
+    : paymentMethod === 'razorpay'
+      ? 'Pay with Razorpay'
+      : 'Place order'
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId || submitting) return
@@ -136,7 +143,7 @@ export default function CheckoutPage() {
         description="Confirm your delivery details and review your order."
         breadcrumbs={[{ label: 'Cart', to: '/cart' }, { label: 'Checkout' }]}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 pb-32 pt-8 sm:px-6 lg:pb-8">
         <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           <LockKeyhole size={17} aria-hidden="true" />
           Orders are created securely on the server with live prices and stock. Online payments are verified by FreshCart before an order is marked paid.
@@ -291,18 +298,10 @@ export default function CheckoutPage() {
                   className="w-full"
                   size="lg"
                   onClick={handlePlaceOrder}
-                  disabled={
-                    !selectedAddressId ||
-                    submitting ||
-                    (paymentMethod === 'razorpay' && !paymentEnabled)
-                  }
+                  disabled={placeOrderDisabled}
                 >
                   <ShieldCheck size={16} aria-hidden="true" />
-                  {submitting
-                    ? 'Creating order…'
-                    : paymentMethod === 'razorpay'
-                      ? 'Pay with Razorpay'
-                      : 'Place order'}
+                  {placeOrderLabel}
                 </Button>
               }
               note={
@@ -318,6 +317,32 @@ export default function CheckoutPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Sticky mobile CTA so payment is always reachable without scrolling past every step. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-4 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-text-secondary">Order total</p>
+            <p className="text-lg font-bold text-text-primary">
+              {formatCurrency(subtotal + deliveryCharge)}
+            </p>
+          </div>
+          <Button
+            className="ml-auto flex-1 sm:max-w-xs"
+            size="lg"
+            onClick={handlePlaceOrder}
+            disabled={placeOrderDisabled}
+          >
+            <ShieldCheck size={16} aria-hidden="true" />
+            {placeOrderLabel}
+          </Button>
+        </div>
+        {orderError && (
+          <p className="mx-auto mt-1 max-w-7xl text-center text-xs text-red-600" role="alert">
+            {orderError}
+          </p>
+        )}
       </div>
     </>
   )

@@ -1,4 +1,4 @@
-import { RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { RotateCcw, SlidersHorizontal, X } from 'lucide-react'
 import Button from './Button.jsx'
 
 const sortOptions = [
@@ -9,7 +9,7 @@ const sortOptions = [
   { value: 'name', label: 'Name: A to Z' },
 ]
 
-export default function ShopFilters({ filters, categories, onChange, onReset, resultCount }) {
+export default function ShopFilters({ filters, categories, onChange, onReset, onApply, resultCount }) {
   const update = (patch) => onChange(patch)
 
   return (
@@ -19,14 +19,26 @@ export default function ShopFilters({ filters, categories, onChange, onReset, re
           <SlidersHorizontal size={17} aria-hidden="true" />
           Filters
         </h2>
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-brand-primary"
-        >
-          <RotateCcw size={13} aria-hidden="true" />
-          Reset
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-brand-primary"
+          >
+            <RotateCcw size={13} aria-hidden="true" />
+            Reset
+          </button>
+          {onApply && (
+            <button
+              type="button"
+              onClick={onApply}
+              className="grid h-10 w-10 place-items-center rounded-lg text-text-secondary hover:bg-app-background lg:hidden"
+              aria-label="Close filters"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="mt-2 text-xs text-text-secondary">{resultCount} products match</p>
@@ -141,6 +153,11 @@ export default function ShopFilters({ filters, categories, onChange, onReset, re
         <Button variant="outline" className="w-full" onClick={onReset}>
           Clear all filters
         </Button>
+        {onApply && (
+          <Button className="w-full lg:hidden" onClick={onApply}>
+            Show {resultCount} products
+          </Button>
+        )}
       </div>
     </aside>
   )

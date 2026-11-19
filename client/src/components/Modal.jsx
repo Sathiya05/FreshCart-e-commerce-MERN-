@@ -42,7 +42,7 @@ export default function Modal({ open, onClose, title, description, children, foo
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-text-secondary hover:bg-app-background"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-text-secondary hover:bg-app-background"
             aria-label="Close dialog"
           >
             <X size={18} aria-hidden="true" />

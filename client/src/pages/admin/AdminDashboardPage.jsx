@@ -64,39 +64,58 @@ export default function AdminDashboardPage() {
               {products.isLoading && <div className="mt-4"><TableSkeleton rows={5} columns={4} /></div>}
               {products.isError && <div className="mt-4"><ErrorState message={products.error} onRetry={products.refetch} /></div>}
               {products.status === 'success' && (
-                <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left text-sm">
-                    <thead className="border-b border-app-border text-xs uppercase text-text-secondary">
-                      <tr>
-                        <th className="py-2">Product</th>
-                        <th className="py-2">Category</th>
-                        <th className="py-2">Stock</th>
-                        <th className="py-2 text-right">Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                products.data.items.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-text-secondary">
+                    No products yet. Add one from the Products page.
+                  </p>
+                ) : (
+                  <>
+                    <div className="mt-4 space-y-3 sm:hidden">
                       {products.data.items.slice(0, 5).map((product) => (
-                        <tr key={product.id} className="border-b border-app-border last:border-0">
-                          <td className="py-3 font-medium text-text-primary">{product.name}</td>
-                          <td className="py-3 text-text-secondary">{product.categoryName}</td>
-                          <td className="py-3">
+                        <div key={product.id} className="rounded-xl border border-app-border p-4">
+                          <p className="font-medium text-text-primary">{product.name}</p>
+                          <p className="mt-1 text-xs text-text-secondary">{product.categoryName}</p>
+                          <div className="mt-3 flex items-center justify-between gap-3">
                             <Badge tone={product.stock === 0 ? 'danger' : product.stock <= 20 ? 'warning' : 'success'}>
                               {product.stock} units
                             </Badge>
-                          </td>
-                          <td className="py-3 text-right font-semibold">
-                            {formatCurrency(product.discountPrice || product.price)}
-                          </td>
-                        </tr>
+                            <span className="font-semibold">
+                              {formatCurrency(product.discountPrice || product.price)}
+                            </span>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                  {products.data.items.length === 0 && (
-                    <p className="py-6 text-center text-sm text-text-secondary">
-                      No products yet. Add one from the Products page.
-                    </p>
-                  )}
-                </div>
+                    </div>
+                    <div className="mt-4 hidden overflow-x-auto sm:block">
+                      <table className="w-full min-w-[520px] text-left text-sm">
+                        <thead className="border-b border-app-border text-xs uppercase text-text-secondary">
+                          <tr>
+                            <th className="py-2">Product</th>
+                            <th className="py-2">Category</th>
+                            <th className="py-2">Stock</th>
+                            <th className="py-2 text-right">Price</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {products.data.items.slice(0, 5).map((product) => (
+                            <tr key={product.id} className="border-b border-app-border last:border-0">
+                              <td className="py-3 font-medium text-text-primary">{product.name}</td>
+                              <td className="py-3 text-text-secondary">{product.categoryName}</td>
+                              <td className="py-3">
+                                <Badge tone={product.stock === 0 ? 'danger' : product.stock <= 20 ? 'warning' : 'success'}>
+                                  {product.stock} units
+                                </Badge>
+                              </td>
+                              <td className="py-3 text-right font-semibold">
+                                {formatCurrency(product.discountPrice || product.price)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )
               )}
             </section>
 

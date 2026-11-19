@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -8,7 +9,7 @@
   --color-app-background: #f8faf7;
   --color-surface: #ffffff;
   --color-text-primary: #202820;
-  --color-text-secondary: #718071;
+  --color-text-secondary: #5c6b5c;
   --color-app-border: #e5eae3;
 
   --font-sans:
@@ -19,13 +20,32 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-app-background text-text-primary antialiased;
   }
 
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Long titles, URLs and user-entered search terms must never widen the page. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
+  }
+
   ::selection {
     @apply bg-brand-secondary text-brand-dark;
+  }
+}
+
+@layer utilities {
+  /* Keeps fixed action bars clear of the iPhone home indicator. */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }

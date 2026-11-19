@@ -37,7 +37,7 @@ function ToastItem({ toast }) {
       <button
         type="button"
         onClick={() => dispatch(dismissToast(toast.id))}
-        className="rounded-md p-0.5 opacity-70 hover:opacity-100"
+        className="-mr-2 -mt-2 grid h-10 w-10 shrink-0 place-items-center rounded-md opacity-70 hover:opacity-100"
         aria-label="Dismiss notification"
       >
         <X size={16} aria-hidden="true" />

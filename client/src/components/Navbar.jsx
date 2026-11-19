@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
   LayoutDashboard,
@@ -33,6 +33,8 @@ const navClass = ({ isActive }) =>
 export default function Navbar() {
   const [query, setQuery] = useState('')
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useAppDispatch()
@@ -42,7 +44,28 @@ export default function Navbar() {
 
   useEffect(() => {
     setMobileOpen(false)
+    setAccountOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!accountOpen) return undefined
+
+    const onPointerDown = (event) => {
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
+        setAccountOpen(false)
+      }
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setAccountOpen(false)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [accountOpen])
 
   const handleSearch = (event) => {
     event.preventDefault()
@@ -124,30 +147,35 @@ export default function Navbar() {
             )}
           </Link>
           {user ? (
-            <div className="group relative">
+            <div className="relative" ref={accountRef}>
               <button
                 type="button"
+                onClick={() => setAccountOpen((value) => !value)}
                 className="flex h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-text-secondary hover:bg-app-background"
                 aria-label="Account menu"
+                aria-haspopup="true"
+                aria-expanded={accountOpen}
               >
                 <UserRound size={19} aria-hidden="true" />
                 <span className="hidden xl:inline">{user.name.split(' ')[0]}</span>
               </button>
-              <div className="invisible absolute right-0 top-11 w-52 translate-y-1 rounded-xl border border-app-border bg-surface p-2 opacity-0 shadow-lg transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 focus-within:visible focus-within:opacity-100">
-                <Link to="/account/profile" className="block rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
-                  My profile
-                </Link>
-                {user.role === 'admin' && (
-                  <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
-                    <LayoutDashboard size={15} aria-hidden="true" />
-                    Admin dashboard
+              {accountOpen && (
+                <div className="absolute right-0 top-11 z-50 w-52 rounded-xl border border-app-border bg-surface p-2 shadow-lg">
+                  <Link to="/account/profile" className="block rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
+                    My profile
                   </Link>
-                )}
-                <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
-                  <LogOut size={15} aria-hidden="true" />
-                  Sign out
-                </button>
-              </div>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
+                      <LayoutDashboard size={15} aria-hidden="true" />
+                      Admin dashboard
+                    </Link>
+                  )}
+                  <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                    <LogOut size={15} aria-hidden="true" />
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link
@@ -176,13 +204,40 @@ export default function Navbar() {
               />
             </div>
           </form>
-          <nav className="space-y-1 px-4 pb-4" aria-label="Mobile navigation">
+          <nav className="space-y-1 px-4 pb-2" aria-label="Mobile navigation">
             {links.map((link) => (
               <NavLink key={link.to} to={link.to} className={({ isActive }) => `block rounded-lg px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-secondary text-brand-dark' : 'text-text-secondary'}`} end={link.to === '/'}>
                 {link.label}
               </NavLink>
             ))}
           </nav>
+          <div className="border-t border-app-border px-4 py-3">
+            {user ? (
+              <>
+                <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                  {user.name}
+                </p>
+                <Link to="/account/profile" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary">
+                  My profile
+                </Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary">
+                    <LayoutDashboard size={16} aria-hidden="true" />
+                    Admin dashboard
+                  </Link>
+                )}
+                <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600">
+                  <LogOut size={16} aria-hidden="true" />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white">
+                <UserRound size={17} aria-hidden="true" />
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </header>
