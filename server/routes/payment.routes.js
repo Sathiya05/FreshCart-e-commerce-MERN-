@@ -8,7 +8,7 @@ import {
 } from '../controllers/payment.controller.js'
 import { protect } from '../middleware/auth.js'
 import { requireDatabase } from '../middleware/database.js'
-import { validate } from '../middleware/validate.js'
+import { validate, validateBadRequest } from '../middleware/validate.js'
 import {
   createPaymentOrderValidator,
   orderIdValidator,
@@ -31,7 +31,12 @@ router.post(
   validate,
   createPaymentOrder,
 )
-router.post('/verify', verifyPaymentValidator, validate, verifyPayment)
+router.post(
+  '/verify',
+  verifyPaymentValidator,
+  validateBadRequest,
+  verifyPayment,
+)
 router.post('/orders/:id/retry', orderIdValidator, validate, retryPayment)
 
 export default router

@@ -30,10 +30,47 @@ a signed response, checks the payment with Razorpay, and then updates the order.
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
 | `GET` | `/api/payments/config` | Public | Public key ID, currency and enabled flag |
-| `POST` | `/api/payments/orders` | Customer | Create an internal order and Razorpay order |
-| `POST` | `/api/payments/verify` | Customer | Verify signed checkout response |
+| `POST` | `/api/create-order` | Customer | Primary create endpoint (cart checkout or direct Razorpay order) |
+| `POST` | `/api/verify-payment` | Customer | Primary verification endpoint (signed response, optional order confirmation) |
+| `POST` | `/api/payments/orders` | Customer | Backwards-compatible internal-order endpoint |
+| `POST` | `/api/payments/verify` | Customer | Backwards-compatible verification endpoint |
 | `POST` | `/api/payments/orders/:id/retry` | Customer | Create a fresh Razorpay order for an unpaid order |
 | `POST` | `/api/payments/webhook` | Signed by Razorpay | Process capture and failure events |
+
+The checkout UI uses `/api/create-order` and `/api/verify-payment`. Both `/api/payments/*`
+create/verify routes remain available and delegate to the same payment service.
+
+### Requested endpoint contracts
+
+`POST /api/create-order` accepts either the full checkout payload shown below,
+or a direct provider order request:
+
+```json
+{
+  "amount": 50000,
+  "currency": "INR",
+  "receipt": "fc_order_receipt"
+}
+```
+
+`amount` must be an integer of at least `100` paise and `receipt` cannot exceed
+40 characters. Authenticated requests receive `401` without a valid session;
+Razorpay API failures return `500`. A direct request creates only a Razorpay
+order and never marks a FreshCart order as paid.
+
+`POST /api/verify-payment` accepts the three Razorpay checkout fields:
+
+```json
+{
+  "razorpay_order_id": "order_...",
+  "razorpay_payment_id": "pay_...",
+  "razorpay_signature": "..."
+}
+```
+
+The server verifies `order_id|payment_id` with `KEY_SECRET`. Missing or invalid
+fields return `400`. Add a valid `orderId` to also confirm the matching internal
+order, exactly as `/api/payments/verify` does.
 
 ### Create an online order
 

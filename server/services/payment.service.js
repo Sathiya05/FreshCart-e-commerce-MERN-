@@ -38,6 +38,23 @@ const signatureMatches = (payload, signature, secret) => {
   )
 }
 
+export const verifyCheckoutSignature = (payload) => {
+  const orderId = payload?.razorpay_order_id
+  const paymentId = payload?.razorpay_payment_id
+  const signature = payload?.razorpay_signature
+  const signedPayload = `${orderId}|${paymentId}`
+
+  if (!signatureMatches(signedPayload, signature, env.razorpayKeySecret)) {
+    throw new ApiError(
+      400,
+      'The payment signature could not be verified.',
+      'INVALID_PAYMENT_SIGNATURE',
+    )
+  }
+
+  return { orderId, paymentId, verified: true }
+}
+
 const assertPaymentMatchesOrder = (order, payment) => {
   if (String(payment.order_id || '') !== String(order.razorpayOrderId || '')) {
     throw new ApiError(
@@ -109,34 +126,51 @@ const markFailed = async (order, reason) => {
   return order
 }
 
-const createProviderOrder = async (order) => {
+export const createRazorpayOrder = async ({
+  amount,
+  currency,
+  receipt,
+  notes,
+}) => {
   const razorpay = requireRazorpay()
 
   try {
-    const providerOrder = await razorpay.orders.create({
-      amount: toPaise(order.totalAmount),
-      currency: env.razorpayCurrency,
-      receipt: `fc_${order.orderNumber}`.slice(0, 40),
-      notes: {
-        orderId: String(order.id),
-        orderNumber: order.orderNumber,
-      },
-    })
+    const payload = {
+      amount: Number(amount),
+      currency,
+      receipt,
+    }
+    if (notes) payload.notes = notes
 
+    const providerOrder = await razorpay.orders.create(payload)
     if (!providerOrder?.id) {
       throw new Error('Razorpay did not return a payment order ID.')
     }
 
-    return { provider: 'razorpay', orderId: providerOrder.id }
+    return providerOrder
   } catch (error) {
     throw new ApiError(
-      502,
+      500,
       error?.error?.description ||
         error?.message ||
         'Razorpay could not create a payment order.',
-      'PAYMENT_PROVIDER_ERROR',
+      'RAZORPAY_API_ERROR',
     )
   }
+}
+
+const createProviderOrder = async (order) => {
+  const providerOrder = await createRazorpayOrder({
+    amount: toPaise(order.totalAmount),
+    currency: env.razorpayCurrency,
+    receipt: `fc_${order.orderNumber}`.slice(0, 40),
+    notes: {
+      orderId: String(order.id),
+      orderNumber: order.orderNumber,
+    },
+  })
+
+  return { provider: 'razorpay', orderId: providerOrder.id }
 }
 
 const buildPaymentPayload = (order) => ({
@@ -209,16 +243,7 @@ export const verifyCustomerPayment = async (userId, payload) => {
     )
   }
 
-  const signedPayload = `${payload.razorpay_order_id}|${payload.razorpay_payment_id}`
-  if (
-    !signatureMatches(signedPayload, payload.razorpay_signature, env.razorpayKeySecret)
-  ) {
-    throw new ApiError(
-      400,
-      'The payment signature could not be verified.',
-      'INVALID_PAYMENT_SIGNATURE',
-    )
-  }
+  verifyCheckoutSignature(payload)
 
   if (
     String(payload.razorpay_order_id) !== String(order.razorpayOrderId || '')

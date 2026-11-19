@@ -1,7 +1,7 @@
 import { validationResult } from 'express-validator'
 import { ApiError } from '../utils/apiError.js'
 
-export const validate = (req, _res, next) => {
+const handleValidation = (statusCode, code) => (req, _res, next) => {
   const result = validationResult(req)
   if (result.isEmpty()) return next()
 
@@ -10,5 +10,11 @@ export const validate = (req, _res, next) => {
     message: msg,
   }))
 
-  next(new ApiError(422, 'Validation failed.', 'VALIDATION_ERROR', errors))
+  next(new ApiError(statusCode, 'Validation failed.', code, errors))
 }
+
+export const validate = handleValidation(422, 'VALIDATION_ERROR')
+
+// Payment verification follows the Razorpay contract: malformed fields are a
+// client error (400), not a generic schema validation response.
+export const validateBadRequest = handleValidation(400, 'INVALID_PAYMENT_DETAILS')

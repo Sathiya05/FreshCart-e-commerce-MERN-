@@ -3,9 +3,9 @@ import { normalizeProduct } from './catalog.service.js'
 import { DEMO_DELIVERY_SLOTS } from '../data/demoData.js'
 
 /**
- * Phase 4 commerce service: cart, addresses, orders and admin order management.
+ * Commerce service: cart, addresses, orders and admin order management.
  * Delivery slots stay as local preview data until a scheduling API exists.
- * Payments remain disabled here; Razorpay is Phase 5.
+ * Online payments use server-created Razorpay orders and signed verification.
  */
 const getData = (response) => response.data.data
 
@@ -128,10 +128,10 @@ export const updateAdminOrderStatus = (id, status) =>
 export const getPaymentConfig = () => api.get('/payments/config').then(getData)
 
 export const createPaymentOrder = (payload) =>
-  api.post('/payments/orders', payload).then(getData)
+  api.post('/create-order', payload).then(getData)
 
 export const retryPayment = (orderId) =>
   api.post(`/payments/orders/${encodeURIComponent(orderId)}/retry`).then(getData)
 
 export const verifyPayment = (payload) =>
-  api.post('/payments/verify', payload).then(getData).then(normalizeOrder)
+  api.post('/verify-payment', payload).then(getData).then(normalizeOrder)
