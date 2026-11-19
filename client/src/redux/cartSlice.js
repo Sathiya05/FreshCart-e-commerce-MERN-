@@ -110,8 +110,8 @@ export const {
   clearCartLocal,
 } = cartSlice.actions
 
-const isCustomer = (getState) => {
-  const user = selectCurrentUser(getState())
+const isCustomer = (state) => {
+  const user = selectCurrentUser(state)
   return Boolean(user && user.role === 'customer')
 }
 
