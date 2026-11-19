@@ -18,6 +18,36 @@ const getData = (response) => response.data.data
 
 export const getAdminOverview = () => api.get('/admin/overview').then(getData)
 
+export const getUploadConfig = () =>
+  api.get('/admin/uploads/config').then(getData)
+
+const createUploadTicket = (file) =>
+  api
+    .post('/admin/uploads/presign', {
+      fileName: file.name,
+      contentType: file.type,
+      size: file.size,
+    })
+    .then(getData)
+
+/** Uploads straight to S3 with a short-lived presigned URL from the API. */
+export const uploadProductImage = async (file) => {
+  const ticket = await createUploadTicket(file)
+  const response = await fetch(ticket.uploadUrl, {
+    method: ticket.method || 'PUT',
+    headers: { 'Content-Type': ticket.contentType },
+    body: file,
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Upload failed (${response.status}). Check the S3 bucket CORS policy.`,
+    )
+  }
+
+  return ticket.publicUrl
+}
+
 export const getAdminProducts = (params = {}) =>
   api
     .get('/admin/products', { params: { status: 'all', limit: 60, ...params } })

@@ -162,7 +162,9 @@ In production, `VITE_API_URL` can point to a separate API origin such as
   [phase-3-api.md](phase-3-api.md).
 - Phase 4 (complete): persistent cart, addresses, COD checkout, order history,
   tracking and admin order status. See [phase-4-commerce.md](phase-4-commerce.md).
-- Phase 5 (current): Razorpay order creation, signed verification, webhooks and
+- Phase 5 (complete): Razorpay order creation, signed verification, webhooks and
   retry flow. See [phase-5-payments.md](phase-5-payments.md).
-- Phase 6/7: AWS fundamentals and deployment.
-- Phase 8/9: testing and portfolio presentation.
+- Phase 6 (complete): AWS S3 image uploads with presigned URLs. See
+  [phase-6-aws.md](phase-6-aws.md).
+- Phase 7 (pending): deployment/infrastructure.
+- Phase 8/9 (pending): testing and portfolio presentation.

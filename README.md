@@ -2,13 +2,13 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 5 — Razorpay payments are live when configured.** Auth,
+> **Current status: Phase 6 — AWS S3 image uploads are implemented.** Auth,
 > catalog, admin catalog, persistent carts, address book, server-calculated
 > checkout, COD orders, verified online payments, order history/tracking and admin
-> order status updates use real APIs. Razorpay keys are read from `server/.env`;
-> without them the option is disabled and COD still works. Coupons, customer
-> reviews, sales reports, refunds and image uploads (AWS) remain clearly labelled
-> demos until their own phases.
+> order status updates use real APIs. Razorpay and S3 credentials are read from
+> `server/.env`; without them payments fall back to COD and admin image uploads
+> fall back to a public URL field. Coupons, customer reviews, sales reports and
+> refunds remain clearly labelled demos until their own phases.
 
 ## Repository structure
 
@@ -137,9 +137,9 @@ In the browser, confirm the home page shows database-backed categories/products,
 sign in with a real account, then open `/admin` with an admin account and change a
 product or category. Those writes go straight to MongoDB through the protected API.
 
-See [Phase 3 API](docs/phase-3-api.md), [Phase 4 Commerce](docs/phase-4-commerce.md)
-and [Phase 5 Payments](docs/phase-5-payments.md) for routes, request bodies and
-the React integration map.
+See [Phase 3 API](docs/phase-3-api.md), [Phase 4 Commerce](docs/phase-4-commerce.md),
+[Phase 5 Payments](docs/phase-5-payments.md) and [Phase 6 AWS](docs/phase-6-aws.md)
+for routes, request bodies and the React integration map.
 
 Production build check:
 
@@ -155,3 +155,4 @@ npm run build
 - [Phase 3 API](docs/phase-3-api.md)
 - [Phase 4 Commerce](docs/phase-4-commerce.md)
 - [Phase 5 Payments](docs/phase-5-payments.md)
+- [Phase 6 AWS](docs/phase-6-aws.md)

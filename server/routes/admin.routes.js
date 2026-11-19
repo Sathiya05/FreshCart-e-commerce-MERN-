@@ -33,6 +33,11 @@ import {
   orderIdValidator,
   updateOrderStatusValidator,
 } from '../validators/order.validator.js'
+import { createUploadTicketValidator } from '../validators/upload.validator.js'
+import {
+  createUploadTicket,
+  getUploadConfig,
+} from '../controllers/upload.controller.js'
 
 const router = Router()
 
@@ -40,6 +45,14 @@ router.use(requireDatabase)
 router.use(protect, authorize('admin'))
 
 router.get('/overview', getOverview)
+
+router.get('/uploads/config', getUploadConfig)
+router.post(
+  '/uploads/presign',
+  createUploadTicketValidator,
+  validate,
+  createUploadTicket,
+)
 
 router.get('/categories', listAdminCategories)
 router.post('/categories', createCategoryValidator, validate, createCategory)

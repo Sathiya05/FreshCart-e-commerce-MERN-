@@ -67,4 +67,16 @@ export const env = {
   razorpayWebhookSecret,
   razorpayCurrency: process.env.RAZORPAY_CURRENCY || 'INR',
   razorpayConfigured,
+  awsRegion: process.env.AWS_REGION || '',
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  s3Bucket: process.env.S3_BUCKET || '',
+  s3PublicBaseUrl: (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/+$/, ''),
+  s3Configured: Boolean(
+    process.env.AWS_REGION &&
+      process.env.S3_BUCKET &&
+      ((process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ||
+        process.env.AWS_USE_IAM_ROLE === 'true'),
+  ),
+  s3UseIamRole: process.env.AWS_USE_IAM_ROLE === 'true',
 }

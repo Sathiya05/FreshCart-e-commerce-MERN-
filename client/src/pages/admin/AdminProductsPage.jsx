@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pencil, Plus, Search, Trash2, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
@@ -19,7 +19,9 @@ import {
   deleteAdminProduct,
   getAdminCategories,
   getAdminProducts,
+  getUploadConfig,
   updateAdminProduct,
+  uploadProductImage,
 } from '../../services/admin.service.js'
 
 const emptyProduct = {
@@ -44,6 +46,10 @@ export default function AdminProductsPage() {
   const dispatch = useAppDispatch()
   const productsState = useAsync(getAdminProducts, [])
   const categoriesState = useAsync(getAdminCategories, [])
+  const uploadConfigState = useAsync(getUploadConfig, [])
+  const fileInputRef = useRef(null)
+  const openFormAfterUpload = useRef(false)
+  const [uploading, setUploading] = useState(false)
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [stockFilter, setStockFilter] = useState('all')
@@ -97,6 +103,56 @@ export default function AdminProductsPage() {
 
   const update = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }))
+
+  const uploadsEnabled = Boolean(uploadConfigState.data?.enabled)
+
+  const pickImage = (openForm = false) => {
+    if (!uploadsEnabled) {
+      dispatch(
+        pushToast({
+          type: 'info',
+          title: 'Image uploads unavailable',
+          message: 'Configure S3 on the server, or paste a public image URL.',
+        }),
+      )
+      return
+    }
+    openFormAfterUpload.current = openForm
+    fileInputRef.current?.click()
+  }
+
+  const handleImagePicked = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const url = await uploadProductImage(file)
+      setForm((current) => ({ ...current, image: url }))
+      setFormError('')
+      if (openFormAfterUpload.current) {
+        setEditing(null)
+        setModalOpen(true)
+      }
+      dispatch(
+        pushToast({
+          title: 'Image uploaded',
+          message: 'The S3 URL was added to the product form.',
+        }),
+      )
+    } catch (error) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Upload failed',
+          message: getApiErrorMessage(error),
+        }),
+      )
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -197,9 +253,9 @@ export default function AdminProductsPage() {
         description="Add, edit and monitor the live grocery catalog."
         actions={
           <>
-            <Button variant="outline" onClick={() => dispatch(pushToast({ type: 'info', message: 'File uploads need AWS storage in Phase 6. Paste an image URL for now.' }))}>
+            <Button variant="outline" onClick={() => pickImage(true)} disabled={uploading}>
               <Upload size={16} aria-hidden="true" />
-              Upload images
+              {uploading ? 'Uploading…' : 'Upload image'}
             </Button>
             <Button onClick={openCreate}>
               <Plus size={16} aria-hidden="true" />
@@ -293,15 +349,40 @@ export default function AdminProductsPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="product-image" className="mb-1.5 block text-sm font-medium">Image URL</label>
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="product-image" className="block text-sm font-medium">Image URL</label>
+              <button
+                type="button"
+                onClick={() => pickImage(false)}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:text-brand-dark disabled:opacity-50"
+              >
+                <Upload size={14} aria-hidden="true" />
+                {uploading ? 'Uploading…' : 'Upload from device'}
+              </button>
+            </div>
             <input id="product-image" type="url" required value={form.image} onChange={update('image')} placeholder="https://images.unsplash.com/…" className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+            {form.image && (
+              <img src={form.image} alt="Product preview" className="mt-3 h-24 w-24 rounded-lg border border-app-border object-cover" />
+            )}
             <p className="mt-1.5 text-xs text-text-secondary">
-              Paste a public image URL. File uploads need AWS storage in Phase 6.
+              {uploadsEnabled
+                ? 'Upload a JPG, PNG, WebP or AVIF image (max 5 MB), or paste a public URL.'
+                : 'Image uploads are not configured on this server. Paste a public image URL.'}
             </p>
           </div>
           {formError && <p className="text-sm text-red-600" role="alert">{formError}</p>}
         </form>
       </Modal>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        className="hidden"
+        onChange={handleImagePicked}
+        aria-label="Choose a product image"
+      />
 
       <ConfirmDialog
         open={Boolean(productToDelete)}
