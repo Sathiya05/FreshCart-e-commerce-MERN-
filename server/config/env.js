@@ -23,6 +23,20 @@ if (isProduction && (!jwtSecret || !jwtRefreshSecret)) {
   )
 }
 
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID || ''
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || ''
+const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || ''
+const razorpayConfigured = Boolean(razorpayKeyId && razorpayKeySecret)
+const hasPartialRazorpayConfig = Boolean(
+  razorpayKeyId || razorpayKeySecret || razorpayWebhookSecret,
+)
+
+if (isProduction && hasPartialRazorpayConfig && !razorpayWebhookSecret) {
+  throw new Error(
+    'RAZORPAY_WEBHOOK_SECRET must be set when Razorpay keys are configured in production.',
+  )
+}
+
 export const env = {
   nodeEnv,
   isProduction,
@@ -48,4 +62,9 @@ export const env = {
     (isProduction && process.env.COOKIE_SECURE !== 'false'),
   cookieSameSite: process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax'),
   cookieDomain: process.env.COOKIE_DOMAIN || undefined,
+  razorpayKeyId,
+  razorpayKeySecret,
+  razorpayWebhookSecret,
+  razorpayCurrency: process.env.RAZORPAY_CURRENCY || 'INR',
+  razorpayConfigured,
 }

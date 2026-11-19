@@ -1,5 +1,9 @@
 import { randomBytes } from 'node:crypto'
-import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../constants/order.js'
+import {
+  ORDER_STATUSES,
+  ORDER_STATUS_LABELS,
+  PAYMENT_STATUSES,
+} from '../constants/order.js'
 import { Order } from '../models/Order.js'
 import { Product } from '../models/Product.js'
 import { User } from '../models/User.js'
@@ -66,7 +70,7 @@ const reserveStock = async (items) => {
   }
 }
 
-export const createOrderFromCart = async (userId, payload) => {
+export const createOrderFromCart = async (userId, payload, options = {}) => {
   const cart = await getCheckoutCart(userId)
   const user = await User.findById(userId)
   if (!user) throw new ApiError(404, 'Account not found.', 'NOT_FOUND')
@@ -127,8 +131,34 @@ export const createOrderFromCart = async (userId, payload) => {
     throw error
   }
 
+  // Payment providers are called after the internal order exists but before the
+  // cart is cleared, so a provider failure can safely roll the whole intent back.
+  let providerData = null
+  if (options.onOrderCreated) {
+    try {
+      providerData = await options.onOrderCreated(order)
+      if (providerData?.orderId) {
+        order.paymentProvider = providerData.provider || 'razorpay'
+        order.razorpayOrderId = providerData.orderId
+        order.paymentAttempts = 1
+        await order.save()
+      }
+    } catch (error) {
+      await restoreStock(items)
+      await Order.deleteOne({ _id: order._id })
+      throw error
+    }
+  }
+
   await clearCart(userId)
-  return serializeOrder(order)
+  const data = serializeOrder(order)
+  if (providerData?.orderId) {
+    data.payment = {
+      provider: providerData.provider || 'razorpay',
+      orderId: providerData.orderId,
+    }
+  }
+  return data
 }
 
 const listQuery = (query, extra = {}) => {
@@ -136,7 +166,7 @@ const listQuery = (query, extra = {}) => {
   if (query.status && ORDER_STATUSES.includes(query.status)) {
     filter.status = query.status
   }
-  if (query.paymentStatus && ['Pending', 'Paid', 'Refunded'].includes(query.paymentStatus)) {
+  if (query.paymentStatus && PAYMENT_STATUSES.includes(query.paymentStatus)) {
     filter.paymentStatus = query.paymentStatus
   }
   return filter

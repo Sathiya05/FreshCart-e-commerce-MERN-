@@ -71,21 +71,21 @@ see [Phase 4 Commerce](phase-4-commerce.md).
 
 ## Payment safety
 
-Checkout is visually complete but deliberately non-functional for payments:
+In Phase 2, checkout was visually complete but deliberately non-functional for
+payments: the action was disabled, a warning banner stated that no payment was
+collected, and the result pages were layout previews only.
 
-- the primary action is disabled and labelled for Phase 5;
-- a warning banner states that no payment is collected;
-- success and failure pages are layout previews only, with no fake verification.
-
-No Razorpay credentials, order creation, or signature verification exist in
-Phase 2.
+Phase 5 keeps the important part of that rule: no success screen is trusted until
+the server verifies the signed Razorpay response. The current result pages read
+the real order and only show success when `paymentStatus` is `Paid`. See
+[Phase 5 Payments](phase-5-payments.md).
 
 ## Admin console
 
 Admin pages use `DataTable`, `Modal`, `ConfirmDialog`, `StatCard`, Recharts, and
-toast feedback. Product, category, inventory, order, customer, coupon, review,
-and settings changes are local demo mutations. Destructive actions always ask
-for confirmation before changing state.
+toast feedback. Product, category, inventory and order changes now call live
+APIs; customers, coupons, reviews and settings remain local demos. Destructive
+actions always ask for confirmation before changing state.
 
 Admin pages are loaded with `React.lazy` so Recharts stays out of the initial
 storefront bundle.
@@ -105,10 +105,9 @@ remain clean. The Vite 6 pin documented in `architecture.md` is unchanged.
 
 - MongoDB models and API routes
 - JWT authentication and protected endpoints
-- Backend cart, inventory, coupon, address, and order APIs
-- Razorpay integration
+- Coupon, review and customer APIs
 - AWS infrastructure or deployment
 - Automated tests (Phase 8)
 
-Phase 3 and its React integration are complete. Phase 4 core commerce is now
-implemented; later phases still require explicit confirmation.
+Phase 3, Phase 4 core commerce and Phase 5 Razorpay payments are implemented.
+Later phases still require explicit confirmation.

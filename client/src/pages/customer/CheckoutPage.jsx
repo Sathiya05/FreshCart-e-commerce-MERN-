@@ -15,19 +15,25 @@ import { clearCartLocal, selectCartItems, selectCartSubtotal } from '../../redux
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
+import useRazorpayCheckout from '../../hooks/useRazorpayCheckout.js'
 import {
   createOrder,
+  createPaymentOrder,
   getAddresses,
   getDeliverySlots,
+  getPaymentConfig,
 } from '../../services/commerce.service.js'
 
 export default function CheckoutPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const pay = useRazorpayCheckout()
   const items = useAppSelector(selectCartItems)
   const subtotal = useAppSelector(selectCartSubtotal)
   const addressesState = useAsync(getAddresses, [])
   const slotsState = useAsync(getDeliverySlots, [])
+  const paymentConfigState = useAsync(getPaymentConfig, [])
+  const paymentEnabled = Boolean(paymentConfigState.data?.enabled)
 
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedSlotId, setSelectedSlotId] = useState(null)
@@ -50,6 +56,12 @@ export default function CheckoutPage() {
     }
   }, [slots, selectedSlotId])
 
+  useEffect(() => {
+    if (!paymentEnabled && paymentMethod === 'razorpay') {
+      setPaymentMethod('cod')
+    }
+  }, [paymentEnabled, paymentMethod])
+
   const selectedSlot = useMemo(
     () => slots.find((slot) => slot.id === selectedSlotId),
     [slots, selectedSlotId],
@@ -58,14 +70,32 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId || submitting) return
+    if (paymentMethod === 'razorpay' && !paymentEnabled) return
+
     setSubmitting(true)
     setOrderError('')
+
+    const payload = {
+      addressId: selectedAddressId,
+      paymentMethod,
+      deliverySlot: selectedSlot?.label || '',
+    }
+
     try {
-      const order = await createOrder({
-        addressId: selectedAddressId,
-        paymentMethod,
-        deliverySlot: selectedSlot?.label || '',
-      })
+      if (paymentMethod === 'razorpay') {
+        const payment = await createPaymentOrder(payload)
+        dispatch(clearCartLocal())
+        dispatch(
+          pushToast({
+            title: 'Order created',
+            message: `${payment.orderNumber} is waiting for payment.`,
+          }),
+        )
+        await pay(payment)
+        return
+      }
+
+      const order = await createOrder(payload)
       dispatch(clearCartLocal())
       dispatch(
         pushToast({
@@ -109,7 +139,7 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           <LockKeyhole size={17} aria-hidden="true" />
-          Orders are created securely on the server with live prices and stock. No online payment is collected yet.
+          Orders are created securely on the server with live prices and stock. Online payments are verified by FreshCart before an order is marked paid.
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -174,15 +204,37 @@ export default function CheckoutPage() {
                 3. Payment method
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-app-border bg-surface p-4 opacity-60">
-                  <span className="flex items-center gap-2 font-semibold text-text-primary">
-                    <CreditCard size={17} className="text-brand-primary" aria-hidden="true" />
-                    Razorpay
-                  </span>
-                  <span className="mt-2 block text-xs text-text-secondary">
-                    Cards, UPI and net banking. Enabled in Phase 5.
-                  </span>
-                </div>
+                {paymentConfigState.status === 'loading' ? (
+                  <SkeletonLine className="h-24 w-full rounded-xl" />
+                ) : paymentEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('razorpay')}
+                    className={`rounded-xl border p-4 text-left ${
+                      paymentMethod === 'razorpay'
+                        ? 'border-brand-primary bg-brand-secondary/40'
+                        : 'border-app-border bg-surface'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-text-primary">
+                      <CreditCard size={17} className="text-brand-primary" aria-hidden="true" />
+                      Razorpay
+                    </span>
+                    <span className="mt-2 block text-xs text-text-secondary">
+                      Cards, UPI and net banking. Verified by FreshCart.
+                    </span>
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-app-border bg-surface p-4 opacity-60">
+                    <span className="flex items-center gap-2 font-semibold text-text-primary">
+                      <CreditCard size={17} className="text-brand-primary" aria-hidden="true" />
+                      Razorpay
+                    </span>
+                    <span className="mt-2 block text-xs text-text-secondary">
+                      Cards, UPI and net banking. Not configured on this server.
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('cod')}
@@ -201,9 +253,13 @@ export default function CheckoutPage() {
                   </span>
                 </button>
               </div>
-              <div className="mt-3">
-                <Badge tone="success">COD orders are live</Badge>
-                <Badge tone="warning">Online payments in Phase 5</Badge>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge tone="success">COD available</Badge>
+                {paymentEnabled ? (
+                  <Badge tone="success">Razorpay available</Badge>
+                ) : (
+                  <Badge tone="warning">Online payments unavailable</Badge>
+                )}
               </div>
             </section>
 
@@ -235,13 +291,25 @@ export default function CheckoutPage() {
                   className="w-full"
                   size="lg"
                   onClick={handlePlaceOrder}
-                  disabled={!selectedAddressId || submitting}
+                  disabled={
+                    !selectedAddressId ||
+                    submitting ||
+                    (paymentMethod === 'razorpay' && !paymentEnabled)
+                  }
                 >
                   <ShieldCheck size={16} aria-hidden="true" />
-                  {submitting ? 'Placing order…' : 'Place order'}
+                  {submitting
+                    ? 'Creating order…'
+                    : paymentMethod === 'razorpay'
+                      ? 'Pay with Razorpay'
+                      : 'Place order'}
                 </Button>
               }
-              note="Your order is created immediately. No online payment is collected."
+              note={
+                paymentMethod === 'razorpay'
+                  ? 'Your order is created first, then Razorpay opens for secure payment.'
+                  : 'Your order is created immediately. Pay when it arrives.'
+              }
             />
             {orderError && (
               <p className="mt-3 text-center text-sm text-red-600" role="alert">

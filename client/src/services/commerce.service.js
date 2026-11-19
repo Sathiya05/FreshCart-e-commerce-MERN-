@@ -28,11 +28,17 @@ const normalizeCart = (data = {}) => ({
   })),
 })
 
+const PAYMENT_METHOD_LABELS = {
+  cod: 'Cash on delivery',
+  razorpay: 'Razorpay',
+}
+
 const normalizeOrder = (order = {}) => ({
   ...order,
   date: formatDate(order.date || order.createdAt),
+  paymentMethodValue: order.paymentMethod,
   paymentMethod:
-    order.paymentMethod === 'cod' ? 'Cash on delivery' : order.paymentMethod,
+    PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod,
   timeline: (order.timeline || []).map((step) => ({
     ...step,
     date: step.date ? formatDate(step.date) : 'Pending',
@@ -118,3 +124,14 @@ export const updateAdminOrderStatus = (id, status) =>
     .patch(`/admin/orders/${encodeURIComponent(id)}/status`, { status })
     .then(getData)
     .then(normalizeOrder)
+
+export const getPaymentConfig = () => api.get('/payments/config').then(getData)
+
+export const createPaymentOrder = (payload) =>
+  api.post('/payments/orders', payload).then(getData)
+
+export const retryPayment = (orderId) =>
+  api.post(`/payments/orders/${encodeURIComponent(orderId)}/retry`).then(getData)
+
+export const verifyPayment = (payload) =>
+  api.post('/payments/verify', payload).then(getData).then(normalizeOrder)

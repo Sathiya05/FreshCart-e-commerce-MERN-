@@ -72,8 +72,22 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route path="payment/success" element={<PaymentSuccessPage />} />
-        <Route path="payment/failure" element={<PaymentFailurePage />} />
+        <Route
+          path="payment/success"
+          element={
+            <ProtectedRoute>
+              <PaymentSuccessPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="payment/failure"
+          element={
+            <ProtectedRoute>
+              <PaymentFailurePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="about" element={<AboutUsPage />} />
         <Route path="contact" element={<ContactUsPage />} />
         <Route path="faq" element={<FAQPage />} />

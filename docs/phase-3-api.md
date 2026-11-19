@@ -98,9 +98,10 @@ The server returns `images[]`, `categoryId`, `categoryName`, `categorySlug` and
 by these screens.
 
 Phase 4 has since replaced cart, checkout, addresses, customer orders and admin
-orders with live APIs. See [phase-4-commerce.md](phase-4-commerce.md). Coupons,
-reviews, customers, password recovery, sales reports and payment results remain
-demo/preview screens.
+orders with live APIs. See [phase-4-commerce.md](phase-4-commerce.md). Phase 5
+replaced the payment result screens with verified Razorpay flows; see
+[phase-5-payments.md](phase-5-payments.md). Coupons, reviews, customers, password
+recovery and sales reports remain demo/preview screens.
 
 ## Authentication
 

@@ -7,7 +7,7 @@ export default function AdminSalesReportsPage() {
     <>
       <AdminPageHeader
         title="Sales reports"
-        description="Real sales analytics will appear here after commerce and payment APIs are added."
+        description="Sales analytics from live order data will appear here in a later phase."
         actions={<DemoBadge />}
       />
 
@@ -17,8 +17,8 @@ export default function AdminSalesReportsPage() {
         </span>
         <h2 className="mt-5 text-xl font-semibold text-text-primary">Reports are not connected yet</h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-text-secondary">
-          Revenue, orders and category performance depend on the Phase 4 commerce API and
-          Phase 5 payment verification. No sample revenue figures are shown.
+          Revenue, orders and category performance will be derived from the live
+          order API. No sample revenue figures are shown.
         </p>
       </section>
     </>

@@ -118,7 +118,8 @@ Valid statuses are `Pending`, `Processing`, `Packed`, `Shipped`,
 
 Cancelling an order restores stock. A COD order becomes `Paid` when marked
 `Delivered`. If a paid order is cancelled, `paymentStatus` becomes `Refunded`
-for bookkeeping only — actual refunds remain a Phase 5 payment concern.
+for bookkeeping only — actual refunds are handled manually because the Razorpay
+refund API is not connected.
 
 ## React integration
 
@@ -139,7 +140,8 @@ the authoritative cart. Checkout is protected and redirects to sign-in.
 ## Still preview-only
 
 - Coupons and discounts — client coupon UI removed; backend coupon APIs later.
-- Razorpay, payment verification and webhooks — Phase 5.
+- Razorpay order creation, verification and webhooks are implemented in
+  [Phase 5](phase-5-payments.md) when keys are configured.
 - AWS image uploads — Phase 6.
 - Customer reviews, admin customers and sales reports — later phases.
 - Delivery slots are local preview data; the selected label is saved on the order.

@@ -1,3 +1,7 @@
+export const PAYMENT_METHODS = ['cod', 'razorpay']
+
+export const PAYMENT_STATUSES = ['Pending', 'Paid', 'Refunded', 'Failed']
+
 export const ORDER_STATUSES = [
   'Pending',
   'Processing',

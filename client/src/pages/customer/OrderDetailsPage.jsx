@@ -1,17 +1,25 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CreditCard, MapPin, Truck } from 'lucide-react'
 import Badge from '../../components/Badge.jsx'
 import Breadcrumbs from '../../components/Breadcrumbs.jsx'
+import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
 import OrderStatusBadge from '../../components/OrderStatusBadge.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
+import { useAppDispatch } from '../../redux/hooks.js'
+import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getOrderById } from '../../services/commerce.service.js'
+import useRazorpayCheckout from '../../hooks/useRazorpayCheckout.js'
+import { getOrderById, retryPayment } from '../../services/commerce.service.js'
 
 export default function OrderDetailsPage() {
   const { id } = useParams()
+  const dispatch = useAppDispatch()
+  const pay = useRazorpayCheckout()
+  const [paying, setPaying] = useState(false)
   const { status, data: order, error, refetch } = useAsync(
     () => getOrderById(id),
     [id],
@@ -47,6 +55,29 @@ export default function OrderDetailsPage() {
     )
   }
 
+  const canPayOnline =
+    order.paymentMethodValue === 'razorpay' &&
+    ['Pending', 'Failed'].includes(order.paymentStatus) &&
+    order.status !== 'Cancelled'
+
+  const handlePayNow = async () => {
+    setPaying(true)
+    try {
+      const payment = await retryPayment(order.id)
+      await pay(payment)
+    } catch (apiError) {
+      dispatch(
+        pushToast({
+          type: 'error',
+          title: 'Could not start payment',
+          message: apiError?.message || 'Please try again.',
+        }),
+      )
+    } finally {
+      setPaying(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <Breadcrumbs
@@ -64,7 +95,15 @@ export default function OrderDetailsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <OrderStatusBadge status={order.status} />
-          <Badge tone={order.paymentStatus === 'Paid' ? 'success' : 'warning'}>
+          <Badge
+            tone={
+              order.paymentStatus === 'Paid'
+                ? 'success'
+                : order.paymentStatus === 'Failed'
+                  ? 'danger'
+                  : 'warning'
+            }
+          >
             {order.paymentStatus}
           </Badge>
         </div>
@@ -126,6 +165,20 @@ export default function OrderDetailsPage() {
                 <dd className="font-bold text-brand-dark">{formatCurrency(order.totalAmount)}</dd>
               </div>
             </dl>
+            {order.razorpayPaymentId && (
+              <p className="mt-3 break-all text-xs text-text-secondary">
+                Payment ID: {order.razorpayPaymentId}
+              </p>
+            )}
+            {canPayOnline && (
+              <Button className="mt-5 w-full" onClick={handlePayNow} disabled={paying}>
+                <CreditCard size={16} aria-hidden="true" />
+                {paying ? 'Opening payment…' : 'Pay now'}
+              </Button>
+            )}
+            {order.paymentFailureReason && (
+              <p className="mt-3 text-xs text-red-600">{order.paymentFailureReason}</p>
+            )}
           </section>
 
           <Link

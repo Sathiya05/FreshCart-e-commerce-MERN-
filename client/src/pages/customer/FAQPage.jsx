@@ -36,12 +36,12 @@ const groups = [
     title: 'Payments and orders',
     items: [
       {
-        q: 'Which payment methods will be supported?',
-        a: 'Razorpay will support cards, UPI and net banking in Phase 5. Payment success or failure will only be trusted after server-side signature verification.',
+        q: 'Which payment methods are supported?',
+        a: 'Cash on delivery is always available. Razorpay supports cards, UPI and net banking when configured; success is accepted only after server-side signature verification.',
       },
       {
         q: 'Can I track my order?',
-        a: 'Yes. The My Orders area includes order details and tracking screens. Live status updates are connected after the admin order APIs are implemented.',
+        a: 'Yes. The My Orders area uses the live order API for details, status history and tracking. Live rider location is not available yet.',
       },
     ],
   },

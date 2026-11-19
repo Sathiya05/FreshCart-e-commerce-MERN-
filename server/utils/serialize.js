@@ -154,6 +154,7 @@ export const serializeOrder = (order) => {
     shippingAddress,
     timeline = [],
     deliveryFee = 0,
+    razorpaySignature,
     ...rest
   } = plain
   const address = serializeAddress(shippingAddress)

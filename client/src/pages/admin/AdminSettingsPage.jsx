@@ -194,11 +194,12 @@ export default function AdminSettingsPage() {
               <h2 className="font-semibold text-text-primary">Payments</h2>
             </div>
             <p className="mt-4 text-sm leading-6 text-text-secondary">
-              Razorpay keys, webhooks and settlement settings will be configured here
-              in Phase 5. No payment credentials are collected in this demo.
+              Razorpay keys and the webhook secret are configured on the server
+              through environment variables. No payment credentials are collected
+              in this admin screen.
             </p>
             <div className="mt-4">
-              <Badge tone="warning">Phase 5 integration pending</Badge>
+              <Badge tone="success">Server-side integration active</Badge>
             </div>
           </section>
 

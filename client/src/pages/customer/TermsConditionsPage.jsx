@@ -7,7 +7,7 @@ const sections = [
   },
   {
     title: 'Products and pricing',
-    body: 'Product availability, images, units and prices come from the live catalog API. Checkout totals are not final until server-side order validation and payment confirmation are connected.',
+    body: 'Product availability, images, units and prices come from the live catalog API. Checkout totals are recalculated and validated by the server when an order is created.',
   },
   {
     title: 'Orders and delivery',
@@ -34,9 +34,9 @@ export default function TermsConditionsPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="rounded-2xl border border-app-border bg-surface p-6 shadow-sm sm:p-8">
           <p className="text-sm leading-7 text-text-secondary">
-            These terms describe the intended production behavior of FreshCart.
-            The current interface uses a live catalog but does not create real
-            orders or collect payments.
+            These terms describe the production behavior of FreshCart. The
+            interface uses live catalog, order and payment APIs; unverified
+            payment screens never mark an order as paid.
           </p>
           <div className="mt-8 space-y-7">
             {sections.map((section, index) => (

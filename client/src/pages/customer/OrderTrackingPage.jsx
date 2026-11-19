@@ -123,8 +123,8 @@ export default function OrderTrackingPage() {
           <section className="rounded-2xl border border-brand-primary bg-brand-secondary/50 p-5">
             <Badge tone="brand">Live order status</Badge>
             <p className="mt-3 text-sm leading-6 text-brand-dark">
-              Status updates come from the live order record. Live rider location
-              and payment webhooks arrive with later phases.
+              Status updates and payment confirmations come from the live order
+              record. Live rider location is not available yet.
             </p>
           </section>
 

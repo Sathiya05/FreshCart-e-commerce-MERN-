@@ -112,11 +112,12 @@ existing cards and tables.
 
 Live UI areas: registration/login/logout/profile, public catalog and search,
 admin dashboard overview, product/category CRUD, stock adjustments, persistent
-cart, address book, COD checkout, order history/tracking and admin order status.
-Preview-only areas: coupons, reviews, customers, password recovery, sales
-reports, online payments and image uploads. See the integration tables in
-[Phase 3 API](phase-3-api.md#react-integration) and
-[Phase 4 Commerce](phase-4-commerce.md).
+cart, address book, COD checkout, verified Razorpay checkout, order
+history/tracking and admin order status. Preview-only areas: coupons, reviews,
+customers, password recovery, sales reports, refunds and image uploads. See the
+integration tables in [Phase 3 API](phase-3-api.md#react-integration),
+[Phase 4 Commerce](phase-4-commerce.md) and
+[Phase 5 Payments](phase-5-payments.md).
 
 ## Request flow in Phase 1
 
@@ -159,8 +160,9 @@ In production, `VITE_API_URL` can point to a separate API origin such as
 - Phase 3 (complete): Mongoose models, JWT authentication, validated category
   and product CRUD, and React integration for those endpoints. See
   [phase-3-api.md](phase-3-api.md).
-- Phase 4 (current): persistent cart, addresses, COD checkout, order history,
+- Phase 4 (complete): persistent cart, addresses, COD checkout, order history,
   tracking and admin order status. See [phase-4-commerce.md](phase-4-commerce.md).
-- Phase 5: Razorpay order creation, verification and webhooks.
+- Phase 5 (current): Razorpay order creation, signed verification, webhooks and
+  retry flow. See [phase-5-payments.md](phase-5-payments.md).
 - Phase 6/7: AWS fundamentals and deployment.
 - Phase 8/9: testing and portfolio presentation.

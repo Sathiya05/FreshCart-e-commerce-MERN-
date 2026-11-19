@@ -131,7 +131,7 @@ export default function CartPage() {
                 Proceed to checkout
               </Button>
             }
-            note="Online payments open in Phase 5. Cash on delivery is available now."
+            note="Cash on delivery and verified Razorpay payments are available at checkout."
           />
         </div>
       </div>

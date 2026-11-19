@@ -31,6 +31,7 @@ const statuses = [
 const paymentTone = {
   Paid: 'success',
   Refunded: 'danger',
+  Failed: 'danger',
   Pending: 'warning',
 }
 
@@ -292,7 +293,7 @@ export default function AdminOrdersPage() {
         onClose={() => setOrderToCancel(null)}
         onConfirm={() => handleCancel(orderToCancel)}
         title="Cancel this order?"
-        message={`${orderToCancel?.orderNumber || orderToCancel?.id || 'This order'} will be marked cancelled and its stock restored. Paid-order refunds are handled manually until Phase 5.`}
+        message={`${orderToCancel?.orderNumber || orderToCancel?.id || 'This order'} will be marked cancelled and its stock restored. Paid-order refunds are handled manually; Razorpay refund APIs are not connected.`}
         confirmLabel="Cancel order"
       />
     </>

@@ -1,5 +1,9 @@
 import mongoose from 'mongoose'
-import { ORDER_STATUSES } from '../constants/order.js'
+import {
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+} from '../constants/order.js'
 
 const { Schema } = mongoose
 
@@ -83,15 +87,25 @@ const orderSchema = new Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['cod'],
+      enum: PAYMENT_METHODS,
       default: 'cod',
     },
     paymentStatus: {
       type: String,
-      enum: ['Pending', 'Paid', 'Refunded'],
+      enum: PAYMENT_STATUSES,
       default: 'Pending',
       index: true,
     },
+    paymentProvider: {
+      type: String,
+      enum: ['razorpay'],
+    },
+    razorpayOrderId: { type: String, trim: true, index: true },
+    razorpayPaymentId: { type: String, trim: true },
+    razorpaySignature: { type: String, trim: true },
+    paymentFailureReason: { type: String, trim: true },
+    paymentAttempts: { type: Number, default: 0, min: 0 },
+    paidAt: { type: Date },
     subtotal: { type: Number, required: true, min: 0 },
     discount: { type: Number, default: 0, min: 0 },
     deliveryFee: { type: Number, default: 0, min: 0 },
