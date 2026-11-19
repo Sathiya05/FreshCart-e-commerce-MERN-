@@ -11,19 +11,23 @@ import routes from './routes/index.js'
 
 const app = express()
 const allowedOrigins = env.clientUrl
+console.log('[CORS] Allowed origins:', allowedOrigins)
+
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean)
-
 app.set('trust proxy', 1)
 
 // Security and request-parsing middleware.
 app.use(helmet())
 
 app.use(
+  
   cors({
+    
     credentials: true,
     origin(origin, callback) {
+      console.log('[CORS] Incoming origin:', origin)
       // Non-browser clients (curl, server-to-server) omit the Origin header.
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true)
