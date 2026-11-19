@@ -1,5 +1,5 @@
-import { Heart, ShoppingCart } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Heart, ShoppingCart, Zap } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { addToCart } from '../redux/cartSlice.js'
 import { selectIsWishlisted, toggleWishlist } from '../redux/wishlistSlice.js'
@@ -11,6 +11,7 @@ import Rating from './Rating.jsx'
 
 export default function ProductCard({ product }) {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const isWishlisted = useAppSelector(selectIsWishlisted(product.id))
   const discount = formatDiscount(product.price, product.discountPrice)
 
@@ -24,6 +25,20 @@ export default function ProductCard({ product }) {
         message: `${product.name} is ready in your cart.`,
       }),
     )
+  }
+
+  const handleBuyNow = async () => {
+    if (product.stock <= 0) return
+    const result = await dispatch(addToCart(product, 1))
+    if (result === null) return
+    dispatch(
+      pushToast({
+        type: 'info',
+        title: 'Buying now',
+        message: `${product.name} is ready for checkout.`,
+      }),
+    )
+    navigate('/checkout')
   }
 
   const handleWishlist = () => {
@@ -100,10 +115,22 @@ export default function ProductCard({ product }) {
           {product.stock > 15 ? `In stock · ${product.stock} available` : `Only ${product.stock} left`}
         </p>
 
-        <Button className="mt-4 w-full" onClick={handleAddToCart} disabled={product.stock <= 0}>
-          <ShoppingCart size={16} aria-hidden="true" />
-          {product.stock > 0 ? 'Add to cart' : 'Out of stock'}
-        </Button>
+        {product.stock > 0 ? (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={handleAddToCart}>
+              <ShoppingCart size={16} aria-hidden="true" />
+              Add to cart
+            </Button>
+            <Button onClick={handleBuyNow}>
+              <Zap size={16} aria-hidden="true" />
+              Buy now
+            </Button>
+          </div>
+        ) : (
+          <Button className="mt-4 w-full" disabled>
+            Out of stock
+          </Button>
+        )}
       </div>
     </article>
   )

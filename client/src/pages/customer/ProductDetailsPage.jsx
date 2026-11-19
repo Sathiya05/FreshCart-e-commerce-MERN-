@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Check, Heart, RotateCcw, ShieldCheck, ShoppingCart, Truck } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { Check, Heart, RotateCcw, ShieldCheck, ShoppingCart, Truck, Zap } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import Badge from '../../components/Badge.jsx'
 import Breadcrumbs from '../../components/Breadcrumbs.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -24,6 +24,7 @@ import {
 export default function ProductDetailsPage() {
   const { id } = useParams()
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
 
@@ -95,6 +96,20 @@ export default function ProductDetailsPage() {
         message: `${quantity} × ${product.name} added successfully.`,
       }),
     )
+  }
+
+  const handleBuyNow = async () => {
+    if (product.stock <= 0) return
+    const result = await dispatch(addToCart(product, quantity))
+    if (result === null) return
+    dispatch(
+      pushToast({
+        type: 'info',
+        title: 'Buying now',
+        message: `${quantity} × ${product.name} is ready for checkout.`,
+      }),
+    )
+    navigate('/checkout')
   }
 
   const handleWishlist = () => {
@@ -200,10 +215,19 @@ export default function ProductDetailsPage() {
               type="button"
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 sm:flex-none"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-app-border bg-surface px-5 text-sm font-semibold text-text-primary hover:border-brand-primary hover:text-brand-dark disabled:opacity-50 sm:flex-none"
             >
               <ShoppingCart size={17} aria-hidden="true" />
               Add to cart
+            </button>
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={product.stock <= 0}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 sm:flex-none"
+            >
+              <Zap size={17} aria-hidden="true" />
+              Buy now
             </button>
             <button
               type="button"
