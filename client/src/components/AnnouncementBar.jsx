@@ -1,4 +1,4 @@
-import { Clock3, RefreshCw, Truck } from 'lucide-react'
+import { CheckCircle2, Clock3, RefreshCw, Truck } from 'lucide-react'
 
 const items = [
   { icon: Truck, text: 'Free delivery on orders above ₹499' },
@@ -16,6 +16,13 @@ export default function AnnouncementBar() {
             {text}
           </span>
         ))}
+        <span
+          className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white"
+          title="Build marker: cart and Buy Now fixes are loaded"
+        >
+          <CheckCircle2 size={12} aria-hidden="true" />
+          Cart ready · v2
+        </span>
       </div>
     </div>
   )
