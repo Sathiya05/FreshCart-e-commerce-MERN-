@@ -265,6 +265,11 @@ export default function AdminOrdersPage() {
                   Slot: {selectedOrder.deliverySlot}
                 </p>
               )}
+              {selectedOrder.deliveryInstructions && (
+                <p className="mt-1 text-xs text-text-secondary">
+                  Instructions: {selectedOrder.deliveryInstructions}
+                </p>
+              )}
             </div>
 
             <div>

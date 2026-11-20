@@ -133,8 +133,13 @@ export default function OrderDetailsPage() {
               Delivery
             </h2>
             <p className="mt-3 text-sm text-text-secondary">
-              Slot: <span className="font-medium text-text-primary">{order.deliverySlot}</span>
+              Slot: <span className="font-medium text-text-primary">{order.deliverySlot || 'Not selected'}</span>
             </p>
+            {order.deliveryInstructions && (
+              <p className="mt-2 text-sm text-text-secondary">
+                Instructions: <span className="font-medium text-text-primary">{order.deliveryInstructions}</span>
+              </p>
+            )}
             <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-text-secondary">
               <MapPin size={16} className="mt-1 shrink-0 text-brand-primary" aria-hidden="true" />
               <span>

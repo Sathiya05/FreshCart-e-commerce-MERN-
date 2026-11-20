@@ -10,6 +10,11 @@ const addressAndSlot = [
     .trim()
     .isLength({ max: 120 })
     .withMessage('Delivery slot cannot exceed 120 characters'),
+  body('deliveryInstructions')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Delivery instructions cannot exceed 200 characters'),
 ]
 
 export const createOrderValidator = [
@@ -53,6 +58,11 @@ export const createAliasPaymentOrderValidator = [
     .trim()
     .isLength({ max: 120 })
     .withMessage('Delivery slot cannot exceed 120 characters'),
+  body('deliveryInstructions')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Delivery instructions cannot exceed 200 characters'),
   body('amount')
     .if(body('addressId').not().exists())
     .isInt({ min: 100 })

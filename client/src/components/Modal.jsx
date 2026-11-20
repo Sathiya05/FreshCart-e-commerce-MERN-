@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 export default function Modal({ open, onClose, title, description, children, footer }) {
@@ -18,9 +19,11 @@ export default function Modal({ open, onClose, title, description, children, foo
     }
   }, [open, onClose])
 
-  if (!open) return null
+  if (!open || typeof document === 'undefined') return null
 
-  return (
+  // Render into <body> so `fixed inset-0` is always relative to the viewport,
+  // even while page-level slide/fade animations apply a transform to an ancestor.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[2px] sm:items-center sm:p-4"
       role="presentation"
@@ -55,6 +58,7 @@ export default function Modal({ open, onClose, title, description, children, foo
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

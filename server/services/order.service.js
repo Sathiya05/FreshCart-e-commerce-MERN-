@@ -118,6 +118,7 @@ export const createOrderFromCart = async (userId, payload, options = {}) => {
       deliveryFee: cart.deliveryFee,
       totalAmount: cart.totalAmount,
       deliverySlot: payload.deliverySlot || '',
+      deliveryInstructions: payload.deliveryInstructions || '',
       timeline: [
         {
           status: 'Pending',

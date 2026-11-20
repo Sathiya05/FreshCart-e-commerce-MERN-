@@ -567,10 +567,11 @@ export const DEMO_ADDRESSES = [
 ]
 
 export const DEMO_DELIVERY_SLOTS = [
-  { id: 'slot-1', label: 'Tomorrow, 8 AM – 10 AM', fee: 30, available: true },
-  { id: 'slot-2', label: 'Tomorrow, 10 AM – 12 PM', fee: 25, available: true },
-  { id: 'slot-3', label: 'Tomorrow, 4 PM – 6 PM', fee: 30, available: true },
-  { id: 'slot-4', label: 'Tomorrow, 6 PM – 8 PM', fee: 20, available: false },
+  { id: 'slot-1', label: 'Tomorrow at 8 – 10 AM', fee: 30, available: true },
+  { id: 'slot-2', label: 'Tomorrow at 10 AM – 12 PM', fee: 25, available: true },
+  { id: 'slot-3', label: 'Tomorrow at 12 – 2 PM', fee: 25, available: true },
+  { id: 'slot-4', label: 'Tomorrow at 4 – 6 PM', fee: 30, available: true },
+  { id: 'slot-5', label: 'Tomorrow at 6 – 8 PM', fee: 20, available: false },
 ]
 
 export const DEMO_COUPONS = [

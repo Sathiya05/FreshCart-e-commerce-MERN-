@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CreditCard, LockKeyhole, MapPin, ShieldCheck, Wallet } from 'lucide-react'
+import { Clock3, CreditCard, Info, LockKeyhole, MapPin, ShieldCheck, Wallet } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import AddressCard from '../../components/AddressCard.jsx'
 import Badge from '../../components/Badge.jsx'
@@ -37,6 +37,7 @@ export default function CheckoutPage() {
 
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedSlotId, setSelectedSlotId] = useState(null)
+  const [deliveryInstructions, setDeliveryInstructions] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cod')
   const [submitting, setSubmitting] = useState(false)
   const [orderError, setOrderError] = useState('')
@@ -66,6 +67,10 @@ export default function CheckoutPage() {
     () => slots.find((slot) => slot.id === selectedSlotId),
     [slots, selectedSlotId],
   )
+  const selectedAddress = useMemo(
+    () => addresses.find((address) => address.id === selectedAddressId),
+    [addresses, selectedAddressId],
+  )
   const deliveryCharge = subtotal >= 499 ? 0 : 30
   const placeOrderDisabled =
     !selectedAddressId || submitting || (paymentMethod === 'razorpay' && !paymentEnabled)
@@ -86,6 +91,7 @@ export default function CheckoutPage() {
       addressId: selectedAddressId,
       paymentMethod,
       deliverySlot: selectedSlot?.label || '',
+      deliveryInstructions,
     }
 
     try {
@@ -201,9 +207,38 @@ export default function CheckoutPage() {
                 selectedId={selectedSlotId}
                 onSelect={(slot) => setSelectedSlotId(slot.id)}
               />
-              <p className="mt-2 text-xs text-text-secondary">
-                Delivery slots are a preview. The selected slot is saved with your order.
-              </p>
+              <div className="mt-3 rounded-2xl border border-brand-secondary bg-brand-secondary/30 p-4">
+                <div className="flex items-start gap-3">
+                  <Clock3 size={18} className="mt-0.5 shrink-0 text-brand-primary" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">
+                      {selectedSlot
+                        ? `Arriving ${selectedSlot.label.toLowerCase()}`
+                        : 'Choose a delivery slot'}
+                    </p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {selectedAddress
+                        ? `${selectedAddress.addressLine}, ${selectedAddress.city} ${selectedAddress.pincode}`
+                        : 'Select a delivery address above.'}
+                    </p>
+                  </div>
+                </div>
+                <label htmlFor="delivery-instructions" className="mt-4 block text-xs font-semibold text-text-primary">
+                  Delivery instructions <span className="font-normal text-text-secondary">(optional)</span>
+                </label>
+                <select
+                  id="delivery-instructions"
+                  value={deliveryInstructions}
+                  onChange={(event) => setDeliveryInstructions(event.target.value)}
+                  className="mt-1.5 h-10 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
+                >
+                  <option value="">No instructions</option>
+                  <option value="Leave at the door">Leave at the door</option>
+                  <option value="Don't ring the bell">Don't ring the bell</option>
+                  <option value="Call on arrival">Call on arrival</option>
+                  <option value="Hand over to security">Hand over to security</option>
+                </select>
+              </div>
             </section>
 
             <section>
@@ -225,10 +260,20 @@ export default function CheckoutPage() {
                   >
                     <span className="flex items-center gap-2 font-semibold text-text-primary">
                       <CreditCard size={17} className="text-brand-primary" aria-hidden="true" />
-                      Razorpay
+                      UPI, card or net banking
                     </span>
                     <span className="mt-2 block text-xs text-text-secondary">
-                      Cards, UPI apps (Google Pay / PhonePe) and net banking. Verified by FreshCart.
+                      Pay securely with Razorpay.
+                    </span>
+                    <span className="mt-3 flex flex-wrap gap-1.5">
+                      {['Google Pay', 'PhonePe', 'Super.Money', 'Paytm'].map((app) => (
+                        <span
+                          key={app}
+                          className="rounded-full border border-app-border bg-surface px-2 py-1 text-[11px] font-medium text-text-secondary"
+                        >
+                          {app}
+                        </span>
+                      ))}
                     </span>
                   </button>
                 ) : (
@@ -268,6 +313,14 @@ export default function CheckoutPage() {
                   <Badge tone="warning">Online payments unavailable</Badge>
                 )}
               </div>
+              <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+                <Info size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  UPI apps open only on a <strong>mobile browser with live Razorpay keys</strong>.
+                  On desktop, scan the QR code in the Razorpay window. In test mode, use a
+                  test UPI ID instead of a real payment app.
+                </span>
+              </p>
             </section>
 
             <section className="rounded-2xl border border-app-border bg-surface p-5">
@@ -306,7 +359,7 @@ export default function CheckoutPage() {
               }
               note={
                 paymentMethod === 'razorpay'
-                  ? 'Your order is created first, then Razorpay opens for secure payment.'
+                  ? `Your ${selectedSlot ? selectedSlot.label.toLowerCase() : 'selected'} delivery slot and instructions are saved before Razorpay opens.`
                   : 'Your order is created immediately. Pay when it arrives.'
               }
             />

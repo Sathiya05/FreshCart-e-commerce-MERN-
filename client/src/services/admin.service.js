@@ -33,16 +33,33 @@ const createUploadTicket = (file) =>
 /** Uploads straight to S3 with a short-lived presigned URL from the API. */
 export const uploadProductImage = async (file) => {
   const ticket = await createUploadTicket(file)
-  const response = await fetch(ticket.uploadUrl, {
-    method: ticket.method || 'PUT',
-    headers: { 'Content-Type': ticket.contentType },
-    body: file,
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
 
-  if (!response.ok) {
-    throw new Error(
-      `Upload failed (${response.status}). Check the S3 bucket CORS policy.`,
-    )
+  try {
+    const response = await fetch(ticket.uploadUrl, {
+      method: ticket.method || 'PUT',
+      headers: { 'Content-Type': ticket.contentType },
+      body: file,
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      throw new Error(
+        `Upload failed (${response.status}). Check the S3 bucket CORS policy and IAM permissions.`,
+      )
+    }
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error('Upload timed out. Check your connection and S3 bucket CORS policy.')
+    }
+    // CORS/blocked requests surface as a TypeError with no useful message.
+    if (error instanceof TypeError) {
+      throw new Error('Could not reach S3. Check the bucket CORS policy and your connection.')
+    }
+    throw error
+  } finally {
+    clearTimeout(timeout)
   }
 
   return ticket.publicUrl

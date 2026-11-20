@@ -1,7 +1,8 @@
 const CHECKOUT_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js'
 
-// Keep Razorpay's other methods (cards, netbanking, wallets) available, but put
-// the popular UPI intent apps first so GPay / PhonePe are easy to find on mobile.
+// Follow Razorpay's recommended ordering: top UPI intent apps first, with the
+// remaining default methods (cards, netbanking, UPI ID/QR) still available.
+// Shortcodes are from Razorpay's "Android Mobile Web" supported apps list.
 const CHECKOUT_CONFIG = {
   display: {
     blocks: {
@@ -10,7 +11,13 @@ const CHECKOUT_CONFIG = {
         instruments: [
           {
             method: 'upi',
-            apps: ['google_pay', 'phonepe'],
+            apps: [
+              'google_pay',
+              'phonepe',
+              'super_money',
+              'paytm',
+              'bhim',
+            ],
           },
         ],
       },
@@ -64,7 +71,7 @@ export const openRazorpayCheckout = async ({
     throw new Error('Razorpay checkout is unavailable in this browser.')
   }
 
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     let settled = false
 
     const runFailure = async (error) => {
@@ -84,11 +91,17 @@ export const openRazorpayCheckout = async ({
       name: 'FreshCart',
       description: `Order ${payment.orderNumber}`,
       order_id: payment.razorpayOrderId,
-      prefill: { ...prefill, method: 'upi' },
+      prefill,
       config: CHECKOUT_CONFIG,
       notes: {
         orderId: payment.orderId,
         orderNumber: payment.orderNumber,
+        ...(payment.deliverySlot
+          ? { deliverySlot: payment.deliverySlot }
+          : {}),
+        ...(payment.deliveryInstructions
+          ? { deliveryInstructions: payment.deliveryInstructions }
+          : {}),
       },
       theme: { color: '#16a34a' },
       modal: {
@@ -122,6 +135,14 @@ export const openRazorpayCheckout = async ({
       )
     })
 
-    checkout.open()
+    try {
+      checkout.open()
+    } catch (error) {
+      await runFailure(
+        new Error(
+          error?.message || 'Razorpay checkout could not be opened on this device.',
+        ),
+      )
+    }
   })
 }

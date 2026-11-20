@@ -133,6 +133,7 @@ export default function AdminProductsPage() {
       setFormError('')
       if (openFormAfterUpload.current) {
         setEditing(null)
+        setForm({ ...emptyProduct, categoryId: categories[0]?.id || '' })
         setModalOpen(true)
       }
       dispatch(

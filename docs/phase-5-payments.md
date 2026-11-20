@@ -251,6 +251,8 @@ If `enabled` is `false`, a key is missing or the API was not restarted.
 | `INVALID_PAYMENT_SIGNATURE` | Key secret does not match the Razorpay account | Recopy the test key secret |
 | Webhook not reached | ngrok stopped or wrong URL | Restart ngrok and update the dashboard URL |
 | Payment paid but order still pending | Webhook secret mismatch or ngrok offline | Verify response normally updates it; check webhook logs and retry from order details |
+| UPI app shows “Something went wrong” | Test-mode keys (`rzp_test_...`) cannot open real UPI apps, or the checkout was opened on desktop | Use a test UPI ID in test mode; switch to live keys after account activation for GPay/PhonePe/Super.Money intents. On desktop, scan the QR code instead |
+| UPI app tile is missing | Unsupported shortcode or account feature disabled | The UI lists `google_pay`, `phonepe`, `super_money`, `paytm` and `bhim` (Razorpay Android mobile-web shortcodes). Contact Razorpay support if UPI Intent is not enabled on the account |
 
 ## Still not included
 

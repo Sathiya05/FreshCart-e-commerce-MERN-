@@ -60,8 +60,11 @@
     }
   }
 
+  /* `both` would keep the final `transform` applied after the animation ends.
+     A transformed wrapper becomes the containing block for `position: fixed`
+     children, which pushes modals off-screen (they look transparent/blank). */
   .animate-page-in {
-    animation: page-in 240ms ease-out both;
+    animation: page-in 240ms ease-out backwards;
   }
 
   @media (prefers-reduced-motion: reduce) {
