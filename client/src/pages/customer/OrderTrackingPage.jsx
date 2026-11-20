@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Check, MapPin, Truck } from 'lucide-react'
 import Badge from '../../components/Badge.jsx'
@@ -11,10 +12,29 @@ import { getOrderTracking } from '../../services/commerce.service.js'
 
 export default function OrderTrackingPage() {
   const { id } = useParams()
-  const { status, data: order, error, refetch } = useAsync(
+  const { status, data, error, refetch } = useAsync(
     () => getOrderTracking(id),
     [id],
   )
+  const [liveOrder, setLiveOrder] = useState(null)
+
+  useEffect(() => {
+    if (data) setLiveOrder(data)
+  }, [data])
+
+  useEffect(() => {
+    if (!id) return undefined
+    const timer = setInterval(() => {
+      getOrderTracking(id)
+        .then((updated) => setLiveOrder(updated))
+        .catch(() => {
+          // Keep showing the last known status if a background refresh fails.
+        })
+    }, 15000)
+    return () => clearInterval(timer)
+  }, [id])
+
+  const order = liveOrder || data
 
   if (status === 'loading') {
     return (
@@ -123,8 +143,9 @@ export default function OrderTrackingPage() {
           <section className="rounded-2xl border border-brand-primary bg-brand-secondary/50 p-5">
             <Badge tone="brand">Live order status</Badge>
             <p className="mt-3 text-sm leading-6 text-brand-dark">
-              Status updates and payment confirmations come from the live order
-              record. Live rider location is not available yet.
+              This page refreshes automatically every 15 seconds. Status and
+              payment updates come from the live order record. Live rider location
+              is not available yet.
             </p>
           </section>
 

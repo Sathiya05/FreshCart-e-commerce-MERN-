@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Copy, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
-import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -13,7 +12,13 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoAdminCoupons } from '../../services/admin.service.js'
+import {
+  createAdminCoupon,
+  deleteAdminCoupon,
+  getAdminCoupons,
+  setAdminCouponStatus,
+  updateAdminCoupon,
+} from '../../services/admin.service.js'
 
 const emptyCoupon = {
   code: '',
@@ -33,7 +38,7 @@ const discountLabel = (coupon) =>
 
 export default function AdminCouponsPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getDemoAdminCoupons, [])
+  const { status, data, error, refetch } = useAsync(getAdminCoupons, [])
   const [coupons, setCoupons] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -85,7 +90,7 @@ export default function AdminCouponsPage() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const payload = {
       ...form,
@@ -96,23 +101,26 @@ export default function AdminCouponsPage() {
       usageLimit: Number(form.usageLimit) || 0,
     }
 
-    if (editing) {
-      setCoupons((current) =>
-        current.map((coupon) => (coupon.id === editing.id ? { ...coupon, ...payload } : coupon)),
-      )
-      dispatch(pushToast({ title: 'Coupon updated', message: `${payload.code} was updated in the demo.` }))
-    } else {
-      setCoupons((current) => [
-        {
-          ...payload,
-          id: `coupon-demo-${Date.now()}`,
-          usedCount: 0,
-        },
-        ...current,
-      ])
-      dispatch(pushToast({ title: 'Coupon created', message: `${payload.code} is now available in the demo.` }))
+    try {
+      if (editing) {
+        const saved = await updateAdminCoupon(editing.id, payload)
+        setCoupons((current) =>
+          current.map((coupon) => (coupon.id === editing.id ? saved : coupon)),
+        )
+        dispatch(pushToast({ title: 'Coupon updated', message: `${payload.code} was updated.` }))
+      } else {
+        const saved = await createAdminCoupon(payload)
+        setCoupons((current) => [saved, ...current])
+        dispatch(pushToast({ title: 'Coupon created', message: `${payload.code} is now saved.` }))
+      }
+      setModalOpen(false)
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Could not save coupon',
+        message: error?.message || 'Please try again.',
+      }))
     }
-    setModalOpen(false)
   }
 
   const copyCode = (code) => {
@@ -120,18 +128,23 @@ export default function AdminCouponsPage() {
     dispatch(pushToast({ type: 'info', message: `${code} copied to clipboard.` }))
   }
 
-  const toggleStatus = (coupon) => {
-    setCoupons((current) =>
-      current.map((item) =>
-        item.id === coupon.id ? { ...item, isActive: !item.isActive } : item,
-      ),
-    )
-    dispatch(
-      pushToast({
+  const toggleStatus = async (coupon) => {
+    try {
+      const saved = await setAdminCouponStatus(coupon.id, !coupon.isActive)
+      setCoupons((current) =>
+        current.map((item) => (item.id === coupon.id ? saved : item)),
+      )
+      dispatch(pushToast({
         type: 'info',
-        message: `${coupon.code} is now ${coupon.isActive ? 'inactive' : 'active'} in the demo.`,
-      }),
-    )
+        message: `${coupon.code} is now ${saved.isActive ? 'active' : 'inactive'}.`,
+      }))
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Update failed',
+        message: error?.message || 'Could not update this coupon.',
+      }))
+    }
   }
 
   const columns = [
@@ -209,13 +222,8 @@ export default function AdminCouponsPage() {
     <>
       <AdminPageHeader
         title="Coupons"
-        description="Preview layout only — coupon APIs arrive with Phase 4."
-        actions={
-          <>
-            <DemoBadge />
-            <Button onClick={openCreate}><Plus size={16} aria-hidden="true" /> Add coupon</Button>
-          </>
-        }
+        description="Promotions saved in the FreshCart database."
+        actions={<Button onClick={openCreate}><Plus size={16} aria-hidden="true" /> Add coupon</Button>}
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -252,7 +260,7 @@ export default function AdminCouponsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editing ? 'Edit coupon' : 'Add a coupon'}
-        description="Coupon changes are local preview actions. Backend validation arrives in Phase 4."
+        description="Coupon details are validated and saved by the API."
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
@@ -364,12 +372,21 @@ export default function AdminCouponsPage() {
       <ConfirmDialog
         open={Boolean(couponToDelete)}
         onClose={() => setCouponToDelete(null)}
-        onConfirm={() => {
-          setCoupons((current) => current.filter((coupon) => coupon.id !== couponToDelete.id))
-          dispatch(pushToast({ type: 'info', message: `${couponToDelete.code} deleted from the demo.` }))
+        onConfirm={async () => {
+          try {
+            await deleteAdminCoupon(couponToDelete.id)
+            setCoupons((current) => current.filter((coupon) => coupon.id !== couponToDelete.id))
+            dispatch(pushToast({ type: 'info', message: `${couponToDelete.code} deleted.` }))
+          } catch (error) {
+            dispatch(pushToast({
+              type: 'error',
+              title: 'Delete failed',
+              message: error?.message || 'Could not delete this coupon.',
+            }))
+          }
         }}
         title="Delete this coupon?"
-        message={`${couponToDelete?.code || 'This coupon'} will be removed from the demo promotion list.`}
+        message={`${couponToDelete?.code || 'This coupon'} will be permanently removed.`}
         confirmLabel="Delete coupon"
       />
     </>

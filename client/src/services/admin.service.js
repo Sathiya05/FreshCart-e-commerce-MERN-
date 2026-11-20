@@ -1,18 +1,9 @@
 import api from './api.js'
 import { normalizeCategory, normalizeProduct } from './catalog.service.js'
-import {
-  DEMO_COUPONS,
-  DEMO_CUSTOMERS,
-  DEMO_ORDERS,
-  DEMO_REVIEWS,
-} from '../data/demoData.js'
 
 /**
- * Protected admin catalog service backed by the Phase 3 REST API.
- *
- * Order, customer, coupon, review and sales endpoints belong to later phases.
- * Those exports keep explicit DEMO_ names so preview data cannot be mistaken
- * for live API results.
+ * Protected admin service backed by the FreshCart REST API. All list and
+ * mutation functions here read/write the live database.
  */
 const getData = (response) => response.data.data
 
@@ -113,7 +104,40 @@ export const getAdminInventory = async () => {
   }))
 }
 
-export const getDemoAdminOrders = async () => DEMO_ORDERS
-export const getDemoAdminCustomers = async () => DEMO_CUSTOMERS
-export const getDemoAdminCoupons = async () => DEMO_COUPONS
-export const getDemoAdminReviews = async () => DEMO_REVIEWS
+export const getAdminReports = () => api.get('/admin/reports').then(getData)
+
+export const syncAdminPayments = () =>
+  api.post('/admin/payments/sync').then(getData)
+
+export const getAdminCustomers = () =>
+  api.get('/admin/customers').then(getData)
+
+export const setAdminCustomerStatus = (id, isActive) =>
+  api.patch(`/admin/customers/${encodeURIComponent(id)}/status`, { isActive }).then(getData)
+
+export const getAdminCoupons = () => api.get('/admin/coupons').then(getData)
+
+export const createAdminCoupon = (payload) =>
+  api.post('/admin/coupons', payload).then(getData)
+
+export const updateAdminCoupon = (id, payload) =>
+  api.patch(`/admin/coupons/${encodeURIComponent(id)}`, payload).then(getData)
+
+export const setAdminCouponStatus = (id, isActive) =>
+  api.patch(`/admin/coupons/${encodeURIComponent(id)}/status`, { isActive }).then(getData)
+
+export const deleteAdminCoupon = (id) =>
+  api.delete(`/admin/coupons/${encodeURIComponent(id)}`).then(getData)
+
+export const getAdminReviews = () => api.get('/admin/reviews').then(getData)
+
+export const setAdminReviewStatus = (id, status) =>
+  api.patch(`/admin/reviews/${encodeURIComponent(id)}/status`, { status }).then(getData)
+
+export const deleteAdminReview = (id) =>
+  api.delete(`/admin/reviews/${encodeURIComponent(id)}`).then(getData)
+
+export const getAdminSettings = () => api.get('/admin/settings').then(getData)
+
+export const updateAdminSettings = (payload) =>
+  api.patch('/admin/settings', payload).then(getData)

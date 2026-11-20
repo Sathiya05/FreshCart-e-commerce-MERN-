@@ -242,6 +242,14 @@ If `enabled` is `false`, a key is missing or the API was not restarted.
 4. Confirm the failure page shows the server payment status and an order link.
 5. Open that order and click **Pay now** to create a fresh Razorpay order.
 
+## Admin reconciliation
+
+If Razorpay captured a payment but FreshCart still shows `Pending`, an admin can
+open **Admin → Orders → Sync payments** (or **Admin → Overview → Sync
+payments**). The API checks every pending Razorpay order with the provider and
+records any captured payment. This also repairs orders created before the paise
+amount-check fix.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -250,7 +258,7 @@ If `enabled` is `false`, a key is missing or the API was not restarted.
 | `PAYMENTS_NOT_CONFIGURED` | Keys absent in server environment | Complete step 4 and restart |
 | `INVALID_PAYMENT_SIGNATURE` | Key secret does not match the Razorpay account | Recopy the test key secret |
 | Webhook not reached | ngrok stopped or wrong URL | Restart ngrok and update the dashboard URL |
-| Payment paid but order still pending | Webhook secret mismatch or ngrok offline | Verify response normally updates it; check webhook logs and retry from order details |
+| Payment paid but order still pending | Webhook missed/rejected, or an older build double-converted the Razorpay paise amount | Open **Admin → Orders → Sync payments**. Future payments are verified correctly after deploying the current code |
 | UPI app shows “Something went wrong” | Test-mode keys (`rzp_test_...`) cannot open real UPI apps, or the checkout was opened on desktop | Use a test UPI ID in test mode; switch to live keys after account activation for GPay/PhonePe/Super.Money intents. On desktop, scan the QR code instead |
 | UPI app tile is missing | Unsupported shortcode or account feature disabled | The UI lists `google_pay`, `phonepe`, `super_money`, `paytm` and `bhim` (Razorpay Android mobile-web shortcodes). Contact Razorpay support if UPI Intent is not enabled on the account |
 
@@ -259,5 +267,4 @@ If `enabled` is `false`, a key is missing or the API was not restarted.
 - Automatic refunds and settlements
 - Live-mode keys in local development
 - Payment method save/tokenization UI
-- Sales reports built from paid orders
 - Razorpay payouts and route optimization

@@ -1,17 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Bell, CreditCard, RotateCcw, Save, Store, Truck } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
-import { DEMO_APP } from '../../data/demoData.js'
+import ErrorState from '../../components/ErrorState.jsx'
+import { SkeletonLine } from '../../components/Skeleton.jsx'
+import { useAsync } from '../../hooks/useAsync.js'
+import { getAdminSettings, updateAdminSettings } from '../../services/admin.service.js'
 import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 
 const initialSettings = {
-  storeName: DEMO_APP.name,
-  supportEmail: DEMO_APP.supportEmail,
-  supportPhone: DEMO_APP.supportPhone,
+  storeName: 'FreshCart',
+  supportEmail: 'support@freshcart.example',
+  supportPhone: '',
   currency: 'INR',
   freeDeliveryAbove: '999',
   defaultDeliveryFee: '30',
@@ -23,37 +26,59 @@ const initialSettings = {
 
 export default function AdminSettingsPage() {
   const dispatch = useAppDispatch()
+  const { status, data, error, refetch } = useAsync(getAdminSettings, [])
   const [settings, setSettings] = useState(initialSettings)
   const [resetOpen, setResetOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (data) setSettings(data)
+  }, [data])
 
   const update = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
     setSettings((current) => ({ ...current, [field]: value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    dispatch(
-      pushToast({
-        type: 'info',
-        message: 'Settings saved for this preview. Settings persistence is not part of the current API.',
-      }),
-    )
+    setSaving(true)
+    try {
+      const saved = await updateAdminSettings({
+        ...settings,
+        freeDeliveryAbove: Number(settings.freeDeliveryAbove) || 0,
+        defaultDeliveryFee: Number(settings.defaultDeliveryFee) || 0,
+        lowStockThreshold: Number(settings.lowStockThreshold) || 1,
+      })
+      setSettings(saved)
+      dispatch(pushToast({ title: 'Settings saved', message: 'Store settings were updated.' }))
+    } catch (apiError) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Could not save settings',
+        message: apiError?.message || 'Please try again.',
+      }))
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <>
       <AdminPageHeader
         title="Settings"
-        description="Configure storefront details and demo preferences."
+        description="Storefront and delivery preferences saved on the server."
         actions={
           <Button variant="outline" onClick={() => setResetOpen(true)}>
             <RotateCcw size={16} aria-hidden="true" />
-            Reset demo values
+            Reset values
           </Button>
         }
       />
 
+      {status === 'loading' && <SkeletonLine className="h-96 w-full rounded-2xl" />}
+      {status === 'error' && <ErrorState message={error} onRetry={refetch} />}
+      {status === 'success' && (
       <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
         <div className="space-y-6">
           <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
@@ -159,7 +184,7 @@ export default function AdminSettingsPage() {
               </span>
               <div>
                 <h2 className="font-semibold text-text-primary">Notifications</h2>
-                <p className="text-xs text-text-secondary">Choose which demo alerts appear.</p>
+                <p className="text-xs text-text-secondary">Choose which alerts are enabled.</p>
               </div>
             </div>
             <div className="mt-5 space-y-4">
@@ -223,25 +248,26 @@ export default function AdminSettingsPage() {
             </div>
           </section>
 
-          <Button type="submit" className="w-full" size="lg">
+          <Button type="submit" className="w-full" size="lg" disabled={saving}>
             <Save size={16} aria-hidden="true" />
-            Save demo settings
+            {saving ? 'Saving…' : 'Save settings'}
           </Button>
           <p className="text-center text-xs text-text-secondary">
-            Changes stay in local UI state until the settings API is built.
+            Changes are saved to the FreshCart database.
           </p>
         </div>
       </form>
+      )}
 
       <ConfirmDialog
         open={resetOpen}
         onClose={() => setResetOpen(false)}
         onConfirm={() => {
           setSettings(initialSettings)
-          dispatch(pushToast({ type: 'info', message: 'Demo settings restored to defaults.' }))
+          dispatch(pushToast({ type: 'info', message: 'Default values restored. Save to apply them.' }))
         }}
-        title="Reset demo settings?"
-        message="All unsaved changes in this form will be replaced with the original demo values."
+        title="Reset settings?"
+        message="All unsaved changes in this form will be replaced with the default values."
         confirmLabel="Reset values"
       />
     </>

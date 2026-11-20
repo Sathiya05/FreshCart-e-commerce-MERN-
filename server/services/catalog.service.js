@@ -5,6 +5,7 @@ import { User } from '../models/User.js'
 import { escapeRegex } from '../utils/slugify.js'
 import { buildPagination, parsePositiveInt } from '../utils/pagination.js'
 import { serializeProduct } from '../utils/serialize.js'
+import { getOrderStats, getRecentOrders } from './report.service.js'
 
 const { ObjectId } = mongoose.Types
 
@@ -164,6 +165,8 @@ export const getAdminOverview = async () => {
     customers,
     lowStock,
     outOfStock,
+    orderStats,
+    recentOrders,
   ] = await Promise.all([
     Product.countDocuments(),
     Product.countDocuments({ isActive: true }),
@@ -178,6 +181,8 @@ export const getAdminOverview = async () => {
       },
     }),
     Product.countDocuments({ stock: 0 }),
+    getOrderStats(),
+    getRecentOrders(5),
   ])
 
   return {
@@ -187,5 +192,7 @@ export const getAdminOverview = async () => {
     customers,
     lowStock,
     outOfStock,
+    ...orderStats,
+    recentOrders,
   }
 }

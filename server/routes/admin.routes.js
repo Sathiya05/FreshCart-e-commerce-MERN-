@@ -1,5 +1,21 @@
 import { Router } from 'express'
-import { getOverview } from '../controllers/admin.controller.js'
+import {
+  createCoupon,
+  deleteCoupon,
+  deleteReview,
+  getOverview,
+  getSalesReport,
+  getSettings,
+  listCoupons,
+  listCustomers,
+  listReviews,
+  syncPayments,
+  updateCoupon,
+  updateCouponStatus,
+  updateCustomerStatus,
+  updateReviewStatus,
+  updateSettings,
+} from '../controllers/admin.controller.js'
 import {
   createCategory,
   deleteCategory,
@@ -30,6 +46,17 @@ import {
   updateProductValidator,
 } from '../validators/catalog.validator.js'
 import {
+  couponIdValidator,
+  createCouponValidator,
+  customerIdValidator,
+  reviewIdValidator,
+  setCouponStatusValidator,
+  setCustomerStatusValidator,
+  setReviewStatusValidator,
+  updateCouponValidator,
+  updateSettingsValidator,
+} from '../validators/admin.validator.js'
+import {
   orderIdValidator,
   updateOrderStatusValidator,
 } from '../validators/order.validator.js'
@@ -45,6 +72,8 @@ router.use(requireDatabase)
 router.use(protect, authorize('admin'))
 
 router.get('/overview', getOverview)
+router.get('/reports', getSalesReport)
+router.post('/payments/sync', syncPayments)
 
 router.get('/uploads/config', getUploadConfig)
 router.post(
@@ -73,5 +102,36 @@ router.patch(
   validate,
   updateAdminOrderStatus,
 )
+
+router.get('/customers', listCustomers)
+router.patch(
+  '/customers/:id/status',
+  setCustomerStatusValidator,
+  validate,
+  updateCustomerStatus,
+)
+
+router.get('/coupons', listCoupons)
+router.post('/coupons', createCouponValidator, validate, createCoupon)
+router.patch(
+  '/coupons/:id/status',
+  setCouponStatusValidator,
+  validate,
+  updateCouponStatus,
+)
+router.patch('/coupons/:id', updateCouponValidator, validate, updateCoupon)
+router.delete('/coupons/:id', couponIdValidator, validate, deleteCoupon)
+
+router.get('/reviews', listReviews)
+router.patch(
+  '/reviews/:id/status',
+  setReviewStatusValidator,
+  validate,
+  updateReviewStatus,
+)
+router.delete('/reviews/:id', reviewIdValidator, validate, deleteReview)
+
+router.get('/settings', getSettings)
+router.patch('/settings', updateSettingsValidator, validate, updateSettings)
 
 export default router

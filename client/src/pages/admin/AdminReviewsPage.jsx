@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Search, Trash2, X } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
-import DemoBadge from '../../components/DemoBadge.jsx'
-import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
@@ -13,7 +11,11 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { truncate } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoAdminReviews } from '../../services/admin.service.js'
+import {
+  deleteAdminReview,
+  getAdminReviews,
+  setAdminReviewStatus,
+} from '../../services/admin.service.js'
 
 const statusTone = {
   approved: 'success',
@@ -23,7 +25,7 @@ const statusTone = {
 
 export default function AdminReviewsPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getDemoAdminReviews, [])
+  const { status, data, error, refetch } = useAsync(getAdminReviews, [])
   const [reviews, setReviews] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -45,16 +47,23 @@ export default function AdminReviewsPage() {
     [reviews, search, statusFilter],
   )
 
-  const updateStatus = (review, nextStatus) => {
-    setReviews((current) =>
-      current.map((item) => (item.id === review.id ? { ...item, status: nextStatus } : item)),
-    )
-    dispatch(
-      pushToast({
+  const updateStatus = async (review, nextStatus) => {
+    try {
+      const saved = await setAdminReviewStatus(review.id, nextStatus)
+      setReviews((current) =>
+        current.map((item) => (item.id === review.id ? saved : item)),
+      )
+      dispatch(pushToast({
         title: 'Review updated',
-        message: `${review.userName}'s review is now ${nextStatus} in this demo.`,
-      }),
-    )
+        message: `${review.userName}'s review is now ${nextStatus}.`,
+      }))
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Update failed',
+        message: error?.message || 'Could not update this review.',
+      }))
+    }
   }
 
   const columns = [
@@ -140,8 +149,7 @@ export default function AdminReviewsPage() {
     <>
       <AdminPageHeader
         title="Reviews"
-        description="Preview layout only — review APIs arrive with Phase 4."
-        actions={<DemoBadge />}
+        description="Customer reviews stored in FreshCart, with live moderation."
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -178,31 +186,26 @@ export default function AdminReviewsPage() {
       <ConfirmDialog
         open={Boolean(reviewToDelete)}
         onClose={() => setReviewToDelete(null)}
-        onConfirm={() => {
-          setReviews((current) => current.filter((review) => review.id !== reviewToDelete.id))
-          dispatch(pushToast({ type: 'info', message: 'Review deleted from the demo list.' }))
+        onConfirm={async () => {
+          try {
+            await deleteAdminReview(reviewToDelete.id)
+            setReviews((current) => current.filter((review) => review.id !== reviewToDelete.id))
+            dispatch(pushToast({ type: 'info', message: 'Review deleted.' }))
+          } catch (error) {
+            dispatch(pushToast({
+              type: 'error',
+              title: 'Delete failed',
+              message: error?.message || 'Could not delete this review.',
+            }))
+          }
         }}
         title="Delete this review?"
-        message={`The review from ${reviewToDelete?.userName || 'this customer'} will be permanently removed from the demo list.`}
+        message={`The review from ${reviewToDelete?.userName || 'this customer'} will be permanently removed.`}
         confirmLabel="Delete review"
       />
 
-      <div className="mt-5 flex items-center gap-2 text-xs text-text-secondary">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            dispatch(
-              pushToast({
-                type: 'info',
-                message: 'Review moderation connects to the API in Phase 4.',
-              }),
-            )
-          }
-        >
-          About moderation
-        </Button>
-        All actions in this table are local preview actions; review APIs arrive in Phase 4.
+      <div className="mt-5 text-xs text-text-secondary">
+        Approve, reject or delete reviews. Changes are saved immediately through the API.
       </div>
     </>
   )

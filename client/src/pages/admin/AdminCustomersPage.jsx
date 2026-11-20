@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Eye, Search } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
-import DemoBadge from '../../components/DemoBadge.jsx'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import DataTable from '../../components/DataTable.jsx'
@@ -13,13 +12,16 @@ import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatNumber } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getDemoAdminCustomers } from '../../services/admin.service.js'
+import {
+  getAdminCustomers,
+  setAdminCustomerStatus,
+} from '../../services/admin.service.js'
 
 const statusTone = { Active: 'success', Inactive: 'neutral' }
 
 export default function AdminCustomersPage() {
   const dispatch = useAppDispatch()
-  const { status, data, error, refetch } = useAsync(getDemoAdminCustomers, [])
+  const { status, data, error, refetch } = useAsync(getAdminCustomers, [])
   const [customers, setCustomers] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -48,18 +50,27 @@ export default function AdminCustomersPage() {
     [customers, search, statusFilter],
   )
 
-  const setCustomerStatus = (id, nextStatus) => {
-    setCustomers((current) =>
-      current.map((customer) =>
-        customer.id === id ? { ...customer, status: nextStatus } : customer,
-      ),
-    )
-    dispatch(
-      pushToast({
-        title: 'Customer status updated',
-        message: `Demo account is now ${nextStatus.toLowerCase()}.`,
-      }),
-    )
+  const setCustomerStatus = async (id, nextStatus) => {
+    try {
+      await setAdminCustomerStatus(id, nextStatus === 'Active')
+      setCustomers((current) =>
+        current.map((customer) =>
+          customer.id === id ? { ...customer, status: nextStatus } : customer,
+        ),
+      )
+      dispatch(
+        pushToast({
+          title: 'Customer status updated',
+          message: `Account is now ${nextStatus.toLowerCase()}.`,
+        }),
+      )
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Update failed',
+        message: error?.message || 'Could not update this customer.',
+      }))
+    }
   }
 
   const columns = [
@@ -125,8 +136,7 @@ export default function AdminCustomersPage() {
     <>
       <AdminPageHeader
         title="Customers"
-        description="Preview layout only — customer APIs arrive with Phase 4."
-        actions={<DemoBadge />}
+        description="Registered customers and lifetime spend from live orders."
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
@@ -163,7 +173,7 @@ export default function AdminCustomersPage() {
         open={Boolean(selectedCustomer)}
         onClose={() => setSelectedCustomer(null)}
         title={selectedCustomer?.name || 'Customer'}
-        description="Demo customer profile. Customer management APIs are planned for Phase 4."
+        description="Live customer profile and order summary."
         footer={<Button variant="outline" onClick={() => setSelectedCustomer(null)}>Close</Button>}
       >
         {selectedCustomer && (
@@ -201,7 +211,7 @@ export default function AdminCustomersPage() {
         onClose={() => setCustomerToDeactivate(null)}
         onConfirm={() => setCustomerStatus(customerToDeactivate.id, 'Inactive')}
         title="Deactivate this customer?"
-        message={`${customerToDeactivate?.name || 'This customer'} will lose demo account access until reactivated.`}
+        message={`${customerToDeactivate?.name || 'This customer'} will lose account access until reactivated.`}
         confirmLabel="Deactivate customer"
       />
     </>

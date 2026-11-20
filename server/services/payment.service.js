@@ -64,7 +64,12 @@ const assertPaymentMatchesOrder = (order, payment) => {
     )
   }
 
-  if (toPaise(payment.amount) !== toPaise(order.totalAmount)) {
+  // Razorpay always reports `payment.amount` in paise. Multiplying it by 100
+  // again made every real payment fail this check, leaving orders Pending even
+  // after Razorpay captured the money.
+  const paidPaise = Math.round(Number(payment.amount))
+  const orderPaise = toPaise(order.totalAmount)
+  if (!Number.isFinite(paidPaise) || paidPaise !== orderPaise) {
     throw new ApiError(
       400,
       'The paid amount does not match the order total.',
@@ -190,6 +195,50 @@ export const getPaymentConfig = () => ({
   keyId: env.razorpayConfigured ? env.razorpayKeyId : '',
   currency: env.razorpayCurrency,
 })
+
+/**
+ * Reconcile orders that were paid in Razorpay but stayed Pending because a
+ * webhook was missed or an older build rejected the paise amount. Admin-only.
+ */
+export const syncPendingRazorpayPayments = async () => {
+  const razorpay = requireRazorpay()
+  const orders = await Order.find({
+    paymentMethod: 'razorpay',
+    paymentStatus: 'Pending',
+    razorpayOrderId: { $nin: ['', null] },
+  }).sort({ createdAt: -1 })
+
+  const result = { checked: orders.length, updated: 0, errors: [] }
+
+  for (const order of orders) {
+    try {
+      const response = await razorpay.orders.fetchPayments(order.razorpayOrderId)
+      const payments = response?.items || []
+      const successful = payments.find((payment) => {
+        if (!SUCCESSFUL_PAYMENT_STATUSES.has(payment?.status)) return false
+        try {
+          assertPaymentMatchesOrder(order, payment)
+          return true
+        } catch {
+          return false
+        }
+      })
+
+      if (!successful) continue
+
+      await markPaid(order, successful.id)
+      result.updated += 1
+    } catch (error) {
+      result.errors.push({
+        orderId: String(order._id),
+        orderNumber: order.orderNumber,
+        message: error?.error?.description || error?.message || 'Sync failed',
+      })
+    }
+  }
+
+  return result
+}
 
 export const createRazorpayOrderFromCart = async (userId, payload) => {
   requireRazorpay()

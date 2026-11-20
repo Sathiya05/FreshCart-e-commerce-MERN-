@@ -1,31 +1,88 @@
+import { useEffect, useState } from 'react'
 import {
   AlertTriangle,
-  Boxes,
   CheckCircle2,
   CircleDashed,
+  CreditCard,
   Package,
+  RefreshCw,
+  ShoppingCart,
   Tags,
   Users,
+  Wallet,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
+import Button from '../../components/Button.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
 import StatCard from '../../components/StatCard.jsx'
 import { TableSkeleton } from '../../components/Skeleton.jsx'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
-import { getAdminOverview, getAdminProducts } from '../../services/admin.service.js'
+import { useAppDispatch } from '../../redux/hooks.js'
+import { pushToast } from '../../redux/uiSlice.js'
+import {
+  getAdminOverview,
+  getAdminProducts,
+  syncAdminPayments,
+} from '../../services/admin.service.js'
 
 export default function AdminDashboardPage() {
+  const dispatch = useAppDispatch()
   const overview = useAsync(getAdminOverview, [])
   const products = useAsync(getAdminProducts, [])
+  const [liveOverview, setLiveOverview] = useState(overview.data)
+  const [syncing, setSyncing] = useState(false)
+
+  useEffect(() => {
+    if (overview.data) setLiveOverview(overview.data)
+  }, [overview.data])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      getAdminOverview()
+        .then((updated) => setLiveOverview(updated))
+        .catch(() => {
+          // Keep the last known numbers if a background refresh fails.
+        })
+    }, 20000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const syncPayments = async () => {
+    setSyncing(true)
+    try {
+      const result = await syncAdminPayments()
+      overview.refetch()
+      dispatch(pushToast({
+        title: 'Payment sync complete',
+        message: `${result.updated || 0} order(s) updated from Razorpay.`,
+      }))
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Sync failed',
+        message: error?.message || 'Could not sync payments right now.',
+      }))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const summary = liveOverview || overview.data
 
   return (
     <>
       <AdminPageHeader
         title="Overview"
-        description="Live counts from your FreshCart database."
+        description="Live counts, orders and revenue from your FreshCart database."
+        actions={
+          <Button variant="outline" onClick={syncPayments} disabled={syncing}>
+            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} aria-hidden="true" />
+            {syncing ? 'Syncing…' : 'Sync payments'}
+          </Button>
+        }
       />
 
       {overview.isError && <ErrorState message={overview.error} onRetry={overview.refetch} />}
@@ -41,12 +98,15 @@ export default function AdminDashboardPage() {
       {overview.status === 'success' && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard label="Total products" value={overview.data.products} icon={Package} />
-            <StatCard label="Active products" value={overview.data.activeProducts} icon={CheckCircle2} tone="info" />
-            <StatCard label="Categories" value={overview.data.categories} icon={Tags} />
-            <StatCard label="Customers" value={overview.data.customers} icon={Users} />
-            <StatCard label="Low stock" value={overview.data.lowStock} icon={AlertTriangle} tone="warning" />
-            <StatCard label="Out of stock" value={overview.data.outOfStock} icon={CircleDashed} tone="warning" />
+            <StatCard label="Revenue (paid)" value={formatCurrency(summary?.revenue)} icon={Wallet} tone="info" />
+            <StatCard label="Total orders" value={summary?.orders || 0} icon={ShoppingCart} />
+            <StatCard label="Paid orders" value={summary?.paidOrders || 0} icon={CheckCircle2} tone="info" />
+            <StatCard label="Awaiting payment" value={summary?.pendingPayment || 0} icon={CreditCard} tone="warning" />
+            <StatCard label="Customers" value={summary?.customers || 0} icon={Users} />
+            <StatCard label="Products" value={summary?.products || 0} icon={Package} />
+            <StatCard label="Categories" value={summary?.categories || 0} icon={Tags} />
+            <StatCard label="Low stock" value={summary?.lowStock || 0} icon={AlertTriangle} tone="warning" />
+            <StatCard label="Out of stock" value={summary?.outOfStock || 0} icon={CircleDashed} tone="warning" />
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -120,19 +180,38 @@ export default function AdminDashboardPage() {
             </section>
 
             <section className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
-              <h2 className="flex items-center gap-2 font-semibold text-text-primary">
-                <Boxes size={18} className="text-brand-primary" aria-hidden="true" />
-                What is live
-              </h2>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-text-secondary">
-                <li>✓ Secure customer registration and login</li>
-                <li>✓ Public product and category browsing</li>
-                <li>✓ Admin product and category management</li>
-                <li>✓ Real MongoDB stock and customer counts</li>
-              </ul>
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 font-semibold text-text-primary">
+                  <ShoppingCart size={18} className="text-brand-primary" aria-hidden="true" />
+                  Recent orders
+                </h2>
+                <Link to="/admin/orders" className="text-xs font-semibold text-brand-primary">
+                  View all
+                </Link>
+              </div>
+              {(summary?.recentOrders || []).length === 0 ? (
+                <p className="mt-6 text-sm text-text-secondary">No orders have been placed yet.</p>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {summary.recentOrders.map((order) => (
+                    <div key={order.id} className="rounded-xl border border-app-border p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{order.orderNumber}</p>
+                        <Badge tone={order.paymentStatus === 'Paid' ? 'success' : 'warning'}>
+                          {order.paymentStatus}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-3 text-xs text-text-secondary">
+                        <span>{order.customer?.name || order.address?.fullName || 'Customer'}</span>
+                        <span className="font-medium text-text-primary">{formatCurrency(order.totalAmount)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <p className="mt-5 rounded-xl bg-app-background p-4 text-xs leading-5 text-text-secondary">
-                Revenue, orders and sales charts will appear when the commerce and payment APIs
-                are added. No placeholder figures are shown here.
+                This overview refreshes automatically. Use “Sync payments” if Razorpay captured
+                a payment but its webhook did not arrive.
               </p>
             </section>
           </div>

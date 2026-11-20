@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Eye, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Eye, RefreshCw, Search } from 'lucide-react'
 import AdminPageHeader from '../../components/AdminPageHeader.jsx'
 import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
@@ -17,6 +17,7 @@ import {
   getAdminOrders,
   updateAdminOrderStatus,
 } from '../../services/commerce.service.js'
+import { syncAdminPayments } from '../../services/admin.service.js'
 
 const statuses = [
   'Pending',
@@ -41,13 +42,50 @@ export default function AdminOrdersPage() {
     () => getAdminOrders({ limit: 60 }),
     [],
   )
+  const [liveData, setLiveData] = useState(data)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [orderToCancel, setOrderToCancel] = useState(null)
   const [updating, setUpdating] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
-  const orders = data?.items || []
+  useEffect(() => {
+    if (data) setLiveData(data)
+  }, [data])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      getAdminOrders({ limit: 60 })
+        .then((updated) => setLiveData(updated))
+        .catch(() => {
+          // Keep the last known orders if a background refresh fails.
+        })
+    }, 20000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const syncPayments = async () => {
+    setSyncing(true)
+    try {
+      const result = await syncAdminPayments()
+      refetch()
+      dispatch(pushToast({
+        title: 'Payment sync complete',
+        message: `${result.updated || 0} order(s) updated from Razorpay.`,
+      }))
+    } catch (error) {
+      dispatch(pushToast({
+        type: 'error',
+        title: 'Sync failed',
+        message: error?.message || 'Could not sync payments right now.',
+      }))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const orders = liveData?.items || []
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) || null
 
   const filtered = useMemo(
@@ -148,7 +186,13 @@ export default function AdminOrdersPage() {
     <>
       <AdminPageHeader
         title="Orders"
-        description="Review live orders and update fulfilment status."
+        description="Review live orders, payment status and fulfilment updates."
+        actions={
+          <Button variant="outline" onClick={syncPayments} disabled={syncing}>
+            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} aria-hidden="true" />
+            {syncing ? 'Syncing…' : 'Sync payments'}
+          </Button>
+        }
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
