@@ -186,8 +186,8 @@ export default function CheckoutPage() {
           Orders are created securely on the server with live prices and stock. Online payments are verified by FreshCart before an order is marked paid.
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          <div className="space-y-8">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[1fr_380px]">
+          <div className="min-w-0 space-y-8">
             <section>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
@@ -395,7 +395,7 @@ export default function CheckoutPage() {
             </section>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <OrderSummary
               subtotal={subtotal}
               deliveryCharge={deliveryCharge}
