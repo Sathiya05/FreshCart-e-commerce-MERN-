@@ -26,15 +26,39 @@ const api = axios.create({
 })
 
 let refreshRequest = null
+let sessionCleanup = null
+let unauthorizedHandler = null
+
+/** Lets the app drop its auth state when a session cannot be renewed. */
+export const setUnauthorizedHandler = (handler) => {
+  unauthorizedHandler = handler
+}
 
 const isAuthEndpoint = (url = '') =>
-  /\/(login|register|refresh|logout)(\?|$)/.test(url)
+  /\/(login|register|refresh|logout|google)(\?|$)/.test(url)
+
+const clearExpiredSession = () => {
+  if (sessionCleanup) return sessionCleanup
+
+  // HttpOnly cookies can only be removed by the API. This also avoids a refresh
+  // loop when several requests fail at the same time.
+  sessionCleanup = api
+    .post('/auth/logout')
+    .catch(() => {})
+    .finally(() => {
+      sessionCleanup = null
+    })
+
+  unauthorizedHandler?.()
+  return sessionCleanup
+}
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
     const status = error.response?.status
+    let sessionExpired = false
 
     if (
       status === 401 &&
@@ -57,10 +81,15 @@ api.interceptors.response.use(
       if (await refreshRequest) {
         return api(originalRequest)
       }
+
+      sessionExpired = true
+      clearExpiredSession()
     }
 
     const apiError = error.response?.data?.error
-    if (apiError?.message) {
+    if (sessionExpired) {
+      error.message = 'Your session has expired. Please sign in again.'
+    } else if (apiError?.message) {
       error.message = apiError.message
     } else if (!error.response) {
       const isTimeout =

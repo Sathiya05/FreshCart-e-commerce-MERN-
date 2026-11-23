@@ -180,6 +180,7 @@ Local checks:
 ```bash
 cd server
 npm run test:whatsapp-share
+npm run test:google-auth
 cd ../client
 npm run build
 ```

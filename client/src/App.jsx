@@ -2,7 +2,9 @@ import { useEffect } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import AppRoutes from './routes/AppRoutes.jsx'
 import { useAppDispatch, useAppSelector } from './redux/hooks.js'
-import { restoreSession, selectAuthInitialized } from './redux/authSlice.js'
+import { restoreSession, selectAuthInitialized, signOut } from './redux/authSlice.js'
+import { pushToast } from './redux/uiSlice.js'
+import { setUnauthorizedHandler } from './services/api.js'
 
 export default function App() {
   const dispatch = useAppDispatch()
@@ -10,6 +12,20 @@ export default function App() {
 
   useEffect(() => {
     dispatch(restoreSession())
+  }, [dispatch])
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      dispatch(signOut())
+      dispatch(
+        pushToast({
+          type: 'info',
+          message: 'Your session has expired. Please sign in again.',
+        }),
+      )
+    })
+
+    return () => setUnauthorizedHandler(null)
   }, [dispatch])
 
   if (!initialized) {

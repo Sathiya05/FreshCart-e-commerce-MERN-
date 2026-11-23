@@ -103,7 +103,9 @@ export const googleSignIn = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'A verified Google email is required.', 'GOOGLE_EMAIL_UNVERIFIED')
   }
 
-  let user = await User.findOne({ email })
+  // tokenVersion is select:false. It must be loaded before issuing tokens or a
+  // customer who previously signed out gets an immediately stale session.
+  let user = await User.findOne({ email }).select('+tokenVersion')
 
   if (user && !user.isActive) {
     throw new ApiError(403, 'This account has been deactivated.', 'ACCOUNT_INACTIVE')
