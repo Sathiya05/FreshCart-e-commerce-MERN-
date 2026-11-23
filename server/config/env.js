@@ -92,6 +92,7 @@ export const env = {
     (isProduction && process.env.COOKIE_SECURE !== 'false'),
   cookieSameSite: process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax'),
   cookieDomain: process.env.COOKIE_DOMAIN || undefined,
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   razorpayKeyId,
   razorpayKeySecret,
   razorpayWebhookSecret,

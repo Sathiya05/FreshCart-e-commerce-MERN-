@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto'
+import { OAuth2Client } from 'google-auth-library'
 import { env } from '../config/env.js'
 import { User } from '../models/User.js'
 import { ApiError } from '../utils/apiError.js'
@@ -14,6 +16,16 @@ const authPayload = (user) => ({
   user: serializeUser(user),
   accessToken: generateAccessToken(user),
 })
+
+const googleClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null
+
+const googleDisplayName = (payload, email) => {
+  const candidate = String(payload?.name || '').trim()
+  if (candidate.length >= 2) return candidate.slice(0, 80)
+
+  const emailName = email.split('@')[0].trim()
+  return emailName.length >= 2 ? emailName.slice(0, 80) : 'FreshCart User'
+}
 
 export const register = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body
@@ -45,6 +57,68 @@ export const login = asyncHandler(async (req, res) => {
 
   if (!user.isActive) {
     throw new ApiError(403, 'This account has been deactivated.', 'ACCOUNT_INACTIVE')
+  }
+
+  setAuthCookies(res, generateAuthTokens(user))
+  res.json({ success: true, data: authPayload(user) })
+})
+
+/** Non-secret configuration for the login page. The OAuth client ID is public. */
+export const getGoogleAuthConfig = asyncHandler(async (_req, res) => {
+  res.json({
+    success: true,
+    data: {
+      enabled: Boolean(googleClient),
+      clientId: googleClient ? env.googleClientId : '',
+    },
+  })
+})
+
+/**
+ * Verifies Google's ID token on the server. Only a verified email is trusted;
+ * the browser never supplies a name, role, user ID or token secret.
+ */
+export const googleSignIn = asyncHandler(async (req, res) => {
+  if (!googleClient) {
+    throw new ApiError(
+      503,
+      'Google sign-in is not configured on this server.',
+      'GOOGLE_AUTH_DISABLED',
+    )
+  }
+
+  let payload
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: req.body.credential,
+      audience: env.googleClientId,
+    })
+    payload = ticket.getPayload()
+  } catch {
+    throw new ApiError(401, 'Google sign-in failed or expired. Please try again.', 'GOOGLE_TOKEN_INVALID')
+  }
+
+  const email = String(payload?.email || '').toLowerCase().trim()
+  if (!email || payload?.email_verified !== true) {
+    throw new ApiError(403, 'A verified Google email is required.', 'GOOGLE_EMAIL_UNVERIFIED')
+  }
+
+  let user = await User.findOne({ email })
+
+  if (user && !user.isActive) {
+    throw new ApiError(403, 'This account has been deactivated.', 'ACCOUNT_INACTIVE')
+  }
+
+  if (!user) {
+    user = await User.create({
+      name: googleDisplayName(payload, email),
+      email,
+      // Google users never need this password. It is random and bcrypt-hashed.
+      password: randomBytes(32).toString('hex'),
+      avatar: String(payload.picture || '').slice(0, 500),
+      role: 'customer',
+      isActive: true,
+    })
   }
 
   setAuthCookies(res, generateAuthTokens(user))

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import {
   getCurrentUser,
+  googleSignInAccount,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -29,6 +30,17 @@ export const loginUser = createAsyncThunk(
       return await loginAccount(credentials)
     } catch (error) {
       return rejectWithValue(getErrorMessage(error, 'Could not sign in.'))
+    }
+  },
+)
+
+export const googleSignInUser = createAsyncThunk(
+  'auth/google',
+  async (credential, { rejectWithValue }) => {
+    try {
+      return await googleSignInAccount(credential)
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, 'Could not sign in with Google.'))
     }
   },
 )
@@ -109,6 +121,19 @@ const authSlice = createSlice({
         state.initialized = true
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.status = 'unauthenticated'
+        state.error = action.payload
+      })
+      .addCase(googleSignInUser.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(googleSignInUser.fulfilled, (state, action) => {
+        state.user = action.payload.user
+        state.status = 'authenticated'
+        state.initialized = true
+      })
+      .addCase(googleSignInUser.rejected, (state, action) => {
         state.status = 'unauthenticated'
         state.error = action.payload
       })

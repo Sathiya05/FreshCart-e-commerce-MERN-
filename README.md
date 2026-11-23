@@ -2,8 +2,8 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 7, Gemini AI assistant and manual WhatsApp handoff are implemented.** Auth,
-> catalog, admin catalog, sign-in-required persistent carts, address book, server-owned delivery
+> **Current status: Phase 7, Gemini AI assistant and manual WhatsApp handoff are implemented.** Auth
+> (with optional Google sign-in), catalog, admin catalog, sign-in-required persistent carts, address book, server-owned delivery
 > slots with a 20–30 min instant option, server-calculated checkout, COD orders,
 > verified online payments, order
 > history/tracking and admin order status updates use real APIs. The website
@@ -111,6 +111,19 @@ Open http://localhost:5173. The storefront reads the live catalog once MongoDB i
 connected. Register a customer account in the UI, or create an admin locally with
 `npm run create-admin` from `server/`, then sign in normally — there are no demo
 sign-in buttons. Sessions are restored from HttpOnly cookies on reload.
+
+### Google sign-in
+
+The login page also offers **Continue with Google** when `GOOGLE_CLIENT_ID` is set
+on the API. Create a Web OAuth client in Google Cloud Console, add the storefront
+origin to **Authorized JavaScript origins** (`http://localhost:5173` and
+`https://freshcart-e-commerce-mern.pages.dev`), then set `GOOGLE_CLIENT_ID` in
+`server/.env` and on Render. The client ID is public and is returned by
+`GET /api/auth/google/config`; no client secret or `VITE_*` value belongs in the
+browser. Google's ID token is verified on the server, a new verified email gets a
+FreshCart customer account, and the same HttpOnly session cookies are used. If the
+variable is blank, the button stays visible but disabled and email sign-in keeps
+working.
 
 ## Verification
 

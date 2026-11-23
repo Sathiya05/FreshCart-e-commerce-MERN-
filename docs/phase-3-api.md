@@ -87,7 +87,7 @@ rendering.
 
 | UI area | Service | Endpoints |
 | --- | --- | --- |
-| Sign in, register, sign out, profile | `auth.service.js` + `authSlice.js` | `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/me` |
+| Sign in, register, Google sign-in, sign out, profile | `auth.service.js` + `authSlice.js` | `/auth/login`, `/auth/register`, `/auth/google/config`, `/auth/google`, `/auth/logout`, `/auth/me` |
 | Home, shop, search, categories, product details | `catalog.service.js` | `/categories`, `/products`, `/categories/:slug`, `/products/:id` |
 | Admin overview, products, categories | `admin.service.js` | `/admin/overview`, `/admin/products`, `/admin/categories` |
 | Admin inventory | `admin.service.js` | `GET/PATCH /admin/products` |
@@ -107,6 +107,9 @@ recovery and sales reports remain demo/preview screens.
 
 - `POST /api/auth/register` creates a customer account.
 - `POST /api/auth/login` verifies the password and starts a session.
+- `GET /api/auth/google/config` returns the non-secret public client ID/enable flag.
+- `POST /api/auth/google` verifies a Google ID token server-side and starts the
+  same FreshCart session; a new verified email becomes a customer account.
 - `POST /api/auth/refresh` rotates cookies using the HttpOnly refresh token.
 - `POST /api/auth/logout` increments the user's token version and clears cookies.
 - `GET /api/auth/me` returns the signed-in user.
@@ -116,6 +119,13 @@ Both tokens are stored in HttpOnly cookies scoped to `/api`. The API also
 accepts an `Authorization: Bearer <accessToken>` header and returns the access
 token in the login/register response for non-browser clients. The refresh token
 is never returned in a response body.
+
+Google sign-in uses Google Identity Services in the browser. The public client ID
+comes from the config endpoint, and the ID token is verified by
+`google-auth-library` on the server with `GOOGLE_CLIENT_ID`. The browser never
+sends a client secret, role, user ID or custom session token. Add the storefront
+origin to the OAuth client's Authorized JavaScript origins; no Cloudflare Pages
+environment variable is required for this feature.
 
 Example login:
 

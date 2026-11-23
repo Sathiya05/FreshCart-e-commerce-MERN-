@@ -26,6 +26,17 @@ export const loginValidator = [
   body('password').isString().notEmpty().withMessage('Password is required'),
 ]
 
+export const googleAuthValidator = [
+  body('credential')
+    .isString()
+    .withMessage('Google credential must be text')
+    .trim()
+    .notEmpty()
+    .withMessage('Google credential is required')
+    .isLength({ max: 4096 })
+    .withMessage('Google credential is too long'),
+]
+
 export const updateProfileValidator = [
   body('name')
     .optional()
