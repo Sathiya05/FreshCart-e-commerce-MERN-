@@ -186,7 +186,22 @@ const callProvider = async ({ contents, tools, signal }) => {
       )
     }
 
-    console.error('[ai] Gemini request failed:', error?.status || error?.statusCode || '', error?.message || error)
+    const status = error?.status || error?.statusCode || error?.response?.status
+    const providerMessage = String(error?.message || '')
+    const isRateLimited =
+      status === 429 ||
+      /quota|rate limit|resource_exhausted|too many requests/i.test(providerMessage)
+
+    if (isRateLimited) {
+      console.warn('[ai] Gemini rate limited:', status || '')
+      throw new ApiError(
+        429,
+        'The assistant is busy right now. Please try again shortly.',
+        'AI_RATE_LIMITED',
+      )
+    }
+
+    console.error('[ai] Gemini request failed:', status || '', providerMessage)
     throw new ApiError(
       502,
       'The AI provider could not answer right now. Please try again shortly.',
