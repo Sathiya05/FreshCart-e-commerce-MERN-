@@ -52,7 +52,7 @@ export default function MyOrdersPage() {
           ))}
         </div>
 
-        {status === 'loading' && <TableSkeleton rows={4} columns={5} />}
+        {status === 'loading' && <TableSkeleton rows={4} columns={5} columnsClass="grid-cols-1 sm:grid-cols-3 lg:grid-cols-5" />}
         {status === 'error' && <ErrorState message={error} onRetry={refetch} />}
         {status === 'success' && orders.length === 0 && (
           <EmptyState
@@ -68,8 +68,8 @@ export default function MyOrdersPage() {
             {orders.map((order) => (
               <article key={order.id} className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border pb-4">
-                  <div>
-                    <p className="font-semibold text-text-primary">{order.orderNumber || order.id}</p>
+                  <div className="min-w-0">
+                    <p className="break-all font-semibold text-text-primary">{order.orderNumber || order.id}</p>
                     <p className="mt-1 text-xs text-text-secondary">
                       Placed on {order.date} · {order.itemCount} items
                     </p>
@@ -77,24 +77,29 @@ export default function MyOrdersPage() {
                   <OrderStatusBadge status={order.status} />
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-4">
-                  <div className="flex -space-x-2">
-                    {order.items.map((item) => (
+                  <div className="flex max-w-full flex-wrap overflow-hidden -space-x-2">
+                    {order.items.slice(0, 5).map((item) => (
                       <img
                         key={item.productId}
                         src={item.image}
                         alt={item.name}
-                        className="h-11 w-11 rounded-full border-2 border-surface object-cover"
+                        className="h-11 w-11 shrink-0 rounded-full border-2 border-surface object-cover"
                       />
                     ))}
+                    {order.items.length > 5 && (
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-surface bg-app-background text-xs font-semibold text-text-secondary">
+                        +{order.items.length - 5}
+                      </span>
+                    )}
                   </div>
-                  <div className="ml-auto text-right">
+                  <div className="ml-auto min-w-0 text-right">
                     <p className="text-xs text-text-secondary">Total</p>
-                    <p className="font-bold text-text-primary">{formatCurrency(order.totalAmount)}</p>
+                    <p className="break-words font-bold text-text-primary">{formatCurrency(order.totalAmount)}</p>
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Button as={Link} to={`/account/orders/${order.id}`} size="sm">View details</Button>
-                  <Button as={Link} to={`/account/orders/${order.id}/track`} size="sm" variant="outline">
+                  <Button as={Link} to={`/account/orders/${order.id}`} size="sm" className="h-11 sm:h-9">View details</Button>
+                  <Button as={Link} to={`/account/orders/${order.id}/track`} size="sm" variant="outline" className="h-11 sm:h-9">
                     <RotateCcw size={14} aria-hidden="true" />
                     Track order
                   </Button>

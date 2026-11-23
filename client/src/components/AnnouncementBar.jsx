@@ -17,7 +17,7 @@ export default function AnnouncementBar() {
           </span>
         ))}
         <span
-          className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white"
+          className="hidden shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white sm:flex"
           title="Build marker: cart and Buy Now fixes are loaded"
         >
           <CheckCircle2 size={12} aria-hidden="true" />

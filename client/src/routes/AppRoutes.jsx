@@ -48,7 +48,7 @@ export default function AppRoutes() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-app-background text-text-secondary" role="status">
+        <div className="flex min-h-dvh items-center justify-center bg-app-background text-text-secondary" role="status">
           <LoaderCircle className="mr-2 animate-spin text-brand-primary" size={20} aria-hidden="true" />
           Loading…
         </div>

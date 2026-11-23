@@ -11,7 +11,7 @@ const highlights = [
 
 export default function AuthLayout() {
   return (
-    <div className="min-h-screen bg-app-background lg:grid lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="min-h-dvh bg-app-background lg:grid lg:grid-cols-[1.05fr_0.95fr]">
       <div className="relative hidden overflow-hidden bg-brand-dark p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-primary/30 blur-3xl" />
         <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-accent/10 blur-3xl" />
@@ -56,13 +56,13 @@ export default function AuthLayout() {
             Back to storefront
           </Link>
         </div>
-        <div className="flex flex-1 items-start justify-center px-5 pb-12 pt-4 sm:items-center sm:py-12">
+        <div className="flex flex-1 items-start justify-center px-4 pb-32 pt-4 sm:items-center sm:px-6 sm:pb-16 sm:pt-8">
           <div className="w-full max-w-md">
             <Outlet />
           </div>
         </div>
       </div>
-      <ToastHost />
+      <ToastHost className="inset-x-3 bottom-24 sm:inset-x-auto sm:bottom-6 sm:right-6" />
     </div>
   )
 }

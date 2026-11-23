@@ -50,15 +50,18 @@ export default function AIChatPanel({
       role="dialog"
       aria-label="FreshCart AI assistant"
       aria-hidden={!open}
-      className={`absolute bottom-full right-0 mb-3 flex w-[calc(100vw-2rem)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-app-border bg-surface shadow-2xl transition-all duration-200 sm:w-[380px] ${
-        compact ? 'max-h-[calc(100dvh-13rem)]' : 'max-h-[calc(100dvh-10rem)]'
-      } ${
+      style={{
+        maxHeight: compact
+          ? 'calc(100dvh - 13rem - var(--dock-lift, 0rem))'
+          : 'calc(100dvh - 10rem - var(--dock-lift, 0rem))',
+      }}
+      className={`absolute bottom-full right-0 mb-3 flex w-[min(380px,calc(100vw-2rem))] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-app-border bg-surface shadow-2xl transition-all duration-200 ${
         open
           ? 'visible translate-y-0 scale-100 opacity-100'
           : 'invisible pointer-events-none translate-y-2 scale-95 opacity-0'
       }`}
     >
-      <div className="flex items-center gap-3 bg-gradient-to-r from-brand-primary to-brand-dark px-4 py-3 text-white">
+      <div className="flex shrink-0 items-center gap-3 bg-gradient-to-r from-brand-primary to-brand-dark px-4 py-3 text-white">
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/15">
           <Sparkles size={18} aria-hidden="true" />
         </span>
@@ -165,7 +168,7 @@ export default function AIChatPanel({
         )}
       </div>
 
-      <div className="border-t border-app-border bg-surface px-4 py-3">
+      <div className="ai-suggestions shrink-0 border-t border-app-border bg-surface px-4 py-3">
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
           Try asking
         </p>
@@ -184,7 +187,9 @@ export default function AIChatPanel({
         </div>
       </div>
 
-      <AIChatComposer onSend={onSend} disabled={thinking} />
+      <div className="shrink-0">
+        <AIChatComposer onSend={onSend} disabled={thinking} />
+      </div>
     </div>
   )
 }

@@ -82,9 +82,9 @@ export default function AdminCustomersPage() {
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-secondary text-xs font-bold text-brand-dark">
             {row.name.charAt(0)}
           </span>
-          <div>
-            <p className="font-medium text-text-primary">{row.name}</p>
-            <p className="text-xs text-text-secondary">{row.email}</p>
+          <div className="min-w-0">
+            <p className="truncate font-medium text-text-primary">{row.name}</p>
+            <p className="truncate text-xs text-text-secondary">{row.email}</p>
           </div>
         </div>
       ),
@@ -113,17 +113,17 @@ export default function AdminCustomersPage() {
           <button
             type="button"
             onClick={() => setSelectedCustomer(row)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-app-background hover:text-brand-primary"
             aria-label={`View ${row.name}`}
           >
             <Eye size={16} aria-hidden="true" />
           </button>
           {row.status === 'Active' ? (
-            <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setCustomerToDeactivate(row)}>
+            <Button size="compact" variant="ghost" className="text-red-600" onClick={() => setCustomerToDeactivate(row)}>
               Deactivate
             </Button>
           ) : (
-            <Button size="sm" variant="outline" onClick={() => setCustomerStatus(row.id, 'Active')}>
+            <Button size="compact" variant="outline" onClick={() => setCustomerStatus(row.id, 'Active')}>
               Activate
             </Button>
           )}

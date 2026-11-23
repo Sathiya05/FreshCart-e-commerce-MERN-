@@ -152,13 +152,13 @@ export default function ProductDetailsPage() {
               className="aspect-square w-full object-cover"
             />
           </div>
-          <div className="mt-3 flex gap-3">
+          <div className="mt-3 flex flex-wrap gap-3 overflow-x-auto">
             {gallery.map((image, index) => (
               <button
                 key={image}
                 type="button"
                 onClick={() => setActiveImage(index)}
-                className={`h-20 w-20 overflow-hidden rounded-xl border-2 ${activeImage === index ? 'border-brand-primary' : 'border-transparent'}`}
+                className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 sm:h-20 sm:w-20 ${activeImage === index ? 'border-brand-primary' : 'border-transparent'}`}
                 aria-label={`View product image ${index + 1}`}
               >
                 <img src={image} alt="" className="h-full w-full object-cover" />

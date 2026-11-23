@@ -48,6 +48,22 @@ export default function Navbar() {
   }, [location.pathname])
 
   useEffect(() => {
+    if (!mobileOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setMobileOpen(false)
+    }
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('resize', onResize)
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
     if (!accountOpen) return undefined
 
     const onPointerDown = (event) => {
@@ -87,10 +103,10 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-app-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 min-w-0 max-w-7xl items-center gap-2 px-3 sm:gap-4 sm:px-6">
         <button
           type="button"
-          className="rounded-lg p-2 text-text-secondary hover:bg-app-background lg:hidden"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-text-secondary hover:bg-app-background lg:hidden"
           onClick={() => setMobileOpen((value) => !value)}
           aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
           aria-expanded={mobileOpen}
@@ -98,9 +114,9 @@ export default function Navbar() {
           {mobileOpen ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
         </button>
 
-        <BrandLogo compact />
+        <BrandLogo compact className="shrink-0" wordmarkClassName="hidden sm:block" />
 
-        <nav className="ml-4 hidden items-center gap-6 lg:flex" aria-label="Main navigation">
+        <nav className="ml-2 hidden min-w-0 items-center gap-4 lg:flex xl:ml-4 xl:gap-6" aria-label="Main navigation">
           {links.map((link) => (
             <NavLink key={link.to} to={link.to} onClick={scrollToTop} className={navClass} end={link.to === '/'}>
               {link.label}
@@ -108,11 +124,11 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <form onSubmit={handleSearch} className="ml-auto hidden max-w-sm flex-1 md:block">
+        <form onSubmit={handleSearch} className="ml-auto hidden min-w-0 max-w-sm flex-1 md:block">
           <label htmlFor="site-search" className="sr-only">
             Search groceries
           </label>
-          <div className="relative">
+          <div className="relative min-w-0">
             <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
             <input
               id="site-search"
@@ -125,10 +141,10 @@ export default function Navbar() {
           </div>
         </form>
 
-        <div className="ml-auto flex items-center gap-1 md:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
           <Link
             to="/wishlist"
-            className="relative grid h-10 w-10 place-items-center rounded-xl text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="relative grid h-11 w-11 place-items-center rounded-xl text-text-secondary hover:bg-app-background hover:text-brand-primary"
             aria-label={`Wishlist, ${wishlistCount} items`}
           >
             <Heart size={20} aria-hidden="true" />
@@ -140,7 +156,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/cart"
-            className="relative grid h-10 w-10 place-items-center rounded-xl text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="relative grid h-11 w-11 place-items-center rounded-xl text-text-secondary hover:bg-app-background hover:text-brand-primary"
             aria-label={`Cart, ${cartCount} items`}
           >
             <ShoppingCart size={20} aria-hidden="true" />
@@ -155,7 +171,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setAccountOpen((value) => !value)}
-                className="flex h-10 items-center gap-2 rounded-xl px-2 text-sm font-medium text-text-secondary hover:bg-app-background"
+                className="flex h-11 items-center gap-2 rounded-xl px-2 text-sm font-medium text-text-secondary hover:bg-app-background"
                 aria-label="Account menu"
                 aria-haspopup="true"
                 aria-expanded={accountOpen}
@@ -184,7 +200,7 @@ export default function Navbar() {
           ) : (
             <Link
               to="/login"
-              className="ml-1 inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-dark"
+              className="ml-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-3 text-sm font-semibold text-white hover:bg-brand-dark sm:px-4"
             >
               <UserRound size={17} aria-hidden="true" />
               <span className="hidden sm:inline">Sign in</span>
@@ -194,7 +210,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-app-border bg-surface lg:hidden">
+        <div className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-app-border bg-surface lg:hidden">
           <form onSubmit={handleSearch} className="px-4 py-3 md:hidden">
             <div className="relative">
               <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />

@@ -248,10 +248,12 @@ export default function AdminSettingsPage() {
             </div>
           </section>
 
-          <Button type="submit" className="w-full" size="lg" disabled={saving}>
-            <Save size={16} aria-hidden="true" />
-            {saving ? 'Saving…' : 'Save settings'}
-          </Button>
+          <div className="sticky bottom-4 z-10 mt-6 rounded-xl bg-surface/95 p-2 backdrop-blur sm:static sm:mt-0 sm:rounded-none sm:bg-transparent sm:p-0">
+            <Button type="submit" className="w-full" size="lg" disabled={saving}>
+              <Save size={16} aria-hidden="true" />
+              {saving ? 'Saving…' : 'Save settings'}
+            </Button>
+          </div>
           <p className="text-center text-xs text-text-secondary">
             Changes are saved to the FreshCart database.
           </p>

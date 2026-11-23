@@ -89,8 +89,8 @@ export default function OrderDetailsPage() {
       />
 
       <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Order {order.orderNumber || order.id}</h1>
+        <div className="min-w-0">
+          <h1 className="break-all text-3xl font-bold tracking-tight text-text-primary">Order {order.orderNumber || order.id}</h1>
           <p className="mt-2 text-sm text-text-secondary">Placed on {order.date}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -121,7 +121,7 @@ export default function OrderDetailsPage() {
                     <p className="font-medium text-text-primary">{item.name}</p>
                     <p className="text-xs text-text-secondary">{item.unit} · Qty {item.quantity}</p>
                   </div>
-                  <p className="font-semibold">{formatCurrency(item.price * item.quantity)}</p>
+                  <p className="shrink-0 text-right font-semibold">{formatCurrency(item.price * item.quantity)}</p>
                 </div>
               ))}
             </div>
@@ -147,7 +147,7 @@ export default function OrderDetailsPage() {
             )}
             <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-text-secondary">
               <MapPin size={16} className="mt-1 shrink-0 text-brand-primary" aria-hidden="true" />
-              <span>
+              <span className="min-w-0 break-words">
                 {order.address.fullName}, {order.address.addressLine}, {order.address.city},
                 {' '}{order.address.state} - {order.address.pincode}
               </span>
@@ -159,20 +159,20 @@ export default function OrderDetailsPage() {
           <section className="rounded-2xl border border-app-border bg-surface p-5">
             <h2 className="font-semibold text-text-primary">Payment</h2>
             <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Method</dt>
-                <dd className="inline-flex items-center gap-1.5 font-medium">
-                  <CreditCard size={14} aria-hidden="true" />
+              <div className="flex justify-between gap-4">
+                <dt className="min-w-0 text-text-secondary">Method</dt>
+                <dd className="inline-flex min-w-0 items-center gap-1.5 break-words text-right font-medium">
+                  <CreditCard size={14} className="shrink-0" aria-hidden="true" />
                   {order.paymentMethod}
                 </dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-text-secondary">Status</dt>
-                <dd className="font-medium">{order.paymentStatus}</dd>
+              <div className="flex justify-between gap-4">
+                <dt className="min-w-0 text-text-secondary">Status</dt>
+                <dd className="min-w-0 break-words text-right font-medium">{order.paymentStatus}</dd>
               </div>
-              <div className="flex justify-between border-t border-app-border pt-3 text-base">
-                <dt className="font-semibold">Total</dt>
-                <dd className="font-bold text-brand-dark">{formatCurrency(order.totalAmount)}</dd>
+              <div className="flex justify-between gap-4 border-t border-app-border pt-3 text-base">
+                <dt className="min-w-0 font-semibold">Total</dt>
+                <dd className="min-w-0 shrink-0 break-words text-right font-bold tabular-nums text-brand-dark">{formatCurrency(order.totalAmount)}</dd>
               </div>
             </dl>
             {order.razorpayPaymentId && (

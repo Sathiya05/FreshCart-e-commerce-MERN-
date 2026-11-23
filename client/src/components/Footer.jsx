@@ -31,7 +31,7 @@ const groups = [
 
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-app-border bg-surface">
+    <footer className="mt-20 border-t border-app-border bg-surface pb-safe">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_2fr]">
           <div>
@@ -41,9 +41,9 @@ export default function Footer() {
               shopping, transparent pricing and reliable delivery slots.
             </p>
             <div className="mt-5 space-y-2 text-sm text-text-secondary">
-              <p className="flex items-center gap-2"><MapPin size={15} aria-hidden="true" /> Bengaluru, Karnataka, India</p>
-              <p className="flex items-center gap-2"><Phone size={15} aria-hidden="true" /> +91 18000 12345</p>
-              <p className="flex items-center gap-2"><Mail size={15} aria-hidden="true" /> support@freshcart.demo</p>
+              <p className="flex min-w-0 items-start gap-2 break-words"><MapPin size={15} className="mt-0.5 shrink-0" aria-hidden="true" /> Bengaluru, Karnataka, India</p>
+              <p className="flex min-w-0 items-start gap-2 break-words"><Phone size={15} className="mt-0.5 shrink-0" aria-hidden="true" /> +91 18000 12345</p>
+              <p className="flex min-w-0 items-start gap-2 break-words"><Mail size={15} className="mt-0.5 shrink-0" aria-hidden="true" /> support@freshcart.demo</p>
             </div>
             <div className="mt-5 flex gap-2">
               {[
@@ -53,7 +53,7 @@ export default function Footer() {
               ].map(({ Icon, label }) => (
                 <span
                   key={label}
-                  className="grid h-9 w-9 place-items-center rounded-lg border border-app-border text-text-secondary"
+                  className="grid h-11 w-11 place-items-center rounded-lg border border-app-border text-text-secondary"
                   role="img"
                   aria-label={label}
                 >

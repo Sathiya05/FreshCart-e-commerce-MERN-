@@ -133,9 +133,9 @@ export default function AdminOrdersPage() {
       key: 'id',
       label: 'Order',
       render: (row) => (
-        <div>
-          <p className="font-medium text-text-primary">{row.orderNumber || row.id}</p>
-          <p className="text-xs text-text-secondary">{row.customer?.name || 'Customer'}</p>
+        <div className="min-w-0">
+          <p className="truncate font-medium text-text-primary">{row.orderNumber || row.id}</p>
+          <p className="truncate text-xs text-text-secondary">{row.customer?.name || 'Customer'}</p>
         </div>
       ),
     },
@@ -167,13 +167,13 @@ export default function AdminOrdersPage() {
           <button
             type="button"
             onClick={() => setSelectedOrderId(row.id)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-app-background hover:text-brand-primary"
             aria-label={`View ${row.orderNumber || row.id}`}
           >
             <Eye size={16} aria-hidden="true" />
           </button>
           {row.status !== 'Cancelled' && (
-            <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setOrderToCancel(row)}>
+            <Button size="compact" variant="ghost" className="text-red-600" onClick={() => setOrderToCancel(row)}>
               Cancel
             </Button>
           )}
@@ -284,12 +284,12 @@ export default function AdminOrdersPage() {
               <div className="mt-3 space-y-3">
                 {selectedOrder.items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
-                    <img src={item.image} alt="" className="h-11 w-11 rounded-lg object-cover" />
+                    <img src={item.image} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{item.name}</p>
                       <p className="text-xs text-text-secondary">{item.quantity} × {item.unit}</p>
                     </div>
-                    <p className="text-sm font-semibold">
+                    <p className="shrink-0 whitespace-nowrap text-sm font-semibold">
                       {formatCurrency(item.price * item.quantity)}
                     </p>
                   </div>
@@ -330,10 +330,10 @@ export default function AdminOrdersPage() {
                       className={`h-2 w-2 rounded-full ${step.complete ? 'bg-brand-primary' : 'bg-app-border'}`}
                       aria-hidden="true"
                     />
-                    <span className={step.complete ? 'text-text-primary' : 'text-text-secondary'}>
+                    <span className={`min-w-0 truncate ${step.complete ? 'text-text-primary' : 'text-text-secondary'}`}>
                       {step.label}
                     </span>
-                    <span className="ml-auto text-xs text-text-secondary">{step.date}</span>
+                    <span className="ml-auto shrink-0 whitespace-nowrap text-xs text-text-secondary">{step.date}</span>
                   </li>
                 ))}
               </ol>

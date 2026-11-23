@@ -153,11 +153,11 @@ export default function AdminCouponsPage() {
       label: 'Code',
       render: (row) => (
         <div>
-          <p className="font-semibold text-text-primary">{row.code}</p>
+          <p className="truncate font-semibold text-text-primary">{row.code}</p>
           <button
             type="button"
             onClick={() => copyCode(row.code)}
-            className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-brand-primary"
+            className="inline-flex min-h-11 items-center gap-1 px-2 text-xs text-text-secondary hover:text-brand-primary"
           >
             <Copy size={12} aria-hidden="true" /> Copy
           </button>
@@ -189,18 +189,18 @@ export default function AdminCouponsPage() {
       key: 'actions',
       label: 'Actions',
       render: (row) => (
-        <div className="flex gap-1">
+        <div className="flex flex-wrap justify-end gap-1">
           <button
             type="button"
             onClick={() => toggleStatus(row)}
-            className="rounded-lg px-2 py-1 text-xs font-medium text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-xs font-medium text-text-secondary hover:bg-app-background hover:text-brand-primary"
           >
             {row.isActive ? 'Disable' : 'Enable'}
           </button>
           <button
             type="button"
             onClick={() => openEdit(row)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-app-background hover:text-brand-primary"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-app-background hover:text-brand-primary"
             aria-label={`Edit ${row.code}`}
           >
             <Pencil size={15} aria-hidden="true" />
@@ -208,7 +208,7 @@ export default function AdminCouponsPage() {
           <button
             type="button"
             onClick={() => setCouponToDelete(row)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-red-50 hover:text-red-600"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-red-50 hover:text-red-600"
             aria-label={`Delete ${row.code}`}
           >
             <Trash2 size={15} aria-hidden="true" />

@@ -84,7 +84,7 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
               aria-selected={active}
               aria-controls="delivery-time-panel"
               onClick={() => setActiveDate(day.key)}
-              className={`relative min-w-[92px] shrink-0 rounded-xl border px-3 py-2 text-left transition-colors ${
+              className={`relative min-w-[108px] shrink-0 rounded-xl border py-2 pl-3 pr-6 text-left transition-colors ${
                 active
                   ? 'border-brand-primary bg-brand-secondary/60 ring-2 ring-brand-primary/10'
                   : 'border-app-border bg-surface hover:border-brand-primary/50'
@@ -93,7 +93,7 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
               <span className="block text-sm font-semibold text-text-primary">{title}</span>
               <span className="block text-xs text-text-secondary">{subtitle}</span>
               {hasSelectedSlot && (
-                <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-brand-primary text-white">
+                <span className="absolute right-2 top-2 grid h-4 w-4 place-items-center rounded-full bg-brand-primary text-white">
                   <Check size={10} aria-hidden="true" />
                 </span>
               )}

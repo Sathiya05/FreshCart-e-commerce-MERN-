@@ -20,8 +20,10 @@ export default function CustomerLayout() {
     dispatch(fetchCustomerCart())
   }, [dispatch, initialized, user?.id, user?.role])
 
+  const hasBottomCta = location.pathname === '/cart' || location.pathname === '/checkout'
+
   return (
-    <div className="flex min-h-screen flex-col bg-app-background">
+    <div className="flex min-h-dvh flex-col bg-app-background">
       <AnnouncementBar />
       <Navbar />
       <main className="flex-1">
@@ -29,7 +31,9 @@ export default function CustomerLayout() {
           <Outlet />
         </div>
       </main>
-      <Footer />
+      <div className={hasBottomCta ? 'pb-24 lg:pb-0' : ''}>
+        <Footer />
+      </div>
       <FloatingActions />
       <ToastHost avoidFloatingDock />
     </div>

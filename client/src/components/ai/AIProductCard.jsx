@@ -13,7 +13,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
   const inStock = Number(product.stock || 0) > 0
 
   return (
-    <article className="overflow-hidden rounded-xl border border-app-border bg-surface shadow-sm">
+    <article className="min-w-0 overflow-hidden rounded-xl border border-app-border bg-surface shadow-sm">
       <img
         src={product.image}
         alt={product.name}
@@ -31,7 +31,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
             <button
               type="button"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              className="grid h-7 w-7 place-items-center rounded-md border border-app-border text-sm"
+              className="grid h-9 w-9 place-items-center rounded-md border border-app-border text-sm"
               aria-label="Decrease quantity"
             >
               −
@@ -40,7 +40,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
             <button
               type="button"
               onClick={() => setQuantity((value) => value + 1)}
-              className="grid h-7 w-7 place-items-center rounded-md border border-app-border text-sm"
+              className="grid h-9 w-9 place-items-center rounded-md border border-app-border text-sm"
               aria-label="Increase quantity"
             >
               +

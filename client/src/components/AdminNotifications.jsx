@@ -80,7 +80,7 @@ export default function AdminNotifications() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-app-border bg-surface shadow-xl">
+        <div className="fixed inset-x-4 top-16 z-50 w-auto overflow-hidden rounded-2xl border border-app-border bg-surface shadow-xl sm:inset-x-auto sm:right-6 sm:top-14 sm:w-[22rem]">
           <div className="flex items-center justify-between gap-3 border-b border-app-border px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-text-primary">Notifications</p>
@@ -98,7 +98,7 @@ export default function AdminNotifications() {
             </button>
           </div>
 
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-[min(20rem,calc(100dvh-9rem))] overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <div className="space-y-3 p-4">
                 {[0, 1, 2].map((item) => (

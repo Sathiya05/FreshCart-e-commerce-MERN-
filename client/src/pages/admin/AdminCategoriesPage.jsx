@@ -131,20 +131,22 @@ export default function AdminCategoriesPage() {
               />
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-semibold text-text-primary">{category.name}</h2>
-                  <Badge tone={category.isActive === false ? 'warning' : 'success'}>
-                    {category.isActive === false ? 'Inactive' : 'Active'}
-                  </Badge>
+                  <h2 className="min-w-0 truncate font-semibold text-text-primary">{category.name}</h2>
+                  <div className="shrink-0">
+                    <Badge tone={category.isActive === false ? 'warning' : 'success'}>
+                      {category.isActive === false ? 'Inactive' : 'Active'}
+                    </Badge>
+                  </div>
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">
                   {category.description || 'No description provided.'}
                 </p>
-                <p className="mt-3 text-xs text-text-secondary">/{category.slug}</p>
+                <p className="mt-3 truncate text-xs text-text-secondary">/{category.slug}</p>
                 <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(category)}>
+                  <Button size="compact" variant="outline" onClick={() => openEdit(category)}>
                     <Pencil size={14} aria-hidden="true" /> Edit
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setCategoryToDelete(category)}>
+                  <Button size="compact" variant="ghost" className="text-red-600" onClick={() => setCategoryToDelete(category)}>
                     <Trash2 size={14} aria-hidden="true" /> Delete
                   </Button>
                 </div>

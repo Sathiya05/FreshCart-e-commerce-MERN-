@@ -31,7 +31,7 @@ export default function App() {
   if (!initialized) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-app-background text-text-secondary"
+        className="flex min-h-dvh items-center justify-center bg-app-background text-text-secondary"
         role="status"
       >
         <LoaderCircle

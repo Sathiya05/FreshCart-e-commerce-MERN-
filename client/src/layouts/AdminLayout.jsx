@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BarChart3,
   ExternalLink,
@@ -46,6 +46,18 @@ const linkClass = ({ isActive }) =>
 
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileOpen])
+
   const location = useLocation()
   const user = useAppSelector(selectCurrentUser)
   const dispatch = useAppDispatch()
@@ -112,7 +124,7 @@ export default function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-app-background">
+    <div className="min-h-dvh bg-app-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-app-border bg-surface lg:block">
         {sidebar}
       </aside>
@@ -129,7 +141,7 @@ export default function AdminLayout() {
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-4 rounded-lg p-2 text-text-secondary hover:bg-app-background"
+              className="absolute right-3 top-4 grid h-10 w-10 place-items-center rounded-lg text-text-secondary hover:bg-app-background"
               aria-label="Close navigation"
             >
               <X size={18} aria-hidden="true" />
@@ -144,7 +156,7 @@ export default function AdminLayout() {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-app-background lg:hidden"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-text-secondary hover:bg-app-background lg:hidden"
             aria-label="Open admin navigation"
           >
             <Menu size={20} aria-hidden="true" />

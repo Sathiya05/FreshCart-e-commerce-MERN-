@@ -132,14 +132,14 @@ export default function AdminDashboardPage() {
                   <>
                     <div className="mt-4 space-y-3 sm:hidden">
                       {products.data.items.slice(0, 5).map((product) => (
-                        <div key={product.id} className="rounded-xl border border-app-border p-4">
-                          <p className="font-medium text-text-primary">{product.name}</p>
-                          <p className="mt-1 text-xs text-text-secondary">{product.categoryName}</p>
+                        <div key={product.id} className="min-w-0 rounded-xl border border-app-border p-4">
+                          <p className="truncate font-medium text-text-primary">{product.name}</p>
+                          <p className="mt-1 truncate text-xs text-text-secondary">{product.categoryName}</p>
                           <div className="mt-3 flex items-center justify-between gap-3">
                             <Badge tone={product.stock === 0 ? 'danger' : product.stock <= 20 ? 'warning' : 'success'}>
                               {product.stock} units
                             </Badge>
-                            <span className="font-semibold">
+                            <span className="shrink-0 whitespace-nowrap font-semibold">
                               {formatCurrency(product.discountPrice || product.price)}
                             </span>
                           </div>
@@ -194,16 +194,16 @@ export default function AdminDashboardPage() {
               ) : (
                 <div className="mt-4 space-y-3">
                   {summary.recentOrders.map((order) => (
-                    <div key={order.id} className="rounded-xl border border-app-border p-3">
+                    <div key={order.id} className="min-w-0 rounded-xl border border-app-border p-3">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{order.orderNumber}</p>
+                        <p className="min-w-0 truncate text-sm font-medium text-text-primary">{order.orderNumber}</p>
                         <Badge tone={order.paymentStatus === 'Paid' ? 'success' : 'warning'}>
                           {order.paymentStatus}
                         </Badge>
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-3 text-xs text-text-secondary">
-                        <span>{order.customer?.name || order.address?.fullName || 'Customer'}</span>
-                        <span className="font-medium text-text-primary">{formatCurrency(order.totalAmount)}</span>
+                        <span className="min-w-0 truncate">{order.customer?.name || order.address?.fullName || 'Customer'}</span>
+                        <span className="shrink-0 whitespace-nowrap font-medium text-text-primary">{formatCurrency(order.totalAmount)}</span>
                       </div>
                     </div>
                   ))}

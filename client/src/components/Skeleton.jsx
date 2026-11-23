@@ -27,16 +27,27 @@ export function ProductGridSkeleton({ count = 8 }) {
   )
 }
 
-export function TableSkeleton({ rows = 5, columns = 5 }) {
+const tableColumnClasses = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-1 sm:grid-cols-2',
+  3: 'grid-cols-1 sm:grid-cols-3',
+  4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+  5: 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-5',
+  6: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
+  7: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7',
+}
+
+export function TableSkeleton({ rows = 5, columns = 5, columnsClass }) {
+  const gridClass = columnsClass || tableColumnClasses[columns] || ''
   return (
     <div className="overflow-hidden rounded-xl border border-app-border bg-surface">
-      <div className="grid border-b border-app-border bg-app-background/60 p-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+      <div className={`grid border-b border-app-border bg-app-background/60 p-4 ${gridClass}`}>
         {Array.from({ length: columns }, (_, index) => (
           <SkeletonLine key={index} className="h-3 w-20" />
         ))}
       </div>
       {Array.from({ length: rows }, (_, rowIndex) => (
-        <div key={rowIndex} className="grid border-b border-app-border p-4 last:border-0" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        <div key={rowIndex} className={`grid border-b border-app-border p-4 last:border-0 ${gridClass}`}>
           {Array.from({ length: columns }, (_, index) => (
             <SkeletonLine key={index} className="h-4 w-3/4" />
           ))}

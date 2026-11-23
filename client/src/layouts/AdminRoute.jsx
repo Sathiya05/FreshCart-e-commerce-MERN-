@@ -14,8 +14,8 @@ export default function AdminRoute({ children }) {
 
   if (user.role !== 'admin') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-app-background px-4">
-        <div className="max-w-md rounded-2xl border border-app-border bg-surface p-8 text-center shadow-sm">
+      <div className="flex min-h-dvh items-center justify-center bg-app-background px-4 py-8">
+        <div className="w-full max-w-md rounded-2xl border border-app-border bg-surface p-5 text-center shadow-sm sm:p-8">
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-600">
             <LockKeyhole size={26} aria-hidden="true" />
           </span>
@@ -24,7 +24,7 @@ export default function AdminRoute({ children }) {
             Your account does not have administrator privileges. Sign in with a
             FreshCart admin account to view this area.
           </p>
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center [&>*]:w-full sm:[&>*]:w-auto">
             <Button as={Link} to="/">Back to store</Button>
             <Button as={Link} to="/login" variant="outline">Switch account</Button>
           </div>

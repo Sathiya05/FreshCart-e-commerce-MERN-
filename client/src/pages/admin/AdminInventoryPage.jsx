@@ -95,9 +95,9 @@ export default function AdminInventoryPage() {
       key: 'name',
       label: 'Product',
       render: (row) => (
-        <div>
-          <p className="font-medium text-text-primary">{row.name}</p>
-          <p className="text-xs text-text-secondary">{row.sku}</p>
+        <div className="min-w-0">
+          <p className="truncate font-medium text-text-primary">{row.name}</p>
+          <p className="truncate text-xs text-text-secondary">{row.sku}</p>
         </div>
       ),
     },
@@ -118,7 +118,7 @@ export default function AdminInventoryPage() {
       key: 'actions',
       label: 'Actions',
       render: (row) => (
-        <Button size="sm" variant="outline" onClick={() => openAdjust(row)}>
+        <Button size="compact" variant="outline" onClick={() => openAdjust(row)}>
           Adjust
         </Button>
       ),
@@ -132,13 +132,13 @@ export default function AdminInventoryPage() {
         description="Monitor live stock levels saved directly to the catalog."
       />
 
-      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-app-border bg-surface p-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-secondary text-brand-dark">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-secondary text-brand-dark">
               <Warehouse size={19} aria-hidden="true" />
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-text-secondary">Tracked products</p>
               <p className="text-xl font-bold">{formatNumber(items.length)}</p>
             </div>
@@ -146,10 +146,10 @@ export default function AdminInventoryPage() {
         </div>
         <div className="rounded-2xl border border-app-border bg-surface p-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-50 text-amber-700">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
               <AlertTriangle size={19} aria-hidden="true" />
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-text-secondary">Low-stock items</p>
               <p className="text-xl font-bold">{formatNumber(lowStockCount)}</p>
             </div>
@@ -157,10 +157,10 @@ export default function AdminInventoryPage() {
         </div>
         <div className="rounded-2xl border border-app-border bg-surface p-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
               <PackageCheck size={19} aria-hidden="true" />
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-text-secondary">Healthy stock</p>
               <p className="text-xl font-bold">
                 {formatNumber(items.filter((item) => item.status === 'Healthy').length)}

@@ -20,9 +20,9 @@ export default function StatCard({
   return (
     <div className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-text-secondary">{label}</p>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-text-primary">
+          <p className="mt-2 break-words text-2xl font-bold tracking-tight text-text-primary">
             {prefix}
             {typeof value === 'number' ? formatNumber(value) : value}
           </p>

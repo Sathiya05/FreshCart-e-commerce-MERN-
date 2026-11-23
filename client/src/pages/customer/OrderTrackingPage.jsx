@@ -77,9 +77,9 @@ export default function OrderTrackingPage() {
       />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">Track your order</h1>
-          <p className="mt-2 text-sm text-text-secondary">Order {order.orderNumber || order.id}</p>
+          <p className="mt-2 break-all text-sm text-text-secondary">Order {order.orderNumber || order.id}</p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
@@ -130,7 +130,7 @@ export default function OrderTrackingPage() {
             <h2 className="font-semibold text-text-primary">Delivery details</h2>
             <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-text-secondary">
               <MapPin size={16} className="mt-1 shrink-0 text-brand-primary" aria-hidden="true" />
-              <span>
+              <span className="min-w-0 break-words">
                 {order.address.fullName}, {order.address.addressLine}, {order.address.city},
                 {' '}{order.address.state} - {order.address.pincode}
               </span>

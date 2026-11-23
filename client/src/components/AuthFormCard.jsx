@@ -1,6 +1,6 @@
 export default function AuthFormCard({ eyebrow, title, description, children, footer }) {
   return (
-    <div className="rounded-2xl border border-app-border bg-surface p-7 shadow-sm sm:p-8">
+    <div className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm sm:p-8">
       {eyebrow && (
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-primary">
           {eyebrow}

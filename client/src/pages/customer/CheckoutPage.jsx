@@ -246,13 +246,13 @@ export default function CheckoutPage() {
               <div className="mt-3 rounded-2xl border border-brand-secondary bg-brand-secondary/30 p-4">
                 <div className="flex items-start gap-3">
                   <Clock3 size={18} className="mt-0.5 shrink-0 text-brand-primary" aria-hidden="true" />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-text-primary">
                       {selectedSlot
                         ? `Arriving ${selectedSlot.label.toLowerCase()}`
                         : 'Choose a delivery slot'}
                     </p>
-                    <p className="mt-1 text-xs text-text-secondary">
+                    <p className="mt-1 break-words text-xs text-text-secondary">
                       {selectedAddress
                         ? `${selectedAddress.addressLine}, ${selectedAddress.city} ${selectedAddress.pincode}`
                         : 'Select a delivery address above.'}

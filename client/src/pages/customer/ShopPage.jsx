@@ -81,11 +81,11 @@ export default function ShopPage() {
       />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileFiltersOpen((value) => !value)}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-app-border bg-surface px-4 text-sm font-semibold"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-app-border bg-surface px-4 text-sm font-semibold"
             aria-expanded={mobileFiltersOpen}
           >
             <SlidersHorizontal size={16} aria-hidden="true" />
@@ -96,9 +96,24 @@ export default function ShopPage() {
               </span>
             )}
           </button>
-          <span className="text-sm text-text-secondary">
-            {productsState.data?.total || 0} products
-          </span>
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none">
+            <label htmlFor="shop-sort-mobile" className="sr-only">Sort products</label>
+            <select
+              id="shop-sort-mobile"
+              value={filters.sort}
+              onChange={(event) => updateFilters({ sort: event.target.value })}
+              className="h-11 min-w-0 max-w-[10rem] rounded-xl border border-app-border bg-surface px-2 text-xs outline-none focus:border-brand-primary sm:max-w-xs sm:px-3 sm:text-sm"
+            >
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="rating">Top rated</option>
+              <option value="name">Name: A to Z</option>
+            </select>
+            <span className="shrink-0 text-sm text-text-secondary">
+              {productsState.data?.total || 0} products
+            </span>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
@@ -193,9 +208,9 @@ export default function ShopPage() {
 
 function FilterChip({ label, onRemove }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/30 bg-brand-secondary/60 px-3 py-1 text-xs font-medium capitalize text-brand-dark">
-      {label}
-      <button type="button" onClick={onRemove} aria-label={`Remove ${label} filter`}>
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-brand-primary/30 bg-brand-secondary/60 px-3 py-1 text-xs font-medium capitalize text-brand-dark">
+      <span className="min-w-0 truncate">{label}</span>
+      <button type="button" onClick={onRemove} aria-label={`Remove ${label} filter`} className="shrink-0">
         <X size={12} aria-hidden="true" />
       </button>
     </span>

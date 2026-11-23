@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { dismissToast, selectToasts } from '../redux/uiSlice.js'
@@ -31,8 +32,8 @@ function ToastItem({ toast }) {
     >
       <Icon size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        {toast.title && <p className="text-sm font-semibold">{toast.title}</p>}
-        <p className="text-sm leading-5">{toast.message}</p>
+        {toast.title && <p className="break-words text-sm font-semibold">{toast.title}</p>}
+        <p className="break-words text-sm leading-5">{toast.message}</p>
       </div>
       <button
         type="button"
@@ -46,18 +47,24 @@ function ToastItem({ toast }) {
   )
 }
 
-export default function ToastHost({ avoidFloatingDock = false }) {
+export default function ToastHost({ avoidFloatingDock = false, className = '' }) {
   const toasts = useAppSelector(selectToasts)
+  const { pathname } = useLocation()
+  const hasBottomCta = pathname === '/cart' || pathname === '/checkout'
 
-  // Customer pages reserve a right gutter for the floating AI/WhatsApp dock,
-  // so notifications stay bottom-aligned without covering the buttons.
-  const positionClasses = avoidFloatingDock
-    ? 'bottom-4 left-4 right-20 w-auto sm:bottom-6 sm:left-auto sm:right-28 sm:w-96'
-    : 'inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:w-96'
+  const positionClasses = className
+    ? ''
+    : avoidFloatingDock
+      ? `left-3 right-32 sm:left-auto sm:right-36 ${
+          hasBottomCta ? 'toast-bottom-cta' : 'toast-bottom'
+        }`
+      : 'inset-x-3 toast-bottom sm:inset-x-auto sm:right-6'
 
   return (
-    <div className={`pointer-events-none fixed z-[60] flex flex-col gap-2 ${positionClasses}`}>
-      {toasts.map((toast) => (
+    <div
+      className={`pointer-events-none fixed z-[60] flex max-h-[60dvh] max-w-[calc(100vw-1.5rem)] flex-col gap-2 overflow-y-auto sm:w-96 sm:max-w-none ${positionClasses} ${className}`}
+    >
+      {toasts.slice(0, 2).map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}
     </div>

@@ -32,7 +32,7 @@ export default function Modal({ open, onClose, title, description, children, foo
       }}
     >
       <div
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-app-border bg-surface shadow-xl sm:max-w-lg sm:rounded-2xl"
+        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-app-border bg-surface pb-safe shadow-xl sm:max-w-lg sm:rounded-2xl sm:pb-0"
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -53,7 +53,7 @@ export default function Modal({ open, onClose, title, description, children, foo
         </div>
         <div className="p-5">{children}</div>
         {footer && (
-          <div className="flex flex-wrap justify-end gap-3 border-t border-app-border p-5">
+          <div className="flex flex-col gap-3 border-t border-app-border p-5 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
             {footer}
           </div>
         )}

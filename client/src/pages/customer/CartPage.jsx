@@ -69,7 +69,7 @@ export default function CartPage() {
         description="Review your items and adjust quantities before checkout."
         breadcrumbs={[{ label: 'Cart' }]}
       />
-      <div className="mx-auto max-w-7xl px-4 pb-32 pt-8 sm:px-6 lg:pb-8">
+      <div className="mx-auto max-w-7xl px-4 pb-40 pt-8 sm:px-6 lg:pb-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           <div>
             <div className="mb-5 rounded-2xl border border-brand-secondary bg-brand-secondary/40 p-4">

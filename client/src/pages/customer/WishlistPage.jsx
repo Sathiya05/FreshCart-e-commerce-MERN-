@@ -107,10 +107,10 @@ export default function WishlistPage() {
                     dispatch(removeFromWishlist(product.id))
                     dispatch(pushToast({ type: 'info', message: `${product.name} removed from wishlist.` }))
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-text-secondary hover:border-red-200 hover:text-red-600"
+                  className="inline-flex max-w-full min-h-11 items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-text-secondary hover:border-red-200 hover:text-red-600"
                 >
-                  <Trash2 size={13} aria-hidden="true" />
-                  Remove {product.name}
+                  <Trash2 size={13} className="shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 truncate">Remove {product.name}</span>
                 </button>
               ))}
             </div>

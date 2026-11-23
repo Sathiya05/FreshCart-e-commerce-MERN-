@@ -91,7 +91,7 @@ export default function AdminReviewsPage() {
       key: 'comment',
       label: 'Comment',
       render: (row) => (
-        <span className="block max-w-xs text-text-secondary" title={row.comment}>
+        <span className="block max-w-full truncate text-text-secondary" title={row.comment}>
           {truncate(row.comment, 72)}
         </span>
       ),
@@ -114,7 +114,7 @@ export default function AdminReviewsPage() {
             <button
               type="button"
               onClick={() => updateStatus(row, 'approved')}
-              className="rounded-lg p-2 text-brand-primary hover:bg-brand-secondary"
+              className="inline-flex h-11 min-w-11 items-center justify-center rounded-lg text-brand-primary hover:bg-brand-secondary"
               aria-label={`Approve review from ${row.userName}`}
               title="Approve"
             >
@@ -125,7 +125,7 @@ export default function AdminReviewsPage() {
             <button
               type="button"
               onClick={() => updateStatus(row, 'rejected')}
-              className="rounded-lg p-2 text-amber-700 hover:bg-amber-50"
+              className="inline-flex h-11 min-w-11 items-center justify-center rounded-lg text-amber-700 hover:bg-amber-50"
               aria-label={`Reject review from ${row.userName}`}
               title="Reject"
             >
@@ -135,7 +135,7 @@ export default function AdminReviewsPage() {
           <button
             type="button"
             onClick={() => setReviewToDelete(row)}
-            className="rounded-lg p-2 text-text-secondary hover:bg-red-50 hover:text-red-600"
+            className="inline-flex h-11 min-w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-red-50 hover:text-red-600"
             aria-label={`Delete review from ${row.userName}`}
           >
             <Trash2 size={15} aria-hidden="true" />

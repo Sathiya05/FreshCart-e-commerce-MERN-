@@ -27,7 +27,7 @@ export default function AIChatMessage({ message, onAddProduct, onRetry }) {
                 }`
         }`}
       >
-        <p className="whitespace-pre-wrap">{message.text}</p>
+        <p className="whitespace-pre-wrap break-words">{message.text}</p>
 
         {isWarning && message.retryText && onRetry && (
           <button
@@ -41,7 +41,7 @@ export default function AIChatMessage({ message, onAddProduct, onRetry }) {
         )}
 
         {products.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-1 gap-2">
             {products.map((product) => (
               <AIProductCard
                 key={product.id}

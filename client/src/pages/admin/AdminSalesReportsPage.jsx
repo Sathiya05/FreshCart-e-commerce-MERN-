@@ -72,20 +72,22 @@ export default function AdminSalesReportsPage() {
                 {formatCurrency(data.weekRevenue)}
               </span>
             </div>
-            <div className="mt-6 flex h-52 items-end gap-2 sm:gap-4">
-              {data.revenueByDay.map((day) => (
-                <div key={day.date} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-                  <span className="text-[10px] font-medium text-text-secondary">
-                    {formatCurrency(day.revenue)}
-                  </span>
-                  <div
-                    className="w-full max-w-12 rounded-t-lg bg-brand-primary/80 transition-all"
-                    style={{ height: `${Math.max(4, (day.revenue / maxRevenue) * 100)}%` }}
-                    title={`${day.date}: ${formatCurrency(day.revenue)} from ${day.orders} orders`}
-                  />
-                  <span className="text-[10px] text-text-secondary">{shortDate(day.date)}</span>
-                </div>
-              ))}
+            <div className="mt-6 overflow-x-auto">
+              <div className="flex h-52 min-w-[420px] items-end gap-2 sm:gap-4">
+                {data.revenueByDay.map((day) => (
+                  <div key={day.date} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                    <span className="block truncate text-[9px] font-medium text-text-secondary sm:text-[10px]" title={formatCurrency(day.revenue)}>
+                      {formatCurrency(day.revenue)}
+                    </span>
+                    <div
+                      className="w-full max-w-12 rounded-t-lg bg-brand-primary/80 transition-all"
+                      style={{ height: `${Math.max(4, (day.revenue / maxRevenue) * 100)}%` }}
+                      title={`${day.date}: ${formatCurrency(day.revenue)} from ${day.orders} orders`}
+                    />
+                    <span className="text-[10px] text-text-secondary">{shortDate(day.date)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -98,11 +100,11 @@ export default function AdminSalesReportsPage() {
                 <div className="mt-4 space-y-3">
                   {data.topProducts.map((product) => (
                     <div key={product.name} className="flex items-center justify-between gap-4 border-b border-app-border pb-3 last:border-0 last:pb-0">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">{product.name}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-text-primary">{product.name}</p>
                         <p className="text-xs text-text-secondary">{formatNumber(product.units)} units sold</p>
                       </div>
-                      <span className="text-sm font-semibold">{formatCurrency(product.revenue)}</span>
+                      <span className="shrink-0 whitespace-nowrap text-sm font-semibold">{formatCurrency(product.revenue)}</span>
                     </div>
                   ))}
                 </div>
@@ -120,13 +122,13 @@ export default function AdminSalesReportsPage() {
                 <div className="mt-4 space-y-3">
                   {data.recentOrders.slice(0, 6).map((order) => (
                     <div key={order.id} className="flex items-center justify-between gap-4 border-b border-app-border pb-3 last:border-0 last:pb-0">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">{order.orderNumber}</p>
-                        <p className="text-xs text-text-secondary">{longDate(order.createdAt || order.date)}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-text-primary">{order.orderNumber}</p>
+                        <p className="truncate text-xs text-text-secondary">{longDate(order.createdAt || order.date)}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">{formatCurrency(order.totalAmount)}</p>
-                        <p className="text-xs text-text-secondary">{order.paymentStatus} · {order.status}</p>
+                      <div className="shrink-0 text-right">
+                        <p className="whitespace-nowrap text-sm font-semibold">{formatCurrency(order.totalAmount)}</p>
+                        <p className="whitespace-nowrap text-xs text-text-secondary">{order.paymentStatus} · {order.status}</p>
                       </div>
                     </div>
                   ))}

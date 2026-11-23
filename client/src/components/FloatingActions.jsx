@@ -227,7 +227,7 @@ export default function FloatingActions() {
 
   return (
     <div
-      style={{ '--dock-lift': `${Math.min(toastCount, 3) * 5.5}rem` }}
+      style={{ '--dock-lift': `${Math.min(toastCount, 2) * 4.5}rem` }}
       className={`floating-actions fixed right-4 z-[45] flex flex-col items-end gap-3 transition-[bottom] duration-200 sm:right-6 ${
         hasBottomCta ? 'floating-actions--raised' : ''
       }`}

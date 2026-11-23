@@ -8,7 +8,7 @@ export default function DataTable({
     column.render ? column.render(row) : row[column.key]
 
   return (
-    <>
+    <div className="min-w-0">
       {/* Phones get readable cards instead of a table that scrolls two screens wide. */}
       <div className="space-y-3 sm:hidden">
         {rows.length === 0 ? (
@@ -25,7 +25,7 @@ export default function DataTable({
                 const content = renderCell(column, row)
                 if (index === 0) {
                   return (
-                    <div key={column.key} className="mb-3 border-b border-app-border pb-3 text-sm font-semibold text-text-primary">
+                    <div key={column.key} className="mb-3 min-w-0 break-words border-b border-app-border pb-3 text-sm font-semibold text-text-primary">
                       {content}
                     </div>
                   )
@@ -37,7 +37,7 @@ export default function DataTable({
                     <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-text-secondary">
                       {column.label}
                     </span>
-                    <span className="min-w-0 text-right">{content}</span>
+                    <span className="min-w-0 break-words text-right">{content}</span>
                   </div>
                 )
               })}
@@ -46,7 +46,7 @@ export default function DataTable({
         )}
       </div>
 
-      <div className="hidden overflow-x-auto rounded-xl border border-app-border bg-surface sm:block">
+      <div className="hidden max-w-full overflow-x-auto rounded-xl border border-app-border bg-surface sm:block">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-app-border bg-app-background/60">
             <tr>
@@ -78,6 +78,6 @@ export default function DataTable({
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   )
 }

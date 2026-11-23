@@ -212,10 +212,10 @@ export default function AdminProductsPage() {
       label: 'Product',
       render: (row) => (
         <div className="flex items-center gap-3">
-          <img src={row.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
-          <div>
-            <p className="font-medium text-text-primary">{row.name}</p>
-            <p className="text-xs text-text-secondary">{row.sku || 'No SKU'}</p>
+          <img src={row.image} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-text-primary">{row.name}</p>
+            <p className="truncate text-xs text-text-secondary">{row.sku || 'No SKU'}</p>
           </div>
         </div>
       ),
@@ -235,11 +235,11 @@ export default function AdminProductsPage() {
       key: 'actions',
       label: 'Actions',
       render: (row) => (
-        <div className="flex gap-1">
-          <button type="button" onClick={() => openEdit(row)} className="rounded-lg p-2 text-text-secondary hover:bg-app-background hover:text-brand-primary" aria-label={`Edit ${row.name}`}>
+        <div className="flex flex-wrap gap-1">
+          <button type="button" onClick={() => openEdit(row)} className="inline-flex h-11 min-w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-app-background hover:text-brand-primary" aria-label={`Edit ${row.name}`}>
             <Pencil size={15} aria-hidden="true" />
           </button>
-          <button type="button" onClick={() => setProductToDelete(row)} className="rounded-lg p-2 text-text-secondary hover:bg-red-50 hover:text-red-600" aria-label={`Delete ${row.name}`}>
+          <button type="button" onClick={() => setProductToDelete(row)} className="inline-flex h-11 min-w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-red-50 hover:text-red-600" aria-label={`Delete ${row.name}`}>
             <Trash2 size={15} aria-hidden="true" />
           </button>
         </div>
@@ -356,7 +356,7 @@ export default function AdminProductsPage() {
                 type="button"
                 onClick={() => pickImage(false)}
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:text-brand-dark disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-1.5 px-2 text-xs font-semibold text-brand-primary hover:text-brand-dark disabled:opacity-50"
               >
                 <Upload size={14} aria-hidden="true" />
                 {uploading ? 'Uploading…' : 'Upload from device'}

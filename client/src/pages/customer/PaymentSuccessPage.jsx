@@ -69,21 +69,21 @@ export default function PaymentSuccessPage() {
               : 'This page only shows success once FreshCart has verified the payment. Check the order status below.'}
           </p>
 
-          <div className="mt-6 rounded-xl bg-app-background p-4 text-left">
-            <div className="flex justify-between gap-4">
-              <span className="text-xs text-text-secondary">Order</span>
-              <span className="font-semibold text-text-primary">
+          <div className="mt-6 min-w-0 rounded-xl bg-app-background p-4 text-left">
+            <div className="flex min-w-0 justify-between gap-4">
+              <span className="shrink-0 text-xs text-text-secondary">Order</span>
+              <span className="min-w-0 break-all text-right font-semibold text-text-primary">
                 {order?.orderNumber || order?.id || '—'}
               </span>
             </div>
-            <div className="mt-2 flex justify-between gap-4">
-              <span className="text-xs text-text-secondary">Payment status</span>
-              <span className="font-medium text-text-primary">{order?.paymentStatus}</span>
+            <div className="mt-2 flex min-w-0 justify-between gap-4">
+              <span className="shrink-0 text-xs text-text-secondary">Payment status</span>
+              <span className="min-w-0 break-words text-right font-medium text-text-primary">{order?.paymentStatus}</span>
             </div>
             {paid && (
-              <div className="mt-2 flex justify-between gap-4">
-                <span className="text-xs text-text-secondary">Amount paid</span>
-                <span className="font-semibold text-text-primary">
+              <div className="mt-2 flex min-w-0 justify-between gap-4">
+                <span className="shrink-0 text-xs text-text-secondary">Amount paid</span>
+                <span className="min-w-0 shrink-0 text-right font-semibold text-text-primary">
                   {formatCurrency(order.totalAmount)}
                 </span>
               </div>

@@ -75,9 +75,9 @@ export default function PaymentFailurePage() {
             </div>
           )}
 
-          <div className="mt-6 rounded-xl bg-app-background p-4">
+          <div className="mt-6 min-w-0 rounded-xl bg-app-background p-4">
             <p className="text-xs text-text-secondary">Order reference</p>
-            <p className="mt-1 font-semibold text-text-primary">
+            <p className="mt-1 min-w-0 break-all text-right font-semibold text-text-primary">
               {order?.orderNumber || order?.id || '—'}
             </p>
             <p className="mt-2 text-xs text-text-secondary">

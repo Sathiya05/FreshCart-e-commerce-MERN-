@@ -20,11 +20,15 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 4.5rem;
     -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-app-background text-text-primary antialiased;
+    min-height: 100dvh;
+    overflow-x: clip;
   }
 
   * {
@@ -58,10 +62,29 @@
     bottom: calc(6.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
   }
 
+  .toast-bottom {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .toast-bottom-cta {
+    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
   @media (min-width: 1024px) {
     .floating-actions,
     .floating-actions--raised {
       bottom: calc(1.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .toast-bottom,
+    .toast-bottom-cta {
+      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  @media (max-height: 640px) {
+    .ai-suggestions {
+      display: none;
     }
   }
 

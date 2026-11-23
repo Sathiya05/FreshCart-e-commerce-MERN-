@@ -23,7 +23,7 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-brand-primary"
+            className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-text-secondary hover:text-brand-primary"
           >
             <RotateCcw size={13} aria-hidden="true" />
             Reset
@@ -32,7 +32,7 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
             <button
               type="button"
               onClick={onApply}
-              className="grid h-10 w-10 place-items-center rounded-lg text-text-secondary hover:bg-app-background lg:hidden"
+              className="grid h-11 w-11 place-items-center rounded-lg text-text-secondary hover:bg-app-background lg:hidden"
               aria-label="Close filters"
             >
               <X size={18} aria-hidden="true" />
@@ -96,7 +96,7 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
               value={filters.minPrice}
               onChange={(event) => update({ minPrice: event.target.value })}
               placeholder="Min"
-              className="h-10 rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
+              className="h-10 rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
             />
             <input
               type="number"
@@ -105,7 +105,7 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
               value={filters.maxPrice}
               onChange={(event) => update({ maxPrice: event.target.value })}
               placeholder="Max"
-              className="h-10 rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
+              className="h-10 rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
             />
           </div>
         </fieldset>
@@ -140,7 +140,7 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
             id="sort-products"
             value={filters.sort}
             onChange={(event) => update({ sort: event.target.value })}
-            className="h-10 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
+            className="h-10 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
