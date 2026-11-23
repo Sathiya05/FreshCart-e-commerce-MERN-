@@ -228,9 +228,14 @@ export default function CheckoutPage() {
             </section>
 
             <section>
-              <h2 className="mb-4 text-lg font-semibold text-text-primary">
-                2. Delivery slot
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-text-primary">
+                  2. Delivery time
+                </h2>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Tap a day, then tap a time. Real slots are validated by FreshCart.
+                </p>
+              </div>
               {slotsState.isLoading && <SkeletonLine className="h-24 w-full rounded-2xl" />}
               {slotsState.isError && <ErrorState message={slotsState.error} onRetry={slotsState.refetch} />}
               <DeliverySlotPicker

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, Trash2 } from 'lucide-react'
+import { ShoppingCart, Trash2, Truck } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -21,6 +21,7 @@ import {
   updateCartQuantity,
 } from '../../redux/cartSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
+import { FREE_DELIVERY_THRESHOLD } from '../../utils/commerce.js'
 import { formatCurrency } from '../../utils/format.js'
 
 export default function CartPage() {
@@ -34,6 +35,9 @@ export default function CartPage() {
 
   const [itemToRemove, setItemToRemove] = useState(null)
   const [clearOpen, setClearOpen] = useState(false)
+
+  const remainingForFreeDelivery = Math.max(FREE_DELIVERY_THRESHOLD - subtotal, 0)
+  const freeDeliveryProgress = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100)
 
   if (items.length === 0) {
     return (
@@ -62,6 +66,38 @@ export default function CartPage() {
       <div className="mx-auto max-w-7xl px-4 pb-32 pt-8 sm:px-6 lg:pb-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           <div>
+            <div className="mb-5 rounded-2xl border border-brand-secondary bg-brand-secondary/40 p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-primary/10 text-brand-primary">
+                  <Truck size={20} aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-text-primary">
+                    Delivery at your chosen time
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-secondary">
+                    Pick a day and time in one tap at checkout.
+                  </p>
+                </div>
+                <span className="rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-brand-primary">
+                  {remainingForFreeDelivery > 0
+                    ? `Add ${formatCurrency(remainingForFreeDelivery)} for FREE delivery`
+                    : 'FREE delivery unlocked'}
+                </span>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-brand-primary/10">
+                <div
+                  className="h-full rounded-full bg-brand-primary transition-all"
+                  style={{ width: `${freeDeliveryProgress}%` }}
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={FREE_DELIVERY_THRESHOLD}
+                  aria-valuenow={Math.min(subtotal, FREE_DELIVERY_THRESHOLD)}
+                  aria-label="Progress toward free delivery"
+                />
+              </div>
+            </div>
+
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-text-secondary">
                 {items.length} product{items.length === 1 ? '' : 's'} in your cart

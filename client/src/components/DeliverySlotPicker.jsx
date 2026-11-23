@@ -1,67 +1,156 @@
-import { CalendarClock, Check } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Clock3 } from 'lucide-react'
+import { formatCurrency } from '../utils/format.js'
+
+const dayLabelParts = (label, index) => {
+  const parts = String(label || '')
+    .replace(/,/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+
+  return {
+    title: index === 0 ? 'Tomorrow' : parts[0] || `Day ${index + 1}`,
+    subtitle: parts.slice(1).join(' ') || 'Available',
+  }
+}
 
 export default function DeliverySlotPicker({ slots = [], selectedId, onSelect }) {
-  if (!slots.length) {
+  const days = useMemo(() => {
+    const grouped = new Map()
+
+    slots.forEach((slot) => {
+      const key = slot.date || slot.dateLabel || 'available'
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          key,
+          label: slot.dateLabel || 'Available dates',
+          slots: [],
+        })
+      }
+      grouped.get(key).slots.push(slot)
+    })
+
+    return [...grouped.values()]
+  }, [slots])
+
+  const selectedDate = useMemo(
+    () => slots.find((slot) => slot.id === selectedId)?.date || '',
+    [slots, selectedId],
+  )
+  const [activeDate, setActiveDate] = useState(() => selectedDate || days[0]?.key || '')
+
+  useEffect(() => {
+    if (selectedDate) setActiveDate(selectedDate)
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (!days.length) {
+      if (activeDate) setActiveDate('')
+      return
+    }
+    if (!days.some((day) => day.key === activeDate)) {
+      setActiveDate(selectedDate || days[0].key)
+    }
+  }, [activeDate, days, selectedDate])
+
+  if (!days.length) {
     return <p className="text-sm text-text-secondary">No delivery slots are available.</p>
   }
 
-  const groups = slots.reduce((result, slot) => {
-    const day = slot.dateLabel || 'Available dates'
-    result[day] = [...(result[day] || []), slot]
-    return result
-  }, {})
+  const activeDay = days.find((day) => day.key === activeDate) || days[0]
 
   return (
-    <div className="space-y-5">
-      {Object.entries(groups).map(([day, daySlots]) => (
-        <div key={day}>
-          <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-            <CalendarClock size={14} aria-hidden="true" />
-            {day}
+    <div className="space-y-4">
+      <div
+        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2"
+        role="tablist"
+        aria-label="Delivery dates"
+      >
+        {days.map((day, index) => {
+          const { title, subtitle } = dayLabelParts(day.label, index)
+          const active = day.key === activeDay.key
+          const hasSelectedSlot = day.slots.some((slot) => slot.id === selectedId)
+
+          return (
+            <button
+              key={day.key}
+              id={`slot-tab-${day.key}`}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              aria-controls="delivery-time-panel"
+              onClick={() => setActiveDate(day.key)}
+              className={`relative min-w-[92px] shrink-0 rounded-xl border px-3 py-2 text-left transition-colors ${
+                active
+                  ? 'border-brand-primary bg-brand-secondary/60 ring-2 ring-brand-primary/10'
+                  : 'border-app-border bg-surface hover:border-brand-primary/50'
+              }`}
+            >
+              <span className="block text-sm font-semibold text-text-primary">{title}</span>
+              <span className="block text-xs text-text-secondary">{subtitle}</span>
+              {hasSelectedSlot && (
+                <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-brand-primary text-white">
+                  <Check size={10} aria-hidden="true" />
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        id="delivery-time-panel"
+        role="tabpanel"
+        aria-labelledby={`slot-tab-${activeDay.key}`}
+        aria-label={activeDay.label}
+      >
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+            <Clock3 size={14} aria-hidden="true" />
+            {activeDay.label}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {daySlots.map((slot) => {
-              const selected = selectedId === slot.id
-              return (
-                <button
-                  key={slot.id}
-                  type="button"
-                  disabled={!slot.available}
-                  onClick={() => onSelect(slot)}
-                  className={`flex items-center justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
-                    selected
-                      ? 'border-brand-primary bg-brand-secondary/50 ring-2 ring-brand-primary/10'
-                      : 'border-app-border bg-surface hover:border-brand-primary/50'
-                  } ${!slot.available ? 'cursor-not-allowed opacity-50' : ''}`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
-                        selected
-                          ? 'border-brand-primary bg-brand-primary text-white'
-                          : 'border-app-border'
-                      }`}
-                    >
-                      {selected && <Check size={12} aria-hidden="true" />}
-                    </span>
-                    <span>
-                      <span className="block text-sm font-medium text-text-primary">
-                        {slot.timeSlot || slot.label}
-                      </span>
-                      <span className="text-xs text-text-secondary">
-                        {slot.available ? 'Available' : 'Fully booked'}
-                      </span>
-                    </span>
-                  </span>
-                  <span className="text-sm font-semibold text-text-primary">
-                    {slot.fee ? `₹${slot.fee}` : 'FREE'}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          <p className="text-xs text-text-secondary">
+            {activeDay.slots.length} time slot{activeDay.slots.length === 1 ? '' : 's'}
+          </p>
         </div>
-      ))}
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {activeDay.slots.map((slot) => {
+            const selected = slot.id === selectedId
+
+            return (
+              <button
+                key={slot.id}
+                type="button"
+                disabled={!slot.available}
+                aria-pressed={selected}
+                onClick={() => onSelect(slot)}
+                className={`relative rounded-xl border px-3 py-3 text-left transition-colors ${
+                  selected
+                    ? 'border-brand-primary bg-brand-secondary/60 ring-2 ring-brand-primary/10'
+                    : 'border-app-border bg-surface hover:border-brand-primary/50'
+                } ${!slot.available ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                <span className="block pr-5 text-sm font-semibold text-text-primary">
+                  {slot.timeSlot || slot.label}
+                </span>
+                <span className="mt-1 block text-xs text-text-secondary">
+                  {!slot.available
+                    ? 'Fully booked'
+                    : slot.fee
+                      ? formatCurrency(slot.fee)
+                      : 'FREE'}
+                </span>
+                {selected && (
+                  <span className="absolute right-2.5 top-3 grid h-5 w-5 place-items-center rounded-full bg-brand-primary text-white">
+                    <Check size={12} aria-hidden="true" />
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
