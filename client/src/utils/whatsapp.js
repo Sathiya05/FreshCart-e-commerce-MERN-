@@ -67,12 +67,19 @@ export const buildWhatsAppCartMessage = ({
   return lines.join('\n')
 }
 
+/** Public business number. Safe to expose; env config still takes precedence. */
+export const FRESH_CART_WHATSAPP_PHONE = '7812841311'
+
 /** FreshCart is India-only, so a 10-digit mobile number gets the +91 prefix. */
 export const normalizeWhatsAppPhone = (value) => {
   const digits = String(value || '').replace(/\D/g, '')
   if (!digits) return ''
   return digits.length === 10 ? `91${digits}` : digits
 }
+
+/** Use configured number when present, otherwise the built-in public number. */
+export const resolveWhatsAppPhone = (value) =>
+  normalizeWhatsAppPhone(value) || normalizeWhatsAppPhone(FRESH_CART_WHATSAPP_PHONE)
 
 export const buildWhatsAppCartUrl = (phone, cart) => {
   const digits = normalizeWhatsAppPhone(phone)

@@ -6,9 +6,9 @@ import {
   selectCartTotal,
 } from '../redux/cartSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
-import { buildWhatsAppCartUrl } from '../utils/whatsapp.js'
+import { buildWhatsAppCartUrl, resolveWhatsAppPhone } from '../utils/whatsapp.js'
 
-const PHONE = String(import.meta.env.VITE_WHATSAPP_PHONE || '').replace(/\D/g, '')
+const PHONE = resolveWhatsAppPhone(import.meta.env.VITE_WHATSAPP_PHONE)
 
 export default function useWhatsAppCartShare(delivery = null) {
   const dispatch = useAppDispatch()

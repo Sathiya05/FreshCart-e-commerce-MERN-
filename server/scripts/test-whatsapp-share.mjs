@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict'
 
 const utilsUrl = new URL('../../client/src/utils/whatsapp.js', import.meta.url).href
-const { buildWhatsAppCartMessage, buildWhatsAppCartUrl, normalizeWhatsAppPhone } =
-  await import(utilsUrl)
+const {
+  FRESH_CART_WHATSAPP_PHONE,
+  buildWhatsAppCartMessage,
+  buildWhatsAppCartUrl,
+  normalizeWhatsAppPhone,
+  resolveWhatsAppPhone,
+} = await import(utilsUrl)
 
 const cart = {
   items: [
@@ -46,8 +51,12 @@ assert.match(deliveryMessage, /Time slot: 8:00 AM – 10:00 AM/)
 assert.match(deliveryMessage, /Address: Jane Doe, 12 Main Street, Bengaluru, Karnataka, 560001/)
 assert.match(deliveryMessage, /Instructions: Leave at the door\./)
 
+assert.equal(FRESH_CART_WHATSAPP_PHONE, '7812841311')
 assert.equal(normalizeWhatsAppPhone('7812841311'), '917812841311')
 assert.equal(normalizeWhatsAppPhone('+91 78128 41311'), '917812841311')
+assert.equal(resolveWhatsAppPhone(undefined), '917812841311')
+assert.equal(resolveWhatsAppPhone(''), '917812841311')
+assert.equal(resolveWhatsAppPhone('91 98765 43210'), '919876543210')
 
 const url = buildWhatsAppCartUrl('91 98765 43210', cart)
 assert.ok(url.startsWith('https://wa.me/919876543210?text='))

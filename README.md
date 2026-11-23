@@ -85,7 +85,8 @@ GEMINI_API_KEY=<your key>
 GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
-The public WhatsApp business number belongs in `client/.env` as
+The WhatsApp click-to-chat and Share Cart buttons always have a number: they use
+FreshCart's built-in public fallback and let `client/.env` override it with
 `VITE_WHATSAPP_PHONE` (digits only, E.164 without `+`). No Meta credentials are
 used by the server.
 

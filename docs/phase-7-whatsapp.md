@@ -23,7 +23,9 @@ WhatsApp messages.
 
 ## Configuration
 
-The business number is public and belongs in `client/.env`:
+The business number is public. FreshCart ships with a built-in fallback
+(`7812841311`, normalized to `917812841311`) so the buttons work even when no
+environment variable is configured. Override it in `client/.env`:
 
 ```env
 VITE_WHATSAPP_PHONE=919876543210
@@ -31,8 +33,8 @@ VITE_WHATSAPP_PHONE=919876543210
 
 Use digits only, in E.164 format without `+`. A 10-digit Indian mobile number is
 also accepted and FreshCart adds `+91` automatically. Cloudflare Pages and any
-other deployment must set the same variable as a build-time environment variable,
-then redeploy the frontend.
+other deployment must set the same variable as a build-time environment variable
+to override the fallback, then redeploy the frontend.
 
 No Meta credentials belong in `server/.env`. The server has no WhatsApp routes,
 webhooks, tokens or database message records.

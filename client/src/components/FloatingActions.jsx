@@ -7,7 +7,7 @@ import { askAssistant, getAiStatus } from '../services/ai.service.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { addToCart, setCart } from '../redux/cartSlice.js'
 import { pushToast, selectToasts } from '../redux/uiSlice.js'
-import { normalizeWhatsAppPhone } from '../utils/whatsapp.js'
+import { resolveWhatsAppPhone } from '../utils/whatsapp.js'
 
 const WELCOME_MESSAGES = [
   {
@@ -198,7 +198,7 @@ export default function FloatingActions() {
   const handleCancelCartChange = () => setPendingConfirmation(null)
 
   const handleWhatsApp = () => {
-    const phone = normalizeWhatsAppPhone(import.meta.env.VITE_WHATSAPP_PHONE)
+    const phone = resolveWhatsAppPhone(import.meta.env.VITE_WHATSAPP_PHONE)
 
     if (!phone) {
       dispatch(
