@@ -50,7 +50,9 @@ if (isProduction && hasPartialRazorpayConfig && !razorpayWebhookSecret) {
 
 const aiProvider = (process.env.AI_PROVIDER || AI_PROVIDER_GEMINI).toLowerCase()
 const geminiApiKey = process.env.GEMINI_API_KEY || ''
-const aiConfigured = aiProvider === AI_PROVIDER_GEMINI && Boolean(geminiApiKey)
+const aiProviderValid = aiProvider === AI_PROVIDER_GEMINI
+const aiKeyPresent = Boolean(geminiApiKey)
+const aiConfigured = aiProviderValid && aiKeyPresent
 
 if (isProduction && geminiApiKey && !aiConfigured) {
   throw new Error(
@@ -60,6 +62,12 @@ if (isProduction && geminiApiKey && !aiConfigured) {
 
 if (isProduction && process.env.AI_API_KEY && !geminiApiKey) {
   console.warn('[ai] AI_API_KEY is no longer used. Set GEMINI_API_KEY for the Gemini assistant.')
+}
+
+if (!aiConfigured) {
+  console.warn(
+    `[ai] Assistant disabled. providerValid=${aiProviderValid} keyPresent=${aiKeyPresent} model=${process.env.GEMINI_MODEL || AI_DEFAULT_MODEL}`,
+  )
 }
 
 export const env = {
@@ -91,6 +99,8 @@ export const env = {
   razorpayConfigured,
   aiProvider,
   geminiApiKey,
+  aiProviderValid,
+  aiKeyPresent,
   aiConfigured,
   aiModel: process.env.GEMINI_MODEL || AI_DEFAULT_MODEL,
   aiTimeoutMs: toPositiveNumber(process.env.AI_TIMEOUT_MS, AI_DEFAULT_TIMEOUT_MS),

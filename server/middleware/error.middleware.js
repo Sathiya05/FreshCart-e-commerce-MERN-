@@ -31,7 +31,11 @@ export const errorHandler = (error, _req, res, _next) => {
   }
 
   if (statusCode >= 500) {
-    console.error('[error]', error)
+    if (code.startsWith('AI_')) {
+      console.warn(`[ai] ${code}: ${message}`)
+    } else {
+      console.error('[error]', error)
+    }
     // AI messages are written for customers and contain no internal detail.
     if (env.isProduction && !code.startsWith('AI_')) {
       message = 'Something went wrong. Please try again later.'

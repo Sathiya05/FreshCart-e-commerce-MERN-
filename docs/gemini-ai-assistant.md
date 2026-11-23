@@ -92,7 +92,9 @@ of FreshCart continues to work normally.
      "data": {
        "configured": true,
        "provider": "gemini",
-       "model": "gemini-3.5-flash-lite"
+       "model": "gemini-3.5-flash-lite",
+       "providerValid": true,
+       "keyPresent": true
      }
    }
    ```
@@ -154,8 +156,9 @@ user ID is accepted from the browser.
 
 - `GEMINI_API_KEY` is read only by `server/config/env.js` and passed only to the
   Gemini SDK on the server.
-- `/api/ai/status` returns only `configured`, `provider`, and `model` — never the
-  key or full environment.
+- `/api/ai/status` returns only `configured`, `provider`, `model`, plus the
+  non-secret booleans `providerValid` and `keyPresent` — never the key or full
+  environment. Use those booleans to diagnose a misconfigured deployment.
 - Provider errors are logged server-side in a generic form. Clients receive
   generic `AI_*` error codes and customer-safe messages.
 - `/api/ai/chat` keeps the existing IP-based AI rate limit.
@@ -187,7 +190,9 @@ Expected behavior:
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `configured: false` from `/api/ai/status` | Missing `GEMINI_API_KEY` or `AI_PROVIDER` is not `gemini` | Set the exact variables and restart |
+| `configured: false`, `keyPresent: false` | `GEMINI_API_KEY` did not reach the server process | Add the exact variable to the correct service and redeploy/restart |
+| `configured: false`, `keyPresent: true`, `providerValid: false` | `AI_PROVIDER` is not exactly `gemini` | Replace its value with `gemini`, removing quotes/spaces, then redeploy |
+| Startup log `Assistant disabled. providerValid=… keyPresent=…` | Same diagnosis without calling the API | Use the booleans above to find the missing variable |
 | `404`/`not found` model error | Model unavailable in the AI Studio project | Use `gemini-3.8-flash` in `GEMINI_MODEL` |
 | `429` / rate limit | Free-tier project rate limit reached | Retry later or lower traffic; no billing is configured |
 | Cart tools not used | Request is a guest or token expired | Sign in again and retry |

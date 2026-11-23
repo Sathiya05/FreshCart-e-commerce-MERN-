@@ -8,6 +8,9 @@ export const getAiStatus = () => ({
   configured: env.aiConfigured,
   provider: env.aiConfigured ? env.aiProvider : 'none',
   model: env.aiConfigured ? env.aiModel : '',
+  // Non-secret diagnostics for deployment troubleshooting.
+  providerValid: env.aiProviderValid,
+  keyPresent: env.aiKeyPresent,
 })
 
 const GEMINI_TYPES = {
