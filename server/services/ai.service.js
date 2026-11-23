@@ -1,7 +1,8 @@
+import { GoogleGenAI, Type } from '@google/genai'
 import { env } from '../config/env.js'
 import { AI_LIMITS, AI_SYSTEM_INSTRUCTIONS } from '../constants/ai.js'
 import { ApiError } from '../utils/apiError.js'
-import { AI_TOOLS, executeAiTool } from './aiTools.service.js'
+import { executeAiTool, getAiTools } from './aiTools.service.js'
 
 export const getAiStatus = () => ({
   configured: env.aiConfigured,
@@ -9,15 +10,54 @@ export const getAiStatus = () => ({
   model: env.aiConfigured ? env.aiModel : '',
 })
 
-// GPT-4.1 family supports tool calling but has no reasoning step. Sending
-// `reasoning` or `include: reasoning.encrypted_content` to those models makes
-// the provider reject the request.
-const REASONING_MODEL_PATTERN = /^(gpt-(?:5|6)|o(?:1|3|4))(?:[-.]|$)/i
-const supportsReasoning = (model) =>
-  REASONING_MODEL_PATTERN.test(String(model || '').toLowerCase())
+const GEMINI_TYPES = {
+  object: Type.OBJECT,
+  string: Type.STRING,
+  integer: Type.INTEGER,
+  number: Type.NUMBER,
+  boolean: Type.BOOLEAN,
+  array: Type.ARRAY,
+}
 
-const normalizeReasoningEffort = (effort) =>
-  String(effort || '').trim().toLowerCase() === 'none' ? 'low' : String(effort || '').trim()
+/** Convert the local JSON-schema-like tool definitions to Gemini's Schema type. */
+const toGeminiSchema = (schema = {}) => {
+  const result = {}
+  const rawType = schema.type
+
+  if (Array.isArray(rawType)) {
+    const concreteType = rawType.find((value) => value !== 'null')
+    if (GEMINI_TYPES[concreteType]) result.type = GEMINI_TYPES[concreteType]
+    if (rawType.includes('null')) result.nullable = true
+  } else if (GEMINI_TYPES[rawType]) {
+    result.type = GEMINI_TYPES[rawType]
+  }
+
+  for (const key of [
+    'description',
+    'format',
+    'enum',
+    'required',
+    'minimum',
+    'maximum',
+    'minLength',
+    'maxLength',
+  ]) {
+    if (schema[key] !== undefined) result[key] = schema[key]
+  }
+
+  if (schema.properties) {
+    result.properties = Object.fromEntries(
+      Object.entries(schema.properties).map(([name, property]) => [
+        name,
+        toGeminiSchema(property),
+      ]),
+    )
+  }
+
+  if (schema.items) result.items = toGeminiSchema(schema.items)
+
+  return result
+}
 
 const sanitizeHistory = (history) =>
   (Array.isArray(history) ? history : [])
@@ -30,103 +70,112 @@ const sanitizeHistory = (history) =>
         item.content.trim(),
     )
     .map((item) => ({
-      role: item.role,
-      content: item.content.trim().slice(0, AI_LIMITS.HISTORY_CONTENT_MAX),
+      role: item.role === 'assistant' ? 'model' : 'user',
+      parts: [
+        {
+          text: item.content.trim().slice(0, AI_LIMITS.HISTORY_CONTENT_MAX),
+        },
+      ],
     }))
 
-const buildInput = (message, history) => [
+const buildContents = (message, history) => [
   ...sanitizeHistory(history),
-  { role: 'user', content: message },
+  {
+    role: 'user',
+    parts: [
+      {
+        text: String(message || '')
+          .trim()
+          .slice(0, AI_LIMITS.MESSAGE_MAX),
+      },
+    ],
+  },
 ]
 
-const responseTools = AI_TOOLS.map((tool) => ({
-  type: 'function',
-  name: tool.name,
-  description: tool.description,
-  parameters: tool.parameters,
-  strict: true,
-}))
+const buildGeminiTools = (toolContext) => [
+  {
+    functionDeclarations: getAiTools(toolContext).map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: toGeminiSchema(tool.parameters),
+    })),
+  },
+]
 
-const parseProviderResponse = (payload) => {
-  const output = Array.isArray(payload?.output) ? payload.output : []
-  const calls = output.filter(
-    (item) => item?.type === 'function_call' && item.call_id && item.name,
-  )
-  const texts = []
+let geminiClient = null
 
-  for (const item of output) {
-    if (item?.type !== 'message' || !Array.isArray(item.content)) continue
-
-    for (const content of item.content) {
-      if (content?.type === 'output_text' && content.text) texts.push(content.text)
-      if (content?.type === 'refusal' && content.refusal) texts.push(content.refusal)
-    }
-  }
-
-  return { output, calls, text: texts.join('\n').trim() }
+/** Allows deterministic tests to inject a fake SDK client. Not exposed over HTTP. */
+export const setGeminiClientForTesting = (client) => {
+  geminiClient = client
 }
 
-const collectProducts = (result) => {
-  const products = []
-
-  if (Array.isArray(result?.products)) products.push(...result.products)
-  if (result?.found && result?.product) products.push(result.product)
-
-  return products.filter((product) => product?.id)
+const getGeminiClient = () => {
+  if (!geminiClient) {
+    geminiClient = new GoogleGenAI({ apiKey: env.geminiApiKey })
+  }
+  return geminiClient
 }
 
-const callProvider = async (input) => {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), env.aiTimeoutMs)
-
-  const body = {
-    model: env.aiModel,
-    instructions: AI_SYSTEM_INSTRUCTIONS,
-    input,
-    tools: responseTools,
-    tool_choice: 'auto',
-    store: false,
-  }
-
-  if (supportsReasoning(env.aiModel)) {
-    body.include = ['reasoning.encrypted_content']
-
-    const effort = normalizeReasoningEffort(env.aiReasoningEffort)
-    if (effort) body.reasoning = { effort }
+const extractText = (response) => {
+  const parts = response?.candidates?.[0]?.content?.parts
+  if (Array.isArray(parts)) {
+    return parts
+      .map((part) => (typeof part?.text === 'string' ? part.text : ''))
+      .join('\n')
+      .trim()
   }
 
   try {
-    const response = await fetch(`${env.aiApiBaseUrl}/responses`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.aiApiKey}`,
-        'Content-Type': 'application/json',
+    return typeof response?.text === 'string' ? response.text.trim() : ''
+  } catch {
+    return ''
+  }
+}
+
+const parseCallArguments = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value
+  if (typeof value !== 'string') return {}
+
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+const collectProducts = (result, productsById) => {
+  const candidates = [
+    ...(Array.isArray(result?.products) ? result.products : []),
+    result?.product,
+    result?.addedProduct,
+  ]
+
+  for (const product of candidates) {
+    if (product?.id) productsById.set(product.id, product)
+  }
+}
+
+const callProvider = async ({ contents, tools, signal }) => {
+  try {
+    return await getGeminiClient().models.generateContent({
+      model: env.aiModel,
+      contents,
+      config: {
+        systemInstruction: AI_SYSTEM_INSTRUCTIONS,
+        tools,
+        temperature: 0.2,
+        abortSignal: signal,
       },
-      body: JSON.stringify(body),
-      signal: controller.signal,
     })
-
-    if (!response.ok) {
-      let providerCode = ''
-      try {
-        const payload = await response.json()
-        providerCode = payload?.error?.code || payload?.error?.type || ''
-      } catch {
-        // Keep the client message generic even when the provider body is not JSON.
-      }
-      console.error('[ai] Provider rejected request:', response.status, providerCode)
-      throw new ApiError(
-        502,
-        'The AI provider could not answer right now. Please try again shortly.',
-        'AI_PROVIDER_ERROR',
-      )
-    }
-
-    return await response.json()
   } catch (error) {
     if (error instanceof ApiError) throw error
 
-    if (error?.name === 'AbortError') {
+    if (
+      error?.name === 'AbortError' ||
+      error?.name === 'TimeoutError' ||
+      /aborted/i.test(error?.message || '')
+    ) {
       throw new ApiError(
         504,
         'The AI assistant took too long to respond. Please try again.',
@@ -134,77 +183,124 @@ const callProvider = async (input) => {
       )
     }
 
-    console.error('[ai] Provider request failed:', error?.message || error)
+    console.error('[ai] Gemini request failed:', error?.status || error?.statusCode || '', error?.message || error)
     throw new ApiError(
       502,
-      'The AI provider is unavailable right now. Please try again shortly.',
+      'The AI provider could not answer right now. Please try again shortly.',
       'AI_PROVIDER_ERROR',
     )
-  } finally {
-    clearTimeout(timeout)
   }
 }
 
-export const runAssistant = async ({ message, history = [] }) => {
+export const runAssistant = async ({ message, history = [], user } = {}) => {
   if (!env.aiConfigured) {
     throw new ApiError(
       503,
-      'AI assistant is not configured yet. Add AI_API_KEY to the server environment to enable it.',
+      'AI assistant is not configured yet. Please contact the store administrator.',
       'AI_NOT_CONFIGURED',
     )
   }
 
-  let input = buildInput(message, history)
+  const toolContext = user
+    ? { user: { id: user.id || user._id, role: user.role } }
+    : {}
+  const tools = buildGeminiTools(toolContext)
   const productsById = new Map()
   const toolsUsed = []
+  let contents = buildContents(message, history)
 
   for (let round = 0; round < env.aiMaxToolRounds; round += 1) {
-    const payload = await callProvider(input)
-    const { output, calls, text } = parseProviderResponse(payload)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), env.aiTimeoutMs)
+
+    let response
+    try {
+      response = await callProvider({ contents, tools, signal: controller.signal })
+    } finally {
+      clearTimeout(timeout)
+    }
+
+    const calls = Array.isArray(response?.functionCalls) ? response.functionCalls : []
+    const text = extractText(response)
 
     if (!calls.length) {
       return {
         answer:
           text ||
-          'I could not produce an answer from the catalog results. Please try rephrasing your question.',
+          'I could not produce an answer from the FreshCart results. Please try rephrasing your question.',
         products: [...productsById.values()].slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX),
         toolsUsed,
       }
     }
 
-    // Preserve model output (including reasoning items) before adding tool results.
-    input = [...input, ...output]
+    // Gemini 3 function calls carry IDs and, for thinking models, signatures.
+    // Passing the model content back unchanged is required for the next turn.
+    const modelContent =
+      response?.candidates?.[0]?.content ||
+      {
+        role: 'model',
+        parts: calls.map((call) => ({
+          functionCall: {
+            id: call.id,
+            name: call.name,
+            args: call.args || {},
+          },
+        })),
+      }
 
-    const toolOutputs = await Promise.all(
-      calls.map(async (call) => {
-        let args = {}
-        try {
-          args = JSON.parse(call.arguments || '{}')
-        } catch {
-          args = {}
+    contents = [...contents, modelContent]
+
+    const functionResponseParts = []
+
+    for (const call of calls) {
+      if (!call?.name) continue
+
+      const args = parseCallArguments(call.args)
+      toolsUsed.push(call.name)
+
+      const result = await executeAiTool(call.name, args, toolContext)
+      collectProducts(result, productsById)
+
+      let resultPayload = result
+      try {
+        resultPayload = JSON.parse(JSON.stringify(result ?? { ok: false }))
+      } catch {
+        resultPayload = {
+          ok: false,
+          error: 'FreshCart information is temporarily unavailable. Tell the customer to try again; do not guess.',
         }
+      }
 
-        toolsUsed.push(call.name)
-        const result = await executeAiTool(call.name, args)
+      functionResponseParts.push({
+        functionResponse: {
+          id: call.id,
+          name: call.name,
+          response: resultPayload,
+        },
+      })
+    }
 
-        for (const product of collectProducts(result)) {
-          productsById.set(product.id, product)
-        }
+    if (!functionResponseParts.length) {
+      return {
+        answer:
+          'I could not complete that FreshCart lookup. Please try rephrasing your question.',
+        products: [...productsById.values()].slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX),
+        toolsUsed,
+      }
+    }
 
-        return {
-          type: 'function_call_output',
-          call_id: call.call_id,
-          output: JSON.stringify(result),
-        }
-      }),
-    )
-
-    input = [...input, ...toolOutputs]
+    contents = [
+      ...contents,
+      {
+        role: 'user',
+        parts: functionResponseParts,
+      },
+    ]
   }
 
   throw new ApiError(
     504,
-    'The assistant needed too many catalog lookups for that question. Please narrow your search.',
+    'The assistant needed too many FreshCart lookups for that question. Please narrow your search.',
     'AI_TOOL_LIMIT',
   )
 }

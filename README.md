@@ -2,13 +2,15 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 6 — AWS S3 image uploads are implemented.** Auth,
+> **Current status: Phase 6 + Gemini AI assistant are implemented.** Auth,
 > catalog, admin catalog, persistent carts, address book, server-calculated
 > checkout, COD orders, verified online payments, order history/tracking and admin
-> order status updates use real APIs. Razorpay and S3 credentials are read from
-> `server/.env`; without them payments fall back to COD and admin image uploads
-> fall back to a public URL field. Coupons, customer reviews, sales reports and
-> refunds remain clearly labelled demos until their own phases.
+> order status updates use real APIs. The shopping assistant uses Google Gemini
+> through `@google/genai` on the server, with live catalog, cart, and store FAQ
+> tools. Razorpay, S3, and Gemini credentials are read from `server/.env`; without
+> them payments fall back to COD, admin image uploads fall back to a public URL
+> field, and the assistant is gracefully disabled. Coupons, customer reviews,
+> sales reports and refunds remain clearly labelled demos until their own phases.
 
 ## Repository structure
 
@@ -21,7 +23,7 @@ freshcart/
 
 ## Prerequisites
 
-- Node.js 20+ (Node 22 LTS recommended)
+- Node.js 22+ (required by `@google/genai`)
 - npm 10+
 - Git
 - MongoDB Atlas account for database-backed work
@@ -138,8 +140,9 @@ sign in with a real account, then open `/admin` with an admin account and change
 product or category. Those writes go straight to MongoDB through the protected API.
 
 See [Phase 3 API](docs/phase-3-api.md), [Phase 4 Commerce](docs/phase-4-commerce.md),
-[Phase 5 Payments](docs/phase-5-payments.md) and [Phase 6 AWS](docs/phase-6-aws.md)
-for routes, request bodies and the React integration map.
+[Phase 5 Payments](docs/phase-5-payments.md), [Phase 6 AWS](docs/phase-6-aws.md)
+and [Gemini AI assistant](docs/gemini-ai-assistant.md) for routes, request bodies,
+environment variables and the React integration map.
 
 Production build check:
 
@@ -156,3 +159,4 @@ npm run build
 - [Phase 4 Commerce](docs/phase-4-commerce.md)
 - [Phase 5 Payments](docs/phase-5-payments.md)
 - [Phase 6 AWS](docs/phase-6-aws.md)
+- [Gemini AI assistant](docs/gemini-ai-assistant.md)

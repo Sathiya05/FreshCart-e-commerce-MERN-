@@ -6,6 +6,13 @@ export const getStatus = asyncHandler(async (_req, res) => {
 })
 
 export const chat = asyncHandler(async (req, res) => {
-  const data = await runAssistant(req.body)
+  const user = req.user
+    ? { id: req.user._id, role: req.user.role }
+    : undefined
+
+  const data = await runAssistant({
+    ...req.body,
+    user,
+  })
   res.json({ success: true, data })
 })

@@ -1,11 +1,10 @@
 import dotenv from 'dotenv'
 import {
-  AI_DEFAULT_BASE_URL,
   AI_DEFAULT_MAX_TOOL_ROUNDS,
   AI_DEFAULT_MODEL,
   AI_DEFAULT_RATE_LIMIT_MAX,
   AI_DEFAULT_TIMEOUT_MS,
-  AI_PROVIDER_OPENAI,
+  AI_PROVIDER_GEMINI,
 } from '../constants/ai.js'
 
 dotenv.config()
@@ -49,15 +48,18 @@ if (isProduction && hasPartialRazorpayConfig && !razorpayWebhookSecret) {
   )
 }
 
-const aiProvider = (process.env.AI_PROVIDER || AI_PROVIDER_OPENAI).toLowerCase()
-const aiApiKey = process.env.AI_API_KEY || ''
-const aiSupportedProviders = [AI_PROVIDER_OPENAI]
-const aiConfigured = aiSupportedProviders.includes(aiProvider) && Boolean(aiApiKey)
+const aiProvider = (process.env.AI_PROVIDER || AI_PROVIDER_GEMINI).toLowerCase()
+const geminiApiKey = process.env.GEMINI_API_KEY || ''
+const aiConfigured = aiProvider === AI_PROVIDER_GEMINI && Boolean(geminiApiKey)
 
-if (isProduction && process.env.AI_API_KEY && !aiConfigured) {
+if (isProduction && geminiApiKey && !aiConfigured) {
   throw new Error(
-    `AI_PROVIDER must be one of: ${aiSupportedProviders.join(', ')} when AI_API_KEY is set in production.`,
+    `AI_PROVIDER must be ${AI_PROVIDER_GEMINI} when GEMINI_API_KEY is set in production.`,
   )
+}
+
+if (isProduction && process.env.AI_API_KEY && !geminiApiKey) {
+  console.warn('[ai] AI_API_KEY is no longer used. Set GEMINI_API_KEY for the Gemini assistant.')
 }
 
 export const env = {
@@ -88,16 +90,14 @@ export const env = {
   razorpayCurrency: process.env.RAZORPAY_CURRENCY || 'INR',
   razorpayConfigured,
   aiProvider,
-  aiApiKey,
+  geminiApiKey,
   aiConfigured,
-  aiModel: process.env.AI_MODEL || AI_DEFAULT_MODEL,
-  aiApiBaseUrl: (process.env.AI_API_BASE_URL || AI_DEFAULT_BASE_URL).replace(/\/+$/, ''),
+  aiModel: process.env.GEMINI_MODEL || AI_DEFAULT_MODEL,
   aiTimeoutMs: toPositiveNumber(process.env.AI_TIMEOUT_MS, AI_DEFAULT_TIMEOUT_MS),
   aiMaxToolRounds: toPositiveNumber(
     process.env.AI_MAX_TOOL_ROUNDS,
     AI_DEFAULT_MAX_TOOL_ROUNDS,
   ),
-  aiReasoningEffort: (process.env.AI_REASONING_EFFORT ?? 'low').trim(),
   aiRateLimitWindowMs: toPositiveNumber(
     process.env.AI_RATE_LIMIT_WINDOW_MS,
     rateLimitWindowMs,

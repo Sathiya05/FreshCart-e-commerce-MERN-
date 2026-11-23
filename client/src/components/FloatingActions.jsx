@@ -4,13 +4,14 @@ import { useLocation } from 'react-router-dom'
 import AIChatPanel from './ai/AIChatPanel.jsx'
 import { askAssistant, getAiStatus } from '../services/ai.service.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
+import { addToCart } from '../redux/cartSlice.js'
 import { pushToast, selectToasts } from '../redux/uiSlice.js'
 
 const WELCOME_MESSAGES = [
   {
     id: 'welcome',
     role: 'assistant',
-    text: 'Hi! I’m the FreshCart assistant. I can search live products, prices and stock. What are you looking for?',
+    text: 'Hi! I’m the FreshCart assistant. I can search live products, prices and stock, answer cart and delivery questions, and add items to your cart. What are you looking for?',
   },
 ]
 
@@ -123,6 +124,10 @@ export default function FloatingActions() {
     )
   }
 
+  const handleAddProduct = (product, quantity = 1) => {
+    dispatch(addToCart(product, quantity))
+  }
+
   return (
     <div
       style={{ '--dock-lift': `${Math.min(toastCount, 3) * 5.5}rem` }}
@@ -139,6 +144,7 @@ export default function FloatingActions() {
         onSend={handleSend}
         onClear={handleClear}
         onClose={() => setChatOpen(false)}
+        onAddProduct={handleAddProduct}
       />
 
       <button

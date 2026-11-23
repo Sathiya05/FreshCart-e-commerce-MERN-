@@ -6,8 +6,9 @@ import AIChatMessage from './AIChatMessage.jsx'
 const SUGGESTED_PROMPTS = [
   'What vegetables are available?',
   'Show fruits under ₹100',
-  'Which products are on discount?',
-  'Which fruits are in stock?',
+  'What is in my cart?',
+  'How much is delivery?',
+  'Which payment methods are available?',
 ]
 
 export default function AIChatPanel({
@@ -95,8 +96,8 @@ export default function AIChatPanel({
 
         {aiStatus?.configured === false && !aiStatus?.error && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-            AI isn’t configured yet. Add <strong>AI_API_KEY</strong> to the server environment to
-            enable real product answers. Shopping and checkout still work normally.
+            AI isn’t configured yet. Ask the site administrator to enable the server-side AI key
+            to get live product answers. Shopping and checkout still work normally.
           </div>
         )}
 

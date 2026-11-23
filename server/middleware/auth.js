@@ -40,6 +40,31 @@ export const protect = asyncHandler(async (req, _res, next) => {
   next()
 })
 
+/**
+ * Attaches req.user when a valid token is present, otherwise continues as a
+ * guest. Used by public endpoints that offer extra capabilities to signed-in
+ * customers (for example, the AI assistant's cart tools).
+ */
+export const optionalAuth = asyncHandler(async (req, _res, next) => {
+  const token = extractAccessToken(req)
+  req.user = null
+
+  if (!token) return next()
+
+  try {
+    const payload = verifyAccessToken(token)
+    const user = await User.findById(payload.sub).select('+tokenVersion')
+
+    if (user && user.isActive && payload.tokenVersion === user.tokenVersion) {
+      req.user = user
+    }
+  } catch {
+    // Invalid or expired tokens are treated as guest access on public routes.
+  }
+
+  next()
+})
+
 export const authorize = (...roles) => (req, _res, next) => {
   if (!req.user || !roles.includes(req.user.role)) {
     return next(
