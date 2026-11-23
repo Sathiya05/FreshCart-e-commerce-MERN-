@@ -2,15 +2,40 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import { selectCurrentUser } from './authSlice.js'
 import { pushToast } from './uiSlice.js'
 import * as commerce from '../services/commerce.service.js'
+import { getDeliveryFee } from '../utils/commerce.js'
 
 const initialState = {
   items: [],
+  summary: null,
   status: 'idle',
   error: null,
 }
 
+const computeSubtotal = (items = []) =>
+  items.reduce(
+    (total, item) =>
+      total + (item.product?.discountPrice || item.product?.price || 0) * item.quantity,
+    0,
+  )
+
 const applyCart = (state, action) => {
   state.items = action.payload.items || []
+  const subtotal =
+    action.payload.subtotal !== undefined
+      ? Number(action.payload.subtotal)
+      : computeSubtotal(state.items)
+  const deliveryFee =
+    action.payload.deliveryFee !== undefined
+      ? Number(action.payload.deliveryFee)
+      : getDeliveryFee(subtotal)
+  state.summary = {
+    subtotal,
+    deliveryFee,
+    totalAmount:
+      action.payload.totalAmount !== undefined
+        ? Number(action.payload.totalAmount)
+        : subtotal + deliveryFee,
+  }
   state.status = 'succeeded'
   state.error = null
 }
@@ -42,6 +67,7 @@ const cartSlice = createSlice({
     },
     addToCartLocal: {
       reducer(state, action) {
+        state.summary = null
         const { product, quantity } = action.payload
         const existing = state.items.find((item) => item.product.id === product.id)
 
@@ -63,6 +89,7 @@ const cartSlice = createSlice({
       },
     },
     updateCartQuantityLocal(state, action) {
+      state.summary = null
       const { productId, quantity } = action.payload
       const item = state.items.find((entry) => entry.product.id === productId)
       if (!item) return
@@ -72,12 +99,14 @@ const cartSlice = createSlice({
       )
     },
     removeFromCartLocal(state, action) {
+      state.summary = null
       state.items = state.items.filter(
         (item) => item.product.id !== action.payload,
       )
     },
     clearCartLocal(state) {
       state.items = []
+      state.summary = null
     },
   },
   extraReducers: (builder) => {
@@ -198,6 +227,7 @@ export const syncGuestCart = () => async (dispatch, getState) => {
 }
 
 export const selectCartItems = (state) => state.cart.items
+export const selectCartSummary = (state) => state.cart.summary
 export const selectCartStatus = (state) => state.cart.status
 export const selectCartError = (state) => state.cart.error
 
@@ -205,12 +235,28 @@ export const selectCartCount = createSelector([selectCartItems], (items) =>
   items.reduce((total, item) => total + item.quantity, 0),
 )
 
-export const selectCartSubtotal = createSelector([selectCartItems], (items) =>
-  items.reduce(
-    (total, item) =>
-      total + (item.product.discountPrice || item.product.price) * item.quantity,
-    0,
-  ),
+export const selectCartSubtotal = createSelector(
+  [selectCartItems, selectCartSummary],
+  (items, summary) =>
+    summary?.subtotal !== undefined && summary?.subtotal !== null
+      ? Number(summary.subtotal)
+      : computeSubtotal(items),
+)
+
+export const selectCartDeliveryFee = createSelector(
+  [selectCartSubtotal, selectCartSummary],
+  (subtotal, summary) =>
+    summary?.deliveryFee !== undefined && summary?.deliveryFee !== null
+      ? Number(summary.deliveryFee)
+      : getDeliveryFee(subtotal),
+)
+
+export const selectCartTotal = createSelector(
+  [selectCartSubtotal, selectCartDeliveryFee, selectCartSummary],
+  (subtotal, deliveryFee, summary) =>
+    summary?.totalAmount !== undefined && summary?.totalAmount !== null
+      ? Number(summary.totalAmount)
+      : subtotal + deliveryFee,
 )
 
 export default cartSlice.reducer

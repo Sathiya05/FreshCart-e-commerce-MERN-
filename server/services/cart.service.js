@@ -1,10 +1,10 @@
+import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../constants/delivery.js'
 import { Cart } from '../models/Cart.js'
 import { Product } from '../models/Product.js'
 import { ApiError } from '../utils/apiError.js'
 import { serializeCart } from '../utils/serialize.js'
 
-export const FREE_DELIVERY_THRESHOLD = 499
-export const DELIVERY_FEE = 30
+export { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD }
 
 const productPopulation = {
   path: 'items.product',

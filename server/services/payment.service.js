@@ -186,8 +186,10 @@ const buildPaymentPayload = (order) => ({
   amount: toPaise(order.totalAmount),
   currency: env.razorpayCurrency,
   keyId: env.razorpayKeyId,
+  deliveryDate: order.deliveryDate || '',
   deliverySlot: order.deliverySlot || '',
   deliveryInstructions: order.deliveryInstructions || '',
+  addressConfirmedAt: order.addressConfirmedAt || null,
 })
 
 export const getPaymentConfig = () => ({

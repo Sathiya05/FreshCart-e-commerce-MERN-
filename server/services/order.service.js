@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { findDeliverySlot } from '../constants/delivery.js'
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
@@ -82,6 +83,18 @@ export const createOrderFromCart = async (userId, payload, options = {}) => {
     throw new ApiError(400, 'Select a valid delivery address.', 'INVALID_ADDRESS')
   }
 
+  if (payload.addressConfirmed !== true) {
+    throw new ApiError(400, 'Confirm your delivery address.', 'ADDRESS_NOT_CONFIRMED')
+  }
+
+  const deliverySlot = findDeliverySlot(
+    payload.deliveryDate,
+    payload.deliverySlot,
+  )
+  if (!deliverySlot) {
+    throw new ApiError(400, 'Select an available delivery date and slot.', 'INVALID_DELIVERY_SLOT')
+  }
+
   const items = cart.items.map((item) => ({
     product: item.product.id,
     name: item.product.name,
@@ -117,8 +130,10 @@ export const createOrderFromCart = async (userId, payload, options = {}) => {
       discount: 0,
       deliveryFee: cart.deliveryFee,
       totalAmount: cart.totalAmount,
-      deliverySlot: payload.deliverySlot || '',
+      deliveryDate: deliverySlot.date,
+      deliverySlot: deliverySlot.label,
       deliveryInstructions: payload.deliveryInstructions || '',
+      addressConfirmedAt: new Date(),
       timeline: [
         {
           status: 'Pending',
@@ -203,6 +218,22 @@ const findOrder = async (userId, id) => {
 
 export const getUserOrder = async (userId, id) => {
   return serializeOrder(await findOrder(userId, id))
+}
+
+/** Safe lookup by Mongo ID or customer-facing order number, scoped to one user. */
+export const getCustomerOrderByIdentifier = async (userId, identifier) => {
+  const value = String(identifier || '').trim()
+  if (!value) throw new ApiError(400, 'An order identifier is required.', 'INVALID_ORDER')
+
+  const isObjectId = /^[a-fA-F0-9]{24}$/.test(value)
+  const order = await Order.findOne(
+    isObjectId
+      ? { _id: value, user: userId }
+      : { orderNumber: value.toUpperCase(), user: userId },
+  )
+  if (!order) throw new ApiError(404, 'Order not found.', 'NOT_FOUND')
+
+  return serializeOrder(order)
 }
 
 export const getOrderTracking = (userId, id) => getUserOrder(userId, id)

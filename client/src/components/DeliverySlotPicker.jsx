@@ -6,11 +6,7 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
   }
 
   const groups = slots.reduce((result, slot) => {
-    const day = slot.label.startsWith('Today')
-      ? 'Today'
-      : slot.label.startsWith('Tomorrow')
-        ? 'Tomorrow'
-        : 'More slots'
+    const day = slot.dateLabel || 'Available dates'
     result[day] = [...(result[day] || []), slot]
     return result
   }, {})
@@ -50,7 +46,7 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
                     </span>
                     <span>
                       <span className="block text-sm font-medium text-text-primary">
-                        {slot.label.replace(/^(Today|Tomorrow)\s+(at\s+)?/i, '')}
+                        {slot.timeSlot || slot.label}
                       </span>
                       <span className="text-xs text-text-secondary">
                         {slot.available ? 'Available' : 'Fully booked'}

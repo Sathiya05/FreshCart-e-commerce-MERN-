@@ -132,7 +132,12 @@ export default function OrderDetailsPage() {
               <Truck size={17} className="text-brand-primary" aria-hidden="true" />
               Delivery
             </h2>
-            <p className="mt-3 text-sm text-text-secondary">
+            {order.deliveryDate && (
+              <p className="mt-3 text-sm text-text-secondary">
+                Date: <span className="font-medium text-text-primary">{order.deliveryDate}</span>
+              </p>
+            )}
+            <p className="mt-2 text-sm text-text-secondary">
               Slot: <span className="font-medium text-text-primary">{order.deliverySlot || 'Not selected'}</span>
             </p>
             {order.deliveryInstructions && (

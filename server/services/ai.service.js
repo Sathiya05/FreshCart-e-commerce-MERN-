@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai'
 import { env } from '../config/env.js'
-import { AI_LIMITS, AI_SYSTEM_INSTRUCTIONS } from '../constants/ai.js'
+import { AI_LIMITS, AI_SYSTEM_INSTRUCTIONS, AI_TOOL_NAMES } from '../constants/ai.js'
 import { ApiError } from '../utils/apiError.js'
 import { executeAiTool, getAiTools } from './aiTools.service.js'
 
@@ -147,6 +147,35 @@ const parseCallArguments = (value) => {
   }
 }
 
+const canonicalCallKey = (name, args) => {
+  if (name === 'search_products' || name === 'recommend_products') {
+    return [
+      name,
+      String(args.query || '').trim().toLowerCase(),
+      String(args.category || '').trim().toLowerCase(),
+      String(args.min_price ?? ''),
+      String(args.max_price ?? ''),
+      String(args.in_stock_only ?? args.only_in_stock ?? ''),
+    ].join(':')
+  }
+  return `${name}:${JSON.stringify(args)}`
+}
+
+const buildGroundedFallbackAnswer = (products) => {
+  const lines = products.slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX).map((product) => {
+    const price = Number(product.effectivePrice ?? product.discountPrice ?? product.price) || 0
+    const stock = Number(product.stock) || 0
+    const availability = stock > 0 ? 'In stock' : 'Out of stock'
+    return `- ${product.name || 'Product'} — ₹${price.toFixed(2)}${product.unit ? ` / ${product.unit}` : ''} (${availability})`
+  })
+
+  return [
+    'Here are the matching products from the live FreshCart catalog:',
+    ...lines,
+    'Ask about any item for more details.',
+  ].join('\n')
+}
+
 const collectProducts = (result, productsById) => {
   const candidates = [
     ...(Array.isArray(result?.products) ? result.products : []),
@@ -210,7 +239,57 @@ const callProvider = async ({ contents, tools, signal }) => {
   }
 }
 
-export const runAssistant = async ({ message, history = [], user } = {}) => {
+const COMMIT_TOOLS_BY_ACTION = {
+  add: AI_TOOL_NAMES.ADD_TO_CART,
+  update: AI_TOOL_NAMES.UPDATE_CART_ITEM,
+  remove: AI_TOOL_NAMES.REMOVE_CART_ITEM,
+  clear: AI_TOOL_NAMES.CLEAR_CART,
+}
+
+const applyConfirmedCartChange = async ({ confirmation, toolContext }) => {
+  const action = String(confirmation?.action || '')
+  const tool = COMMIT_TOOLS_BY_ACTION[action]
+  if (!tool || !confirmation?.token || confirmation?.confirmed !== true) return null
+
+  const args = {
+    identifier: confirmation.productId || '',
+    quantity: Number(confirmation.quantity) || 0,
+    confirmation_token: confirmation.token,
+  }
+
+  const result = await executeAiTool(tool, args, toolContext, { allowInternal: true })
+  const productsById = new Map()
+  collectProducts(result, productsById)
+  const products = [...productsById.values()]
+
+  if (!result?.confirmed) {
+    return {
+      answer:
+        result?.error ||
+        'That confirmation is no longer valid. Please ask for the change again.',
+      products,
+      toolsUsed: [tool],
+      pendingConfirmation: null,
+      cart: null,
+    }
+  }
+
+  return {
+    answer: `${result.message || 'Your cart has been updated.'} Your cart total is now ₹${Number(result.totalAmount || 0).toFixed(2)}.`,
+    products,
+    toolsUsed: [tool],
+    pendingConfirmation: null,
+    cart: {
+      items: result.items || [],
+      itemCount: result.itemCount,
+      subtotal: result.subtotal,
+      deliveryFee: result.deliveryFee,
+      totalAmount: result.totalAmount,
+    },
+  }
+}
+
+export const runAssistant = async ({ message, history = [], user, confirmation } = {}) => {
   if (!env.aiConfigured) {
     throw new ApiError(
       503,
@@ -220,12 +299,26 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
   }
 
   const toolContext = user
-    ? { user: { id: user.id || user._id, role: user.role } }
+    ? { user: { id: user.id || user._id, role: user.role }, confirmation }
     : {}
+
+  const isCustomer = user && (!user.role || user.role === 'customer')
+  if (
+    isCustomer &&
+    confirmation?.confirmed === true &&
+    confirmation?.token
+  ) {
+    const confirmed = await applyConfirmedCartChange({ confirmation, toolContext })
+    if (confirmed) return confirmed
+  }
+
   const tools = buildGeminiTools(toolContext)
   const productsById = new Map()
   const toolsUsed = []
+  let pendingConfirmation = null
+  let cartSnapshot = null
   const seenCallKeys = new Set()
+  const toolCallCounts = new Map()
   let contents = buildContents(message, history)
 
   for (let round = 0; round < env.aiMaxToolRounds; round += 1) {
@@ -249,6 +342,8 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
           'I could not produce an answer from the FreshCart results. Please try rephrasing your question.',
         products: [...productsById.values()].slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX),
         toolsUsed,
+        pendingConfirmation,
+        cart: cartSnapshot,
       }
     }
 
@@ -275,18 +370,21 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
       if (!call?.name) continue
 
       const args = parseCallArguments(call.args)
-      const callKey = `${call.name}:${JSON.stringify(args)}`
+      const callKey = canonicalCallKey(call.name, args)
+      const callCount = (toolCallCounts.get(call.name) || 0) + 1
+      toolCallCounts.set(call.name, callCount)
 
-      // Gemini sometimes retries an identical lookup. Return the earlier answer
-      // instead of repeating database work and consuming tool rounds.
-      if (seenCallKeys.has(callKey)) {
+      // Gemini sometimes retries a lookup with slightly different arguments.
+      // Return the earlier answer instead of repeating database work.
+      if (seenCallKeys.has(callKey) || callCount > 2) {
+        toolsUsed.push(call.name)
         functionResponseParts.push({
           functionResponse: {
             id: call.id,
             name: call.name,
             response: {
               ok: false,
-              error: 'This exact FreshCart lookup was already completed. Use the earlier result and answer now; do not repeat it.',
+              error: 'This FreshCart lookup was already completed. Use the earlier result and answer now; do not call this tool again.',
             },
           },
         })
@@ -299,9 +397,38 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
       const result = await executeAiTool(call.name, args, toolContext)
       collectProducts(result, productsById)
 
+      if (
+        Array.isArray(result?.items) &&
+        result.subtotal !== undefined &&
+        result.totalAmount !== undefined
+      ) {
+        cartSnapshot = {
+          items: result.items,
+          itemCount: result.itemCount,
+          subtotal: result.subtotal,
+          deliveryFee: result.deliveryFee,
+          totalAmount: result.totalAmount,
+        }
+      }
+
+      if (result?.needsConfirmation && result.confirmationToken) {
+        pendingConfirmation = {
+          token: result.confirmationToken,
+          action: result.action || '',
+          productId: result.productId || '',
+          quantity: Number(result.quantity) || 0,
+          summary: result.summary || '',
+        }
+      } else if (result?.confirmed) {
+        pendingConfirmation = null
+      }
+
       let resultPayload = result
       try {
         resultPayload = JSON.parse(JSON.stringify(result ?? { ok: false }))
+        // Confirmation tokens are capabilities for the client, not text for the
+        // model to repeat. The client supplies them back out of band.
+        delete resultPayload.confirmationToken
       } catch {
         resultPayload = {
           ok: false,
@@ -324,6 +451,8 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
           'I could not complete that FreshCart lookup. Please try rephrasing your question.',
         products: [...productsById.values()].slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX),
         toolsUsed,
+        pendingConfirmation,
+        cart: cartSnapshot,
       }
     }
 
@@ -336,6 +465,19 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
     ]
   }
 
+  if (!env.isProduction) {
+    console.warn('[ai] Tool limit reached. Sequence:', toolsUsed.join(' -> '))
+  }
+
+  if (productsById.size) {
+    return {
+      answer: buildGroundedFallbackAnswer([...productsById.values()]),
+      products: [...productsById.values()].slice(0, AI_LIMITS.ANSWER_PRODUCTS_MAX),
+      toolsUsed,
+      pendingConfirmation,
+      cart: cartSnapshot,
+    }
+  }
   throw new ApiError(
     504,
     'The assistant needed too many FreshCart lookups for that question. Please narrow your search.',

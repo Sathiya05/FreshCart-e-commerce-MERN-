@@ -1,11 +1,10 @@
 import api from './api.js'
 import { normalizeProduct } from './catalog.service.js'
-import { DEMO_DELIVERY_SLOTS } from '../data/demoData.js'
 
 /**
- * Commerce service: cart, addresses, orders and admin order management.
- * Delivery slots stay as local preview data until a scheduling API exists.
- * Online payments use server-created Razorpay orders and signed verification.
+ * Commerce service: cart, addresses, delivery slots, orders and admin order
+ * management. Online payments use server-created Razorpay orders and signed
+ * verification.
  */
 const getData = (response) => response.data.data
 
@@ -87,7 +86,8 @@ export const deleteAddress = (id) =>
 export const setDefaultAddress = (id) =>
   api.patch(`/account/addresses/${encodeURIComponent(id)}/default`).then(getData)
 
-export const getDeliverySlots = async () => DEMO_DELIVERY_SLOTS
+export const getDeliverySlots = () =>
+  api.get('/delivery/slots').then(getData).then((data) => data.slots || [])
 
 export const createOrder = (payload) =>
   api.post('/orders', payload).then(getData).then(normalizeOrder)

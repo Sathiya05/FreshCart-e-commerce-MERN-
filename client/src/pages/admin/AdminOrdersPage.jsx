@@ -304,8 +304,13 @@ export default function AdminOrdersPage() {
                 {selectedOrder.address?.addressLine}<br />
                 {selectedOrder.address?.city}, {selectedOrder.address?.state} {selectedOrder.address?.pincode}
               </p>
-              {selectedOrder.deliverySlot && (
+              {selectedOrder.deliveryDate && (
                 <p className="mt-2 text-xs text-text-secondary">
+                  Date: {selectedOrder.deliveryDate}
+                </p>
+              )}
+              {selectedOrder.deliverySlot && (
+                <p className="mt-1 text-xs text-text-secondary">
                   Slot: {selectedOrder.deliverySlot}
                 </p>
               )}

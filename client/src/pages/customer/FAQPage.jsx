@@ -15,7 +15,7 @@ const groups = [
       },
       {
         q: 'Are the prices final at checkout?',
-        a: 'Catalog prices come from the live backend. Checkout totals and discounts are still a preview until the commerce API is added.',
+        a: 'Catalog prices come from the live backend. The server recalculates and validates the cart total before an order is created.',
       },
     ],
   },
@@ -24,11 +24,11 @@ const groups = [
     items: [
       {
         q: 'What are delivery slots?',
-        a: 'Delivery slots are selected time windows for receiving your groceries. You can choose one during checkout once real order creation is enabled.',
+        a: 'Delivery slots are date and time windows for receiving your groceries. FreshCart serves the live schedule from the server, and you select one during checkout.',
       },
       {
         q: 'Do you deliver on weekends?',
-        a: 'Weekend availability depends on your location and the configured slots. The live schedule will appear in checkout after Phase 4.',
+        a: 'Available dates and time slots come from the live delivery schedule in checkout. Choose an available slot for your location.',
       },
     ],
   },

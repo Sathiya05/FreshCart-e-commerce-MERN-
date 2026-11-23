@@ -135,7 +135,12 @@ export default function OrderTrackingPage() {
                 {' '}{order.address.state} - {order.address.pincode}
               </span>
             </div>
-            <p className="mt-4 text-sm text-text-secondary">
+            {order.deliveryDate && (
+              <p className="mt-4 text-sm text-text-secondary">
+                Date: <span className="font-medium text-text-primary">{order.deliveryDate}</span>
+              </p>
+            )}
+            <p className="mt-2 text-sm text-text-secondary">
               Slot: <span className="font-medium text-text-primary">{order.deliverySlot}</span>
             </p>
           </section>

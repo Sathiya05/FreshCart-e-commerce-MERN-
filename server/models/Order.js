@@ -110,8 +110,10 @@ const orderSchema = new Schema(
     discount: { type: Number, default: 0, min: 0 },
     deliveryFee: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true, min: 0 },
+    deliveryDate: { type: String, trim: true },
     deliverySlot: { type: String, trim: true },
     deliveryInstructions: { type: String, trim: true, maxlength: 200 },
+    addressConfirmedAt: { type: Date },
     couponCode: { type: String, trim: true },
     timeline: {
       type: [timelineEventSchema],

@@ -4,11 +4,12 @@ import AIChatComposer from './AIChatComposer.jsx'
 import AIChatMessage from './AIChatMessage.jsx'
 
 const SUGGESTED_PROMPTS = [
-  'What vegetables are available?',
-  'Show fruits under ₹100',
-  'What is in my cart?',
-  'How much is delivery?',
-  'Which payment methods are available?',
+  'Show available vegetables.',
+  'Find fruits under ₹100.',
+  'Recommend daily essentials.',
+  'Show products currently in stock.',
+  'Tell me about Amul Milk.',
+  'Help me with my cart.',
 ]
 
 export default function AIChatPanel({
@@ -17,7 +18,11 @@ export default function AIChatPanel({
   thinking,
   compact = false,
   aiStatus,
+  pendingConfirmation,
   onSend,
+  onRetry,
+  onConfirm,
+  onCancel,
   onClear,
   onClose,
   onAddProduct,
@@ -36,7 +41,7 @@ export default function AIChatPanel({
   useEffect(() => {
     if (!open || !scrollRef.current) return
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [open, messages, thinking])
+  }, [open, messages, thinking, pendingConfirmation])
 
   return (
     <div
@@ -46,7 +51,7 @@ export default function AIChatPanel({
       aria-label="FreshCart AI assistant"
       aria-hidden={!open}
       className={`absolute bottom-full right-0 mb-3 flex w-[calc(100vw-2rem)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-app-border bg-surface shadow-2xl transition-all duration-200 sm:w-[380px] ${
-        compact ? 'max-h-[calc(100dvh-15rem)]' : 'max-h-[calc(100dvh-10rem)]'
+        compact ? 'max-h-[calc(100dvh-13rem)]' : 'max-h-[calc(100dvh-10rem)]'
       } ${
         open
           ? 'visible translate-y-0 scale-100 opacity-100'
@@ -107,8 +112,39 @@ export default function AIChatPanel({
           </div>
         )}
 
+        {pendingConfirmation?.summary && (
+          <div className="rounded-xl border border-brand-primary/30 bg-brand-secondary/50 p-3 text-xs leading-5 text-brand-dark">
+            <p className="font-semibold">Waiting for your confirmation</p>
+            <p className="mt-1">{pendingConfirmation.summary}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={thinking}
+                className="rounded-lg bg-brand-primary px-3 py-1.5 font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
+              >
+                Confirm change
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={thinking}
+                className="rounded-lg border border-app-border bg-surface px-3 py-1.5 font-semibold text-text-secondary transition hover:text-text-primary disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="mt-1 text-text-secondary">You can also reply with “yes, confirm”.</p>
+          </div>
+        )}
+
         {messages.map((message) => (
-          <AIChatMessage key={message.id} message={message} onAddProduct={onAddProduct} />
+          <AIChatMessage
+            key={message.id}
+            message={message}
+            onAddProduct={onAddProduct}
+            onRetry={onRetry}
+          />
         ))}
 
         {thinking && (
@@ -129,25 +165,24 @@ export default function AIChatPanel({
         )}
       </div>
 
-      {!compact && (
-        <div className="border-t border-app-border bg-surface px-4 py-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-            Try asking
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTED_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => onSend(prompt)}
-                className="rounded-full border border-brand-primary/20 bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-dark transition hover:border-brand-primary/40 hover:bg-brand-primary/10"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
+      <div className="border-t border-app-border bg-surface px-4 py-3">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+          Try asking
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTED_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => onSend(prompt)}
+              disabled={thinking}
+              className="rounded-full border border-brand-primary/20 bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-dark transition hover:border-brand-primary/40 hover:bg-brand-primary/10 disabled:opacity-50"
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       <AIChatComposer onSend={onSend} disabled={thinking} />
     </div>

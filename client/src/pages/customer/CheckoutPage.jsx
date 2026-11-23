@@ -10,8 +10,16 @@ import ErrorState from '../../components/ErrorState.jsx'
 import OrderSummary from '../../components/OrderSummary.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
+import WhatsAppIcon from '../../components/WhatsAppIcon.jsx'
+import useWhatsAppCartShare from '../../hooks/useWhatsAppCartShare.js'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
-import { clearCartLocal, selectCartItems, selectCartSubtotal } from '../../redux/cartSlice.js'
+import {
+  clearCartLocal,
+  selectCartDeliveryFee,
+  selectCartItems,
+  selectCartSubtotal,
+  selectCartTotal,
+} from '../../redux/cartSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
@@ -30,6 +38,8 @@ export default function CheckoutPage() {
   const pay = useRazorpayCheckout()
   const items = useAppSelector(selectCartItems)
   const subtotal = useAppSelector(selectCartSubtotal)
+  const deliveryCharge = useAppSelector(selectCartDeliveryFee)
+  const total = useAppSelector(selectCartTotal)
   const addressesState = useAsync(getAddresses, [])
   const slotsState = useAsync(getDeliverySlots, [])
   const paymentConfigState = useAsync(getPaymentConfig, [])
@@ -38,6 +48,7 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedSlotId, setSelectedSlotId] = useState(null)
   const [deliveryInstructions, setDeliveryInstructions] = useState('')
+  const [addressConfirmed, setAddressConfirmed] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cod')
   const [submitting, setSubmitting] = useState(false)
   const [orderError, setOrderError] = useState('')
@@ -58,6 +69,10 @@ export default function CheckoutPage() {
   }, [slots, selectedSlotId])
 
   useEffect(() => {
+    setAddressConfirmed(false)
+  }, [selectedAddressId, selectedSlotId])
+
+  useEffect(() => {
     if (!paymentEnabled && paymentMethod === 'razorpay') {
       setPaymentMethod('cod')
     }
@@ -71,9 +86,23 @@ export default function CheckoutPage() {
     () => addresses.find((address) => address.id === selectedAddressId),
     [addresses, selectedAddressId],
   )
-  const deliveryCharge = subtotal >= 499 ? 0 : 30
+  const { shareCart } = useWhatsAppCartShare(
+    selectedSlot || selectedAddress
+      ? {
+          date: selectedSlot?.date,
+          dateLabel: selectedSlot?.dateLabel,
+          timeSlot: selectedSlot?.timeSlot,
+          address: selectedAddress,
+          instructions: deliveryInstructions,
+        }
+      : null,
+  )
   const placeOrderDisabled =
-    !selectedAddressId || submitting || (paymentMethod === 'razorpay' && !paymentEnabled)
+    !selectedAddressId ||
+    !selectedSlot ||
+    !addressConfirmed ||
+    submitting ||
+    (paymentMethod === 'razorpay' && !paymentEnabled)
   const placeOrderLabel = submitting
     ? 'Creating order…'
     : paymentMethod === 'razorpay'
@@ -81,7 +110,7 @@ export default function CheckoutPage() {
       : 'Place order'
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId || submitting) return
+    if (!selectedAddressId || !selectedSlot || !addressConfirmed || submitting) return
     if (paymentMethod === 'razorpay' && !paymentEnabled) return
 
     setSubmitting(true)
@@ -90,8 +119,10 @@ export default function CheckoutPage() {
     const payload = {
       addressId: selectedAddressId,
       paymentMethod,
-      deliverySlot: selectedSlot?.label || '',
+      deliveryDate: selectedSlot.date,
+      deliverySlot: selectedSlot.label,
       deliveryInstructions,
+      addressConfirmed: true,
     }
 
     try {
@@ -223,6 +254,17 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                 </div>
+                <label className="mt-4 flex items-start gap-2 text-xs leading-5 text-text-primary">
+                  <input
+                    type="checkbox"
+                    checked={addressConfirmed}
+                    onChange={(event) => setAddressConfirmed(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-app-border text-brand-primary focus:ring-brand-primary"
+                  />
+                  <span>
+                    I confirm this delivery address, date and time slot are correct.
+                  </span>
+                </label>
                 <label htmlFor="delivery-instructions" className="mt-4 block text-xs font-semibold text-text-primary">
                   Delivery instructions <span className="font-normal text-text-secondary">(optional)</span>
                 </label>
@@ -346,16 +388,34 @@ export default function CheckoutPage() {
             <OrderSummary
               subtotal={subtotal}
               deliveryCharge={deliveryCharge}
+              delivery={selectedSlot}
+              address={selectedAddress}
               action={
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={handlePlaceOrder}
-                  disabled={placeOrderDisabled}
-                >
-                  <ShieldCheck size={16} aria-hidden="true" />
-                  {placeOrderLabel}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={handlePlaceOrder}
+                    disabled={placeOrderDisabled}
+                  >
+                    <ShieldCheck size={16} aria-hidden="true" />
+                    {placeOrderLabel}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={shareCart}
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Share cart on WhatsApp
+                  </Button>
+                  {!addressConfirmed && (
+                    <p className="text-center text-xs text-text-secondary">
+                      Confirm your delivery address to place the order.
+                    </p>
+                  )}
+                </div>
               }
               note={
                 paymentMethod === 'razorpay'
@@ -378,7 +438,7 @@ export default function CheckoutPage() {
           <div className="min-w-0">
             <p className="text-xs text-text-secondary">Order total</p>
             <p className="text-lg font-bold text-text-primary">
-              {formatCurrency(subtotal + deliveryCharge)}
+              {formatCurrency(total)}
             </p>
           </div>
           <Button

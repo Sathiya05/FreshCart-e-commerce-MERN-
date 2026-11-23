@@ -140,17 +140,31 @@ only `/api/ai/status` and `/api/ai/chat` from the Render API.
 | Stock availability | `check_stock` | Everyone |
 | Recommendations | `recommend_products` | Everyone |
 | Delivery/payment/order FAQs | `get_store_faqs` | Everyone |
-| Cart questions | `view_cart` | Signed-in customers |
-| Add to cart | `add_to_cart` | Signed-in customers |
+| Cart questions/total | `view_cart` | Signed-in customers |
+| Prepare cart change | `prepare_cart_change` | Signed-in customers |
+| Commit cart change | server-side confirmation handler | Signed-in customers, after explicit confirmation |
+| Recent orders | `get_my_orders` | Signed-in customers, read-only |
+| One order | `get_order_details` | Signed-in customers, read-only, ownership checked |
 
 Catalog answers are grounded in live MongoDB data. The assistant is instructed
 not to invent products, prices, discounts, stock, delivery times, or policies.
-Cart mutations call the same `cartService.addCartItem()` logic used by
-`POST /api/cart/items`, including cumulative stock checks.
+Every cart mutation first calls `prepare_cart_change`, which validates the
+product, current cart state and stock, then returns an opaque signed confirmation
+summary. The assistant asks the customer to confirm before anything changes. On
+the next message, FreshCart validates the signed confirmation and commits the
+prepared change through the existing cart service functions used by
+`POST /api/cart/items`, `PATCH /api/cart/items/:id`,
+`DELETE /api/cart/items/:id`, and `DELETE /api/cart`, including server-side price
+and cumulative stock checks. Commit results include a cart snapshot so the React
+client can refresh Redux immediately. The browser only returns the signed token
+when the customer presses **Confirm change** or sends a clear affirmative reply;
+an unrelated follow-up question never commits the prepared change. Commit tools
+are not exposed to the model; only the read-only prepare step is.
 
-Guests can use catalog and FAQ tools. If a guest asks a cart question, the
-assistant asks them to sign in. Cart tools are not advertised to guests, and no
-user ID is accepted from the browser.
+Guests can use catalog and FAQ tools. If a guest asks a cart or order question,
+the assistant asks them to sign in. Cart and order tools are not advertised to
+guests, and no user ID is accepted from the browser. Order tools use the existing
+ownership-scoped order service and never expose another customer's information.
 
 ## Security notes
 
@@ -162,6 +176,11 @@ user ID is accepted from the browser.
 - Provider errors are logged server-side in a generic form. Clients receive
   generic `AI_*` error codes and customer-safe messages.
 - `/api/ai/chat` keeps the existing IP-based AI rate limit.
+- Consumed confirmation tokens are recorded in MongoDB with a unique `jti`, so
+  a token cannot be replayed on another server instance before it expires.
+- Commit tools are rejected by the tool executor unless the request carries an
+  explicit client approval flag and a valid signed token. The browser only sets
+  that flag from the **Confirm change** button or an exact affirmative reply.
 - `optionalAuth` ignores invalid tokens on this public route rather than
   granting cart capabilities.
 
@@ -169,21 +188,25 @@ user ID is accepted from the browser.
 
 Use the floating assistant on the customer site and try:
 
-1. `What vegetables are available?`
-2. `Show me fruits under ₹100`
-3. `Which fruits are in stock?`
-4. `Recommend a product under ₹200`
-5. `What is in my cart?` (signed in)
-6. `Add 2 of the first product you found to my cart` (signed in; then open the cart)
-7. `How much is delivery?`
-8. `Which payment methods are available?`
+1. `Show available vegetables.`
+2. `Find fruits under ₹100.`
+3. `Recommend daily essentials.`
+4. `Show products currently in stock.`
+5. `Tell me about Amul Milk.`
+6. `Help me with my cart.`
+7. `What is in my cart?` (signed in)
+8. `Add 2 Amul Milk to my cart` (signed in; confirm when asked, then open the cart)
+9. `Change that item to 3` (signed in; confirm when asked)
+10. `Show my recent orders` (signed in)
 
 Expected behavior:
 
 - Product names, prices, units, and stock come from the live catalog.
 - No answer invents a product, offer, delivery promise, or payment policy.
+- The exact welcome message and six suggested prompts match the product requirement.
+- Cart changes require explicit confirmation; the cart UI updates after a confirmed change.
 - Signed-in users can add AI-recommended products from the product cards.
-- Guests are asked to sign in for cart questions.
+- Guests are asked to sign in for cart and order questions.
 - No API key appears in responses, page source, or the client bundle.
 
 ## Troubleshooting

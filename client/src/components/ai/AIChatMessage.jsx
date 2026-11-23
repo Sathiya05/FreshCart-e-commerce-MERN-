@@ -1,7 +1,7 @@
-import { Bot, User } from 'lucide-react'
+import { Bot, RotateCw, User } from 'lucide-react'
 import AIProductCard from './AIProductCard.jsx'
 
-export default function AIChatMessage({ message, onAddProduct }) {
+export default function AIChatMessage({ message, onAddProduct, onRetry }) {
   const isUser = message.role === 'user'
   const isWarning = message.tone === 'warning'
   const products = Array.isArray(message.products) ? message.products : []
@@ -28,6 +28,17 @@ export default function AIChatMessage({ message, onAddProduct }) {
         }`}
       >
         <p className="whitespace-pre-wrap">{message.text}</p>
+
+        {isWarning && message.retryText && onRetry && (
+          <button
+            type="button"
+            onClick={() => onRetry(message.retryText)}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+          >
+            <RotateCw size={12} aria-hidden="true" />
+            Retry
+          </button>
+        )}
 
         {products.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-2">

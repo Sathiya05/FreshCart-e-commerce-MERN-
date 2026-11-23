@@ -12,14 +12,26 @@ export const getAiStatus = async () => {
   }
 }
 
-export const askAssistant = async ({ message, history = [] }) => {
+export const askAssistant = async ({ message, history = [], confirmation } = {}) => {
   try {
-    const data = await api.post('/ai/chat', { message, history }).then(getData)
+    const data = await api
+      .post('/ai/chat', { message, history, confirmation })
+      .then(getData)
 
     return {
       answer: data?.answer || '',
       products: (data?.products || []).map(normalizeProduct),
       toolsUsed: data?.toolsUsed || [],
+      pendingConfirmation: data?.pendingConfirmation || null,
+      cart: data?.cart
+        ? {
+            ...data.cart,
+            items: (data.cart.items || []).map((item) => ({
+              ...item,
+              product: normalizeProduct(item.product),
+            })),
+          }
+        : null,
     }
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'The assistant is unavailable right now.'))

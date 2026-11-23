@@ -13,6 +13,7 @@ export const chat = asyncHandler(async (req, res) => {
   const data = await runAssistant({
     ...req.body,
     user,
+    confirmation: req.body.confirmation,
   })
   res.json({ success: true, data })
 })

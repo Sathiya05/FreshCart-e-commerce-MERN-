@@ -7,13 +7,17 @@ import EmptyState from '../../components/EmptyState.jsx'
 import OrderSummary from '../../components/OrderSummary.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import QuantitySelector from '../../components/QuantitySelector.jsx'
+import WhatsAppIcon from '../../components/WhatsAppIcon.jsx'
+import useWhatsAppCartShare from '../../hooks/useWhatsAppCartShare.js'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
 import {
   clearCart,
   removeFromCart,
+  selectCartDeliveryFee,
   selectCartItems,
   selectCartStatus,
   selectCartSubtotal,
+  selectCartTotal,
   updateCartQuantity,
 } from '../../redux/cartSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
@@ -23,12 +27,13 @@ export default function CartPage() {
   const dispatch = useAppDispatch()
   const items = useAppSelector(selectCartItems)
   const subtotal = useAppSelector(selectCartSubtotal)
+  const deliveryCharge = useAppSelector(selectCartDeliveryFee)
+  const total = useAppSelector(selectCartTotal)
   const cartStatus = useAppSelector(selectCartStatus)
+  const { shareCart } = useWhatsAppCartShare()
 
   const [itemToRemove, setItemToRemove] = useState(null)
   const [clearOpen, setClearOpen] = useState(false)
-
-  const deliveryCharge = subtotal >= 499 ? 0 : 30
 
   if (items.length === 0) {
     return (
@@ -127,9 +132,20 @@ export default function CartPage() {
             subtotal={subtotal}
             deliveryCharge={deliveryCharge}
             action={
-              <Button as={Link} to="/checkout" className="w-full" size="lg">
-                Proceed to checkout
-              </Button>
+              <div className="space-y-2">
+                <Button as={Link} to="/checkout" className="w-full" size="lg">
+                  Proceed to checkout
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={shareCart}
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
+                  Share cart on WhatsApp
+                </Button>
+              </div>
             }
             note="Cash on delivery and verified Razorpay payments are available at checkout."
           />
@@ -141,7 +157,7 @@ export default function CartPage() {
           <div className="min-w-0">
             <p className="text-xs text-text-secondary">{items.length} items · total</p>
             <p className="text-lg font-bold text-text-primary">
-              {formatCurrency(subtotal + deliveryCharge)}
+              {formatCurrency(total)}
             </p>
           </div>
           <Button as={Link} to="/checkout" className="ml-auto flex-1 sm:max-w-xs" size="lg">

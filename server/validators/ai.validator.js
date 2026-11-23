@@ -23,4 +23,30 @@ export const aiChatValidator = [
     .trim()
     .isLength({ min: 1, max: AI_LIMITS.HISTORY_CONTENT_MAX })
     .withMessage('History messages are too long'),
+  body('confirmation')
+    .optional({ nullable: true })
+    .isObject()
+    .withMessage('Invalid confirmation'),
+  body('confirmation.token')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 2000 })
+    .withMessage('Invalid confirmation token'),
+  body('confirmation.action')
+    .optional()
+    .isIn(['add', 'update', 'remove', 'clear'])
+    .withMessage('Invalid confirmation action'),
+  body('confirmation.productId')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 100 })
+    .withMessage('Invalid confirmation product'),
+  body('confirmation.quantity')
+    .optional({ nullable: true })
+    .isInt({ min: 0, max: 20 })
+    .withMessage('Invalid confirmation quantity'),
+  body('confirmation.confirmed')
+    .optional()
+    .isBoolean()
+    .withMessage('Invalid confirmation approval'),
 ]

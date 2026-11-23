@@ -1,31 +1,54 @@
 import { body, param } from 'express-validator'
 import { ORDER_STATUSES } from '../constants/order.js'
+import { findDeliverySlot, isDeliveryDateAllowed } from '../constants/delivery.js'
 
 const idParam = param('id').isMongoId().withMessage('Invalid ID')
 
-const addressAndSlot = [
-  body('addressId').isMongoId().withMessage('Select a valid delivery address'),
-  body('deliverySlot')
-    .optional({ nullable: true })
+const hasAddress = body('addressId').exists()
+
+const deliveryFields = [
+  body('deliveryDate')
+    .if(hasAddress)
+    .isString()
+    .withMessage('Delivery date must be text')
     .trim()
-    .isLength({ max: 120 })
-    .withMessage('Delivery slot cannot exceed 120 characters'),
+    .custom((value) => isDeliveryDateAllowed(value))
+    .withMessage('Choose an available delivery date'),
+  body('deliverySlot')
+    .if(hasAddress)
+    .isString()
+    .withMessage('Delivery slot must be text')
+    .trim()
+    .notEmpty()
+    .withMessage('Select a delivery slot')
+    .custom((value, { req }) =>
+      Boolean(findDeliverySlot(req.body?.deliveryDate, value)),
+    )
+    .withMessage('Select an available delivery slot'),
   body('deliveryInstructions')
     .optional({ nullable: true })
     .trim()
     .isLength({ max: 200 })
     .withMessage('Delivery instructions cannot exceed 200 characters'),
+  body('addressConfirmed')
+    .if(hasAddress)
+    .isBoolean()
+    .withMessage('Confirm your delivery address')
+    .custom((value) => value === true)
+    .withMessage('Confirm your delivery address before placing the order'),
 ]
 
 export const createOrderValidator = [
-  ...addressAndSlot,
+  body('addressId').isMongoId().withMessage('Select a valid delivery address'),
+  ...deliveryFields,
   body('paymentMethod')
     .isIn(['cod'])
     .withMessage('Only cash on delivery is available on this endpoint'),
 ]
 
 export const createPaymentOrderValidator = [
-  ...addressAndSlot,
+  body('addressId').isMongoId().withMessage('Select a valid delivery address'),
+  ...deliveryFields,
   body('paymentMethod')
     .isIn(['razorpay'])
     .withMessage('This endpoint creates online payment orders'),
@@ -49,20 +72,11 @@ export const createAliasPaymentOrderValidator = [
     .if(body('amount').not().exists())
     .isMongoId()
     .withMessage('Select a valid delivery address'),
+  ...deliveryFields,
   body('paymentMethod')
     .if(body('amount').not().exists())
     .isIn(['razorpay'])
     .withMessage('This endpoint creates online payment orders'),
-  body('deliverySlot')
-    .optional({ nullable: true })
-    .trim()
-    .isLength({ max: 120 })
-    .withMessage('Delivery slot cannot exceed 120 characters'),
-  body('deliveryInstructions')
-    .optional({ nullable: true })
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage('Delivery instructions cannot exceed 200 characters'),
   body('amount')
     .if(body('addressId').not().exists())
     .isInt({ min: 100 })

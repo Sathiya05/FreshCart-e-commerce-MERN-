@@ -1,10 +1,12 @@
-import { ShieldCheck, Truck } from 'lucide-react'
+import { CalendarDays, MapPin, ShieldCheck, Truck } from 'lucide-react'
 import { formatCurrency } from '../utils/format.js'
 
 export default function OrderSummary({
   subtotal = 0,
   discount = 0,
   deliveryCharge = 0,
+  delivery = null,
+  address = null,
   action,
   note,
 }) {
@@ -35,6 +37,41 @@ export default function OrderSummary({
           <dd className="text-xl font-bold text-brand-dark">{formatCurrency(total)}</dd>
         </div>
       </dl>
+
+      {(delivery?.date || delivery?.timeSlot || address) && (
+        <div className="mt-5 space-y-2 rounded-xl border border-app-border bg-app-background p-3 text-xs text-text-secondary">
+          <p className="font-semibold text-text-primary">Delivery confirmation</p>
+          {delivery?.date && (
+            <p className="flex items-center gap-2">
+              <CalendarDays size={14} aria-hidden="true" />
+              {delivery.dateLabel || delivery.date}
+            </p>
+          )}
+          {delivery?.timeSlot && (
+            <p className="flex items-center gap-2">
+              <CalendarDays size={14} aria-hidden="true" />
+              {delivery.timeSlot}
+            </p>
+          )}
+          {delivery?.instructions && <p>Instructions: {delivery.instructions}</p>}
+          {address && (
+            <p className="flex items-start gap-2">
+              <MapPin size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <span>
+                {[
+                  address.fullName,
+                  address.addressLine,
+                  address.city,
+                  address.state,
+                  address.pincode,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-5 flex items-start gap-2 rounded-xl bg-brand-secondary/60 p-3 text-xs text-brand-dark">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" />

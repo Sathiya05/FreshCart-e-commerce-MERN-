@@ -45,15 +45,12 @@ app.use(
 app.use(
   express.json({
     limit: '1mb',
-    // Keep raw bodies for webhook signature verification.
+    // Keep a raw body for Razorpay webhook signature verification.
     verify: (req, _res, buffer) => {
       const signedWebhook =
         req.path === '/payments/webhook' ||
-        req.originalUrl === '/api/payments/webhook' ||
-        req.path === '/whatsapp/webhook' ||
-        req.originalUrl === '/api/whatsapp/webhook'
+        req.originalUrl === '/api/payments/webhook'
 
-      // Razorpay and Meta sign the exact request body, so keep a raw copy.
       if (signedWebhook) req.rawBody = Buffer.from(buffer)
     },
   }),
