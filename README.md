@@ -2,15 +2,17 @@
 
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
-> **Current status: Phase 6 + Gemini AI assistant are implemented.** Auth,
+> **Current status: Phase 6, Gemini AI assistant and WhatsApp Cloud API wiring are implemented.** Auth,
 > catalog, admin catalog, persistent carts, address book, server-calculated
 > checkout, COD orders, verified online payments, order history/tracking and admin
-> order status updates use real APIs. The shopping assistant uses Google Gemini
+> order status updates use real APIs. The website assistant uses Google Gemini
 > through `@google/genai` on the server, with live catalog, cart, and store FAQ
-> tools. Razorpay, S3, and Gemini credentials are read from `server/.env`; without
-> them payments fall back to COD, admin image uploads fall back to a public URL
-> field, and the assistant is gracefully disabled. Coupons, customer reviews,
-> sales reports and refunds remain clearly labelled demos until their own phases.
+> tools. WhatsApp can answer catalog and FAQ questions through a signed webhook,
+> but cannot access carts or place orders. Razorpay, S3, Gemini and Meta credentials
+> are read from `server/.env`; without them payments fall back to COD, admin image
+> uploads fall back to a public URL field, and the assistants are gracefully
+> disabled. Coupons, customer reviews, sales reports and refunds remain clearly
+> labelled demos until their own phases.
 
 ## Repository structure
 
@@ -141,7 +143,8 @@ product or category. Those writes go straight to MongoDB through the protected A
 
 See [Phase 3 API](docs/phase-3-api.md), [Phase 4 Commerce](docs/phase-4-commerce.md),
 [Phase 5 Payments](docs/phase-5-payments.md), [Phase 6 AWS](docs/phase-6-aws.md)
-and [Gemini AI assistant](docs/gemini-ai-assistant.md) for routes, request bodies,
+[Gemini AI assistant](docs/gemini-ai-assistant.md) and
+[WhatsApp Cloud API](docs/phase-7-whatsapp.md) for routes, request bodies,
 environment variables and the React integration map.
 
 Production build check:
@@ -160,3 +163,4 @@ npm run build
 - [Phase 5 Payments](docs/phase-5-payments.md)
 - [Phase 6 AWS](docs/phase-6-aws.md)
 - [Gemini AI assistant](docs/gemini-ai-assistant.md)
+- [WhatsApp Cloud API](docs/phase-7-whatsapp.md)

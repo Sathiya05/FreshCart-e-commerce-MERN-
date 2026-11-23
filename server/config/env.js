@@ -6,6 +6,7 @@ import {
   AI_DEFAULT_TIMEOUT_MS,
   AI_PROVIDER_GEMINI,
 } from '../constants/ai.js'
+import { WHATSAPP_API_VERSION } from '../constants/whatsapp.js'
 
 dotenv.config()
 
@@ -70,6 +71,20 @@ if (!aiConfigured) {
   )
 }
 
+const whatsappAccessToken = process.env.WHATSAPP_ACCESS_TOKEN || ''
+const whatsappPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || ''
+const whatsappVerifyToken = process.env.WHATSAPP_VERIFY_TOKEN || ''
+const whatsappAppSecret = process.env.WHATSAPP_APP_SECRET || ''
+const whatsappWebhookConfigured = Boolean(whatsappVerifyToken && whatsappAppSecret)
+const whatsappSendConfigured = Boolean(whatsappAccessToken && whatsappPhoneNumberId)
+const whatsappConfigured = whatsappWebhookConfigured && whatsappSendConfigured
+
+if (!whatsappConfigured && process.env.NODE_ENV === 'production') {
+  console.warn(
+    `[whatsapp] Assistant disabled. webhookConfigured=${whatsappWebhookConfigured} sendConfigured=${whatsappSendConfigured}`,
+  )
+}
+
 export const env = {
   nodeEnv,
   isProduction,
@@ -116,6 +131,14 @@ export const env = {
     process.env.AI_RATE_LIMIT_MAX,
     AI_DEFAULT_RATE_LIMIT_MAX,
   ),
+  whatsappAccessToken,
+  whatsappPhoneNumberId,
+  whatsappVerifyToken,
+  whatsappAppSecret,
+  whatsappApiVersion: process.env.WHATSAPP_API_VERSION || WHATSAPP_API_VERSION,
+  whatsappWebhookConfigured,
+  whatsappSendConfigured,
+  whatsappConfigured,
   awsRegion: process.env.AWS_REGION || '',
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',

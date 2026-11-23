@@ -10,6 +10,7 @@ import orderRoutes from './order.routes.js'
 import paymentAliasRoutes from './payment-alias.routes.js'
 import paymentRoutes from './payment.routes.js'
 import productRoutes from './product.routes.js'
+import whatsappRoutes from './whatsapp.routes.js'
 
 const router = Router()
 
@@ -23,6 +24,7 @@ router.use('/orders', orderRoutes)
 router.use(paymentAliasRoutes)
 router.use('/payments', paymentRoutes)
 router.use('/products', productRoutes)
+router.use('/whatsapp', whatsappRoutes)
 router.use('/admin', adminRoutes)
 
 export default router

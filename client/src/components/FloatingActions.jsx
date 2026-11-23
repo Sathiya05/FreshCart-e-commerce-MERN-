@@ -115,13 +115,23 @@ export default function FloatingActions() {
   }
 
   const handleWhatsApp = () => {
-    dispatch(
-      pushToast({
-        type: 'info',
-        title: 'WhatsApp shopping',
-        message: 'WhatsApp shopping will be available after the Business Cloud API is connected.',
-      }),
+    const phone = String(import.meta.env.VITE_WHATSAPP_PHONE || '').replace(/\D/g, '')
+
+    if (!phone) {
+      dispatch(
+        pushToast({
+          type: 'info',
+          title: 'WhatsApp shopping',
+          message: 'WhatsApp shopping is not available yet. Please use the AI assistant for now.',
+        }),
+      )
+      return
+    }
+
+    const text = encodeURIComponent(
+      'Hi FreshCart! I would like help with products, prices, stock, delivery or payments.',
     )
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank', 'noopener,noreferrer')
   }
 
   const handleAddProduct = (product, quantity = 1) => {

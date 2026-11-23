@@ -166,5 +166,7 @@ In production, `VITE_API_URL` can point to a separate API origin such as
   retry flow. See [phase-5-payments.md](phase-5-payments.md).
 - Phase 6 (complete): AWS S3 image uploads with presigned URLs. See
   [phase-6-aws.md](phase-6-aws.md).
-- Phase 7 (pending): deployment/infrastructure.
-- Phase 8/9 (pending): testing and portfolio presentation.
+- Phase 7 (wired, awaiting Meta credentials): WhatsApp Cloud API catalog and FAQ
+  assistant. See [phase-7-whatsapp.md](phase-7-whatsapp.md).
+- Phase 8 (pending): deployment hardening and remaining demo features.
+- Phase 9 (pending): testing and portfolio presentation.
