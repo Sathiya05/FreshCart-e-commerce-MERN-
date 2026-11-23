@@ -210,6 +210,7 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
   const tools = buildGeminiTools(toolContext)
   const productsById = new Map()
   const toolsUsed = []
+  const seenCallKeys = new Set()
   let contents = buildContents(message, history)
 
   for (let round = 0; round < env.aiMaxToolRounds; round += 1) {
@@ -259,6 +260,25 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
       if (!call?.name) continue
 
       const args = parseCallArguments(call.args)
+      const callKey = `${call.name}:${JSON.stringify(args)}`
+
+      // Gemini sometimes retries an identical lookup. Return the earlier answer
+      // instead of repeating database work and consuming tool rounds.
+      if (seenCallKeys.has(callKey)) {
+        functionResponseParts.push({
+          functionResponse: {
+            id: call.id,
+            name: call.name,
+            response: {
+              ok: false,
+              error: 'This exact FreshCart lookup was already completed. Use the earlier result and answer now; do not repeat it.',
+            },
+          },
+        })
+        continue
+      }
+
+      seenCallKeys.add(callKey)
       toolsUsed.push(call.name)
 
       const result = await executeAiTool(call.name, args, toolContext)

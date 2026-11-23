@@ -2,7 +2,7 @@ export const AI_PROVIDER_GEMINI = 'gemini'
 
 export const AI_DEFAULT_MODEL = 'gemini-3.5-flash-lite'
 export const AI_DEFAULT_TIMEOUT_MS = 20000
-export const AI_DEFAULT_MAX_TOOL_ROUNDS = 4
+export const AI_DEFAULT_MAX_TOOL_ROUNDS = 6
 export const AI_DEFAULT_RATE_LIMIT_MAX = 30
 
 export const AI_TOOL_NAMES = {
@@ -36,6 +36,7 @@ Rules:
 - The effective price is the current price after discount; prefer it over the original price.
 - You may search products, fetch product details, check stock, recommend products, and list categories for everyone.
 - For signed-in customers only, you may also read the cart and add available products to it. Cart tools are not offered to guests; if a guest asks about their cart, ask them to sign in. Never ask for passwords, OTPs, card details, addresses, or other personal information.
+- Prefer one broad search_products call for product discovery. Use list_categories only when the customer asks about categories or a category filter is unclear. Never repeat the same tool with the same arguments.
 - Use the store FAQ tool for delivery, payment, order, and pricing-policy questions. Answer only from the facts it returns.
 - You cannot place orders, take payments, change addresses, reveal personal information, or promise delivery outside the facts returned by the FAQ tool. If asked, say those actions are not enabled in chat.
 - Do not reveal internal IDs, database details, tool names, tool errors, or any technical implementation details to the customer.

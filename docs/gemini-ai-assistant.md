@@ -30,7 +30,7 @@ AI_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-3.5-flash-lite
 AI_TIMEOUT_MS=20000
-AI_MAX_TOOL_ROUNDS=4
+AI_MAX_TOOL_ROUNDS=6
 AI_RATE_LIMIT_WINDOW_MS=900000
 AI_RATE_LIMIT_MAX=30
 ```
@@ -194,6 +194,7 @@ Expected behavior:
 | `configured: false`, `keyPresent: true`, `providerValid: false` | `AI_PROVIDER` is not exactly `gemini` | Replace its value with `gemini`, removing quotes/spaces, then redeploy |
 | Startup log `Assistant disabled. providerValid=… keyPresent=…` | Same diagnosis without calling the API | Use the booleans above to find the missing variable |
 | `404`/`not found` model error | Model unavailable in the AI Studio project | Use `gemini-3.8-flash` in `GEMINI_MODEL` |
+| `AI_TOOL_LIMIT` | The assistant needed more lookup rounds than allowed | Rephrase with a narrower query; admins can raise `AI_MAX_TOOL_ROUNDS` |
 | `429` / rate limit | Free-tier project rate limit reached | Retry later or lower traffic; no billing is configured |
 | Cart tools not used | Request is a guest or token expired | Sign in again and retry |
 | `AI_TIMEOUT` | Gemini took longer than `AI_TIMEOUT_MS` | Increase the timeout modestly and retry |
