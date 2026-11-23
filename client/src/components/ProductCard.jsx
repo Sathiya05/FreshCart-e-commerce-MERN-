@@ -76,7 +76,7 @@ export default function ProductCard({ product }) {
         <button
           type="button"
           onClick={handleWishlist}
-          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border bg-white/95 shadow-sm transition-colors ${
+          className={`absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full border bg-white/95 shadow-sm transition-colors ${
             isWishlisted
               ? 'border-red-200 text-red-500'
               : 'border-app-border text-text-secondary hover:text-red-500'

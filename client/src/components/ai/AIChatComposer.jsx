@@ -21,13 +21,13 @@ export default function AIChatComposer({ onSend, disabled = false }) {
         maxLength={500}
         aria-label="Ask FreshCart assistant"
         placeholder="Ask about products, prices or your cart…"
-        className="h-10 min-w-0 flex-1 rounded-xl border border-app-border bg-app-background px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
+        className="h-11 min-w-0 flex-1 rounded-xl border border-app-border bg-app-background px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
       />
       <button
         type="submit"
         disabled={!value.trim() || disabled}
         aria-label="Send message"
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-primary text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-primary text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Send size={16} aria-hidden="true" />
       </button>

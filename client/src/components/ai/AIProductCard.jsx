@@ -31,7 +31,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
             <button
               type="button"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              className="grid h-9 w-9 place-items-center rounded-md border border-app-border text-sm"
+              className="grid h-10 w-10 place-items-center rounded-md border border-app-border text-sm"
               aria-label="Decrease quantity"
             >
               −
@@ -40,7 +40,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
             <button
               type="button"
               onClick={() => setQuantity((value) => value + 1)}
-              className="grid h-9 w-9 place-items-center rounded-md border border-app-border text-sm"
+              className="grid h-10 w-10 place-items-center rounded-md border border-app-border text-sm"
               aria-label="Increase quantity"
             >
               +
@@ -52,7 +52,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
             type="button"
             disabled={!inStock}
             onClick={() => onAdd?.(product, quantity)}
-            className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-brand-primary text-xs font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand-primary text-xs font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus size={14} aria-hidden="true" />
             {inStock ? 'Add to cart' : 'Unavailable'}
@@ -60,7 +60,7 @@ export default function AIProductCard({ product, onAdd, canAdd = false }) {
         ) : (
           <Link
             to={`/products/${encodeURIComponent(product.id)}`}
-            className="mt-3 flex h-9 w-full items-center justify-center rounded-lg border border-brand-primary/30 text-xs font-semibold text-brand-dark transition hover:bg-brand-secondary"
+            className="mt-3 flex h-10 w-full items-center justify-center rounded-lg border border-brand-primary/30 text-xs font-semibold text-brand-dark transition hover:bg-brand-secondary"
           >
             View product
           </Link>

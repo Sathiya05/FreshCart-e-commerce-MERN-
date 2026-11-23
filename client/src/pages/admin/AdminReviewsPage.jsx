@@ -9,7 +9,6 @@ import Rating from '../../components/Rating.jsx'
 import { TableSkeleton } from '../../components/Skeleton.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
 import { pushToast } from '../../redux/uiSlice.js'
-import { truncate } from '../../utils/format.js'
 import { useAsync } from '../../hooks/useAsync.js'
 import {
   deleteAdminReview,
@@ -91,8 +90,8 @@ export default function AdminReviewsPage() {
       key: 'comment',
       label: 'Comment',
       render: (row) => (
-        <span className="block max-w-full truncate text-text-secondary" title={row.comment}>
-          {truncate(row.comment, 72)}
+        <span className="block max-w-full break-words text-text-secondary sm:truncate" title={row.comment}>
+          {row.comment}
         </span>
       ),
     },

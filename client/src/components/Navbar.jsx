@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Heart,
   LayoutDashboard,
@@ -55,11 +56,16 @@ export default function Navbar() {
     const onResize = () => {
       if (window.innerWidth >= 1024) setMobileOpen(false)
     }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
     window.addEventListener('resize', onResize)
+    document.addEventListener('keydown', onKeyDown)
 
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('resize', onResize)
+      document.removeEventListener('keydown', onKeyDown)
     }
   }, [mobileOpen])
 
@@ -171,7 +177,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setAccountOpen((value) => !value)}
-                className="flex h-11 items-center gap-2 rounded-xl px-2 text-sm font-medium text-text-secondary hover:bg-app-background"
+                className="flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-medium text-text-secondary hover:bg-app-background"
                 aria-label="Account menu"
                 aria-haspopup="true"
                 aria-expanded={accountOpen}
@@ -209,57 +215,81 @@ export default function Navbar() {
         </div>
       </div>
 
-      {mobileOpen && (
-        <div className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-app-border bg-surface lg:hidden">
-          <form onSubmit={handleSearch} className="px-4 py-3 md:hidden">
-            <div className="relative">
-              <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search groceries…"
-                aria-label="Search groceries"
-                className="h-10 w-full rounded-xl border border-app-border bg-app-background/60 pl-10 pr-3 text-sm outline-none focus:border-brand-primary"
-              />
-            </div>
-          </form>
-          <nav className="space-y-1 px-4 pb-2" aria-label="Mobile navigation">
-            {links.map((link) => (
-              <NavLink key={link.to} to={link.to} onClick={() => { scrollToTop(); setMobileOpen(false) }} className={({ isActive }) => `block rounded-lg px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-secondary text-brand-dark' : 'text-text-secondary'}`} end={link.to === '/'}>
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
-          <div className="border-t border-app-border px-4 py-3">
-            {user ? (
-              <>
-                <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                  {user.name}
-                </p>
-                <Link to="/account/profile" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary">
-                  My profile
-                </Link>
-                {user.role === 'admin' && (
-                  <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary">
-                    <LayoutDashboard size={16} aria-hidden="true" />
-                    Admin dashboard
-                  </Link>
-                )}
-                <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600">
-                  <LogOut size={16} aria-hidden="true" />
-                  Sign out
+      {mobileOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close navigation"
+              tabIndex={-1}
+            />
+            <div className="absolute inset-x-0 top-0 flex max-h-dvh flex-col bg-surface shadow-xl">
+              <div className="flex h-16 shrink-0 items-center justify-between border-b border-app-border px-3 sm:px-6">
+                <BrandLogo compact />
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="grid h-11 w-11 place-items-center rounded-lg text-text-secondary hover:bg-app-background"
+                  aria-label="Close navigation"
+                >
+                  <X size={21} aria-hidden="true" />
                 </button>
-              </>
-            ) : (
-              <Link to="/login" className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white">
-                <UserRound size={17} aria-hidden="true" />
-                Sign in
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-safe">
+                <form onSubmit={handleSearch} className="px-4 py-3 md:hidden">
+                  <div className="relative">
+                    <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" aria-hidden="true" />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search groceries…"
+                      aria-label="Search groceries"
+                      className="h-11 w-full rounded-xl border border-app-border bg-app-background/60 pl-10 pr-3 text-sm outline-none focus:border-brand-primary"
+                    />
+                  </div>
+                </form>
+                <nav className="space-y-1 px-4 pb-2" aria-label="Mobile navigation">
+                  {links.map((link) => (
+                    <NavLink key={link.to} to={link.to} onClick={() => { scrollToTop(); setMobileOpen(false) }} className={({ isActive }) => `block rounded-lg px-3 py-3 text-sm font-medium ${isActive ? 'bg-brand-secondary text-brand-dark' : 'text-text-secondary'}`} end={link.to === '/'}>
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </nav>
+                <div className="border-t border-app-border px-4 py-3">
+                  {user ? (
+                    <>
+                      <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                        {user.name}
+                      </p>
+                      <Link to="/account/profile" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary">
+                        My profile
+                      </Link>
+                      {user.role === 'admin' && (
+                        <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-text-secondary">
+                          <LayoutDashboard size={16} aria-hidden="true" />
+                          Admin dashboard
+                        </Link>
+                      )}
+                      <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium text-red-600">
+                        <LogOut size={16} aria-hidden="true" />
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/login" className="flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white">
+                      <UserRound size={17} aria-hidden="true" />
+                      Sign in
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </header>
   )
 }

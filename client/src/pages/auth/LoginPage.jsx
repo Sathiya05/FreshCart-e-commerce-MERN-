@@ -240,7 +240,7 @@ export default function LoginPage() {
             <label htmlFor="login-password" className="text-sm font-medium text-text-primary">
               Password
             </label>
-            <Link to="/forgot-password" className="text-xs font-semibold text-brand-primary">
+            <Link to="/forgot-password" className="inline-block py-1 text-xs font-semibold text-brand-primary">
               Forgot password?
             </Link>
           </div>
@@ -259,7 +259,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary"
+              className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text-secondary hover:text-text-primary"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}

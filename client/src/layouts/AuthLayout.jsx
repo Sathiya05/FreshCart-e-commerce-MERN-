@@ -49,7 +49,7 @@ export default function AuthLayout() {
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 lg:justify-end">
           <BrandLogo compact className="lg:hidden" />
-          <Link to="/" className="text-sm font-medium text-text-secondary hover:text-brand-primary">
+          <Link to="/" className="inline-flex items-center py-2 text-sm font-medium text-text-secondary hover:text-brand-primary">
             Back to storefront
           </Link>
         </div>

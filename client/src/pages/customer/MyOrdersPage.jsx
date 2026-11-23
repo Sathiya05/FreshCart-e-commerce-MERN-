@@ -41,7 +41,7 @@ export default function MyOrdersPage() {
               key={filter}
               type="button"
               onClick={() => setActiveFilter(filter)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium ${
+              className={`rounded-full border px-4 py-2.5 text-sm font-medium ${
                 activeFilter === filter
                   ? 'border-brand-primary bg-brand-primary text-white'
                   : 'border-app-border bg-surface text-text-secondary hover:border-brand-primary'

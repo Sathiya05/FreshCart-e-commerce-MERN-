@@ -72,7 +72,7 @@ export default function AIChatPanel({
         <button
           type="button"
           onClick={onClear}
-          className="grid h-8 w-8 place-items-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
+          className="grid h-10 w-10 place-items-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
           aria-label="Clear conversation"
           title="Clear conversation"
         >
@@ -81,7 +81,7 @@ export default function AIChatPanel({
         <button
           type="button"
           onClick={onClose}
-          className="grid h-8 w-8 place-items-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
+          className="grid h-10 w-10 place-items-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
           aria-label="Close assistant"
         >
           <X size={18} aria-hidden="true" />
@@ -124,7 +124,7 @@ export default function AIChatPanel({
                 type="button"
                 onClick={onConfirm}
                 disabled={thinking}
-                className="rounded-lg bg-brand-primary px-3 py-1.5 font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
+                className="rounded-lg bg-brand-primary px-4 py-2.5 font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
               >
                 Confirm change
               </button>
@@ -132,7 +132,7 @@ export default function AIChatPanel({
                 type="button"
                 onClick={onCancel}
                 disabled={thinking}
-                className="rounded-lg border border-app-border bg-surface px-3 py-1.5 font-semibold text-text-secondary transition hover:text-text-primary disabled:opacity-50"
+                className="rounded-lg border border-app-border bg-surface px-4 py-2.5 font-semibold text-text-secondary transition hover:text-text-primary disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -179,7 +179,7 @@ export default function AIChatPanel({
               type="button"
               onClick={() => onSend(prompt)}
               disabled={thinking}
-              className="rounded-full border border-brand-primary/20 bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-dark transition hover:border-brand-primary/40 hover:bg-brand-primary/10 disabled:opacity-50"
+              className="rounded-full border border-brand-primary/20 bg-brand-secondary px-3 py-2 text-xs font-medium text-brand-dark transition hover:border-brand-primary/40 hover:bg-brand-primary/10 disabled:opacity-50"
             >
               {prompt}
             </button>
