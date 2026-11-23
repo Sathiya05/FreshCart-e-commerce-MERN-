@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AnnouncementBar from '../components/AnnouncementBar.jsx'
+import FloatingActions from '../components/FloatingActions.jsx'
 import Footer from '../components/Footer.jsx'
 import Navbar from '../components/Navbar.jsx'
 import ToastHost from '../components/ToastHost.jsx'
@@ -30,7 +31,8 @@ export default function CustomerLayout() {
         </div>
       </main>
       <Footer />
-      <ToastHost />
+      <FloatingActions />
+      <ToastHost avoidFloatingDock />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import accountRoutes from './account.routes.js'
 import adminRoutes from './admin.routes.js'
+import aiRoutes from './ai.routes.js'
 import authRoutes from './auth.routes.js'
 import cartRoutes from './cart.routes.js'
 import categoryRoutes from './category.routes.js'
@@ -13,6 +14,7 @@ import productRoutes from './product.routes.js'
 const router = Router()
 
 router.use(healthRoutes)
+router.use('/ai', aiRoutes)
 router.use('/auth', authRoutes)
 router.use('/account', accountRoutes)
 router.use('/cart', cartRoutes)

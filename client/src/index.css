@@ -49,6 +49,22 @@
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
+  /* Floating AI/WhatsApp dock. Raised on cart/checkout so mobile CTA bars stay clear. */
+  .floating-actions {
+    bottom: calc(1.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .floating-actions--raised {
+    bottom: calc(6.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .floating-actions,
+    .floating-actions--raised {
+      bottom: calc(1.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
   @keyframes page-in {
     from {
       opacity: 0;
@@ -74,6 +90,13 @@
 
     .animate-page-in {
       animation: none;
+    }
+
+    .floating-actions,
+    .floating-actions * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 }

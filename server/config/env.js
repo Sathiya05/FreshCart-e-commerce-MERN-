@@ -1,4 +1,12 @@
 import dotenv from 'dotenv'
+import {
+  AI_DEFAULT_BASE_URL,
+  AI_DEFAULT_MAX_TOOL_ROUNDS,
+  AI_DEFAULT_MODEL,
+  AI_DEFAULT_RATE_LIMIT_MAX,
+  AI_DEFAULT_TIMEOUT_MS,
+  AI_PROVIDER_OPENAI,
+} from '../constants/ai.js'
 
 dotenv.config()
 
@@ -9,6 +17,10 @@ const toPositiveNumber = (value, fallback) => {
 
 const nodeEnv = process.env.NODE_ENV || 'development'
 const isProduction = nodeEnv === 'production'
+const rateLimitWindowMs = toPositiveNumber(
+  process.env.RATE_LIMIT_WINDOW_MS,
+  15 * 60 * 1000,
+)
 
 const jwtSecret =
   process.env.JWT_SECRET ||
@@ -37,6 +49,17 @@ if (isProduction && hasPartialRazorpayConfig && !razorpayWebhookSecret) {
   )
 }
 
+const aiProvider = (process.env.AI_PROVIDER || AI_PROVIDER_OPENAI).toLowerCase()
+const aiApiKey = process.env.AI_API_KEY || ''
+const aiSupportedProviders = [AI_PROVIDER_OPENAI]
+const aiConfigured = aiSupportedProviders.includes(aiProvider) && Boolean(aiApiKey)
+
+if (isProduction && process.env.AI_API_KEY && !aiConfigured) {
+  throw new Error(
+    `AI_PROVIDER must be one of: ${aiSupportedProviders.join(', ')} when AI_API_KEY is set in production.`,
+  )
+}
+
 export const env = {
   nodeEnv,
   isProduction,
@@ -45,10 +68,7 @@ export const env = {
     process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:4173',
   mongodbUri: process.env.MONGODB_URI || '',
   mongoDbName: process.env.MONGODB_DB_NAME || 'freshcart',
-  rateLimitWindowMs: toPositiveNumber(
-    process.env.RATE_LIMIT_WINDOW_MS,
-    15 * 60 * 1000,
-  ),
+  rateLimitWindowMs,
   rateLimitMax: toPositiveNumber(process.env.RATE_LIMIT_MAX, 100),
   bcryptRounds: toPositiveNumber(process.env.BCRYPT_ROUNDS, 12),
   jwtSecret,
@@ -67,6 +87,25 @@ export const env = {
   razorpayWebhookSecret,
   razorpayCurrency: process.env.RAZORPAY_CURRENCY || 'INR',
   razorpayConfigured,
+  aiProvider,
+  aiApiKey,
+  aiConfigured,
+  aiModel: process.env.AI_MODEL || AI_DEFAULT_MODEL,
+  aiApiBaseUrl: (process.env.AI_API_BASE_URL || AI_DEFAULT_BASE_URL).replace(/\/+$/, ''),
+  aiTimeoutMs: toPositiveNumber(process.env.AI_TIMEOUT_MS, AI_DEFAULT_TIMEOUT_MS),
+  aiMaxToolRounds: toPositiveNumber(
+    process.env.AI_MAX_TOOL_ROUNDS,
+    AI_DEFAULT_MAX_TOOL_ROUNDS,
+  ),
+  aiReasoningEffort: (process.env.AI_REASONING_EFFORT ?? 'low').trim(),
+  aiRateLimitWindowMs: toPositiveNumber(
+    process.env.AI_RATE_LIMIT_WINDOW_MS,
+    rateLimitWindowMs,
+  ),
+  aiRateLimitMax: toPositiveNumber(
+    process.env.AI_RATE_LIMIT_MAX,
+    AI_DEFAULT_RATE_LIMIT_MAX,
+  ),
   awsRegion: process.env.AWS_REGION || '',
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',

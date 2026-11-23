@@ -46,11 +46,17 @@ function ToastItem({ toast }) {
   )
 }
 
-export default function ToastHost() {
+export default function ToastHost({ avoidFloatingDock = false }) {
   const toasts = useAppSelector(selectToasts)
 
+  // Customer pages reserve a right gutter for the floating AI/WhatsApp dock,
+  // so notifications stay bottom-aligned without covering the buttons.
+  const positionClasses = avoidFloatingDock
+    ? 'bottom-4 left-4 right-20 w-auto sm:bottom-6 sm:left-auto sm:right-28 sm:w-96'
+    : 'inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:w-96'
+
   return (
-    <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col gap-2 sm:inset-x-auto sm:right-6 sm:w-96">
+    <div className={`pointer-events-none fixed z-[60] flex flex-col gap-2 ${positionClasses}`}>
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}

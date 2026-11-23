@@ -84,8 +84,24 @@ const authLimiter = rateLimit({
   },
 })
 
+// AI chat makes paid provider calls, so it gets a stricter limit than catalog reads.
+const aiLimiter = rateLimit({
+  windowMs: env.aiRateLimitWindowMs,
+  limit: env.aiRateLimitMax,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'AI_RATE_LIMITED',
+      message: 'Too many assistant requests. Please try again later.',
+    },
+  },
+})
+
 app.use('/api', apiLimiter)
 app.use('/api/auth', authLimiter)
+app.use('/api/ai', aiLimiter)
 app.use('/api', routes)
 
 app.get('/', (_req, res) => {

@@ -42,6 +42,9 @@ const addRangeExpression = (expressions, value, operator) => {
 export const findCategoryBySlug = (slug) =>
   Category.findOne({ slug: String(slug).toLowerCase() }).lean()
 
+export const listActiveCategories = () =>
+  Category.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean()
+
 export const listProducts = async (query = {}, { allowInactive = false } = {}) => {
   const page = parsePositiveInt(query.page, 1, { min: 1, max: 100000 })
   const limit = parsePositiveInt(query.limit, 12, { min: 1, max: 60 })
