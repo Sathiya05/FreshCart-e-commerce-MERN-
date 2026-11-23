@@ -96,8 +96,7 @@ export default function AIChatPanel({
 
         {aiStatus?.configured === false && !aiStatus?.error && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-            AI isn’t configured yet. Ask the site administrator to enable the server-side AI key
-            to get live product answers. Shopping and checkout still work normally.
+            AI is temporarily unavailable. Shopping and checkout still work normally.
           </div>
         )}
 

@@ -196,7 +196,7 @@ export const runAssistant = async ({ message, history = [], user } = {}) => {
   if (!env.aiConfigured) {
     throw new ApiError(
       503,
-      'AI assistant is not configured yet. Please contact the store administrator.',
+      'AI assistant is unavailable right now. Shopping and checkout still work normally.',
       'AI_NOT_CONFIGURED',
     )
   }
