@@ -73,10 +73,10 @@ export default function CartPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-text-primary">
-                    Delivery at your chosen time
+                    Instant delivery in 20–30 min
                   </p>
                   <p className="mt-0.5 text-xs text-text-secondary">
-                    Pick a day and time in one tap at checkout.
+                    Available at checkout — choose it in one tap.
                   </p>
                 </div>
                 <span className="rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-brand-primary">

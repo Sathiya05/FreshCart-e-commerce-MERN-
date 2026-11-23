@@ -4,7 +4,8 @@ A production-oriented, full-stack grocery e-commerce platform built with the MER
 
 > **Current status: Phase 7, Gemini AI assistant and manual WhatsApp handoff are implemented.** Auth,
 > catalog, admin catalog, persistent carts, address book, server-owned delivery
-> slots, server-calculated checkout, COD orders, verified online payments, order
+> slots with a 20–30 min instant option, server-calculated checkout, COD orders,
+> verified online payments, order
 > history/tracking and admin order status updates use real APIs. The website
 > assistant uses Google Gemini through `@google/genai` on the server with live
 > catalog, cart, order and store FAQ tools. WhatsApp is click-to-chat and Share

@@ -233,7 +233,7 @@ export default function CheckoutPage() {
                   2. Delivery time
                 </h2>
                 <p className="mt-1 text-xs text-text-secondary">
-                  Tap a day, then tap a time. Real slots are validated by FreshCart.
+                  Choose Instant for 20–30 min delivery, or pick a scheduled day and time.
                 </p>
               </div>
               {slotsState.isLoading && <SkeletonLine className="h-24 w-full rounded-2xl" />}

@@ -1,6 +1,8 @@
 export const FREE_DELIVERY_THRESHOLD = 499
 export const DELIVERY_FEE = 30
 export const DELIVERY_DAYS_AHEAD = 7
+export const INSTANT_DELIVERY_SLOT_ID = 'instant-2030'
+export const INSTANT_DELIVERY_ETA = '20–30 min'
 
 export const DELIVERY_TIME_SLOTS = Object.freeze([
   { id: '0800-1000', label: '8:00 AM – 10:00 AM' },
@@ -37,7 +39,9 @@ export const isDeliveryDateAllowed = (value, now = new Date()) => {
   if (!isDeliveryDateKey(value)) return false
 
   const todayKey = toDeliveryDateKey(now)
-  if (value <= todayKey) return false
+  // Today is allowed only because listDeliverySlots() exposes a single instant
+  // slot for today. findDeliverySlot() still validates the exact slot value.
+  if (value < todayKey) return false
 
   const lastAllowedKey = toDeliveryDateKey(addDays(now, DELIVERY_DAYS_AHEAD))
   return value <= lastAllowedKey
@@ -45,7 +49,19 @@ export const isDeliveryDateAllowed = (value, now = new Date()) => {
 
 /** Server-owned delivery options. No client-supplied slot is trusted. */
 export const listDeliverySlots = (now = new Date()) => {
-  const slots = []
+  const todayKey = toDeliveryDateKey(now)
+  const instantSlot = {
+    id: INSTANT_DELIVERY_SLOT_ID,
+    date: todayKey,
+    dateLabel: 'Today',
+    timeSlotId: 'instant',
+    timeSlot: `In ${INSTANT_DELIVERY_ETA}`,
+    label: `Today, in ${INSTANT_DELIVERY_ETA}`,
+    eta: INSTANT_DELIVERY_ETA,
+    isExpress: true,
+    available: true,
+  }
+  const slots = [instantSlot]
 
   for (let day = 1; day <= DELIVERY_DAYS_AHEAD; day += 1) {
     const date = addDays(now, day)

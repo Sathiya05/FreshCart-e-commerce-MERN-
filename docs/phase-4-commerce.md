@@ -144,7 +144,7 @@ the authoritative cart. Checkout is protected and redirects to sign-in.
   [Phase 5](phase-5-payments.md) when keys are configured.
 - AWS image uploads — Phase 6.
 - Customer reviews, admin customers and sales reports — later phases.
-- Delivery slots are local preview data; the selected label is saved on the order.
+- Instant delivery is a 20–30 minute ETA option, not live rider dispatch or GPS tracking.
 - Live rider location is not available; tracking shows real order status events.
 
 ## Verification

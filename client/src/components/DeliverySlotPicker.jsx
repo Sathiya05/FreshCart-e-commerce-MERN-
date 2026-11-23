@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Clock3 } from 'lucide-react'
 import { formatCurrency } from '../utils/format.js'
 
-const dayLabelParts = (label, index) => {
+const dayLabelParts = (label, index, isExpress = false) => {
+  if (isExpress) return { title: 'Instant', subtitle: '20–30 min' }
+
   const parts = String(label || '')
     .replace(/,/g, '')
     .split(/\s+/)
@@ -19,11 +21,12 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
     const grouped = new Map()
 
     slots.forEach((slot) => {
-      const key = slot.date || slot.dateLabel || 'available'
+      const key = slot.isExpress ? 'instant' : slot.date || slot.dateLabel || 'available'
       if (!grouped.has(key)) {
         grouped.set(key, {
           key,
-          label: slot.dateLabel || 'Available dates',
+          label: slot.isExpress ? 'Instant delivery' : slot.dateLabel || 'Available dates',
+          isExpress: Boolean(slot.isExpress),
           slots: [],
         })
       }
@@ -33,15 +36,16 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
     return [...grouped.values()]
   }, [slots])
 
-  const selectedDate = useMemo(
-    () => slots.find((slot) => slot.id === selectedId)?.date || '',
-    [slots, selectedId],
-  )
-  const [activeDate, setActiveDate] = useState(() => selectedDate || days[0]?.key || '')
+  const selectedDayKey = useMemo(() => {
+    const slot = slots.find((item) => item.id === selectedId)
+    if (!slot) return ''
+    return slot.isExpress ? 'instant' : slot.date || slot.dateLabel || ''
+  }, [slots, selectedId])
+  const [activeDate, setActiveDate] = useState(() => selectedDayKey || days[0]?.key || '')
 
   useEffect(() => {
-    if (selectedDate) setActiveDate(selectedDate)
-  }, [selectedDate])
+    if (selectedDayKey) setActiveDate(selectedDayKey)
+  }, [selectedDayKey])
 
   useEffect(() => {
     if (!days.length) {
@@ -49,9 +53,9 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
       return
     }
     if (!days.some((day) => day.key === activeDate)) {
-      setActiveDate(selectedDate || days[0].key)
+      setActiveDate(selectedDayKey || days[0].key)
     }
-  }, [activeDate, days, selectedDate])
+  }, [activeDate, days, selectedDayKey])
 
   if (!days.length) {
     return <p className="text-sm text-text-secondary">No delivery slots are available.</p>
@@ -67,7 +71,7 @@ export default function DeliverySlotPicker({ slots = [], selectedId, onSelect })
         aria-label="Delivery dates"
       >
         {days.map((day, index) => {
-          const { title, subtitle } = dayLabelParts(day.label, index)
+          const { title, subtitle } = dayLabelParts(day.label, index, day.isExpress)
           const active = day.key === activeDay.key
           const hasSelectedSlot = day.slots.some((slot) => slot.id === selectedId)
 
