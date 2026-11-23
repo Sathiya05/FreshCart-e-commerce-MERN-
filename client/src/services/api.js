@@ -12,9 +12,13 @@ import axios from 'axios'
  */
 const configuredBaseUrl = import.meta.env.VITE_API_URL || '/api'
 
+// Render's free tier can take longer than 10 seconds to wake an idle service.
+// Keep a generous timeout so a cold start does not look like a failed sign-in.
+const REQUEST_TIMEOUT_MS = 60000
+
 const api = axios.create({
   baseURL: configuredBaseUrl.trim(),
-  timeout: 10000,
+  timeout: REQUEST_TIMEOUT_MS,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -56,7 +60,15 @@ api.interceptors.response.use(
     }
 
     const apiError = error.response?.data?.error
-    if (apiError?.message) error.message = apiError.message
+    if (apiError?.message) {
+      error.message = apiError.message
+    } else if (!error.response) {
+      const isTimeout =
+        error.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '')
+      error.message = isTimeout
+        ? 'The server is taking longer than expected to respond. It may be waking up — please try again.'
+        : 'Could not reach the server. Check your connection and try again.'
+    }
     return Promise.reject(error)
   },
 )
