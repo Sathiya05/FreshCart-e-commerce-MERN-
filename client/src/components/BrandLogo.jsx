@@ -1,5 +1,5 @@
-import { Leaf } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import FreshCartMark from './FreshCartMark.jsx'
 
 export default function BrandLogo({
   compact = false,
@@ -14,13 +14,11 @@ export default function BrandLogo({
       className={`group inline-flex items-center gap-3 ${className}`}
       aria-label="FreshCart home"
     >
-      <span
-        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl shadow-sm transition-colors ${
-          light ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white group-hover:bg-brand-dark'
+      <FreshCartMark
+        className={`h-10 w-10 shrink-0 rounded-xl transition-shadow ${
+          light ? 'shadow-[0_0_0_2px_rgba(255,255,255,0.22)]' : 'shadow-sm group-hover:shadow-md'
         }`}
-      >
-        <Leaf size={22} strokeWidth={2.2} aria-hidden="true" />
-      </span>
+      />
       <span className={`leading-tight ${wordmarkClassName}`}>
         <span
           className={`block text-lg font-bold tracking-tight ${

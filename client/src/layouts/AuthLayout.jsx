@@ -1,4 +1,4 @@
-import { CheckCircle2, Leaf, PackageCheck, ShieldCheck, Truck } from 'lucide-react'
+import { CheckCircle2, PackageCheck, ShieldCheck, Truck } from 'lucide-react'
 import { Link, Outlet } from 'react-router-dom'
 import BrandLogo from '../components/BrandLogo.jsx'
 import ToastHost from '../components/ToastHost.jsx'
@@ -48,10 +48,7 @@ export default function AuthLayout() {
 
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 lg:justify-end">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-dark lg:hidden">
-            <Leaf size={18} aria-hidden="true" />
-            FreshCart
-          </Link>
+          <BrandLogo compact className="lg:hidden" />
           <Link to="/" className="text-sm font-medium text-text-secondary hover:text-brand-primary">
             Back to storefront
           </Link>
