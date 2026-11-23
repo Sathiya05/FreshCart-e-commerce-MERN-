@@ -52,8 +52,8 @@ export default function AIChatPanel({
       aria-hidden={!open}
       style={{
         maxHeight: compact
-          ? 'calc(100dvh - 13rem - var(--dock-lift, 0rem))'
-          : 'calc(100dvh - 10rem - var(--dock-lift, 0rem))',
+          ? 'calc(100dvh - 15rem - var(--dock-lift, 0rem) - env(safe-area-inset-bottom, 0px))'
+          : 'calc(100dvh - 10rem - var(--dock-lift, 0rem) - env(safe-area-inset-bottom, 0px))',
       }}
       className={`absolute bottom-full right-0 mb-3 flex w-[min(380px,calc(100vw-2rem))] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-app-border bg-surface shadow-2xl transition-all duration-200 ${
         open

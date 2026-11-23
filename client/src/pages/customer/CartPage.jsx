@@ -85,7 +85,7 @@ export default function CartPage() {
                     Available at checkout — choose it in one tap.
                   </p>
                 </div>
-                <span className="rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-brand-primary">
+                <span className="min-w-0 basis-full rounded-full bg-surface px-3 py-1.5 text-center text-xs font-semibold text-brand-primary sm:basis-auto">
                   {remainingForFreeDelivery > 0
                     ? `Add ${formatCurrency(remainingForFreeDelivery)} for FREE delivery`
                     : 'FREE delivery unlocked'}
@@ -111,7 +111,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setClearOpen(true)}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700"
+                className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700"
               >
                 <Trash2 size={15} aria-hidden="true" />
                 Clear cart
@@ -126,32 +126,35 @@ export default function CartPage() {
 
             <div className="space-y-4">
               {items.map(({ product, quantity }) => (
-                <article key={product.id} className="flex gap-4 rounded-2xl border border-app-border bg-surface p-4 shadow-sm">
+                <article key={product.id} className="flex gap-3 rounded-2xl border border-app-border bg-surface p-3 shadow-sm sm:gap-4 sm:p-4">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-24 w-24 shrink-0 rounded-xl object-cover sm:h-28 sm:w-28"
+                    className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-28 sm:w-28"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <Link to={`/products/${product.id}`} className="font-semibold text-text-primary hover:text-brand-primary">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={`/products/${product.id}`}
+                          className="line-clamp-2 font-semibold leading-snug text-text-primary hover:text-brand-primary"
+                        >
                           {product.name}
                         </Link>
-                        <p className="mt-1 text-xs text-text-secondary">
+                        <p className="mt-1 truncate text-xs text-text-secondary">
                           {product.unit} · {product.brand}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setItemToRemove(product)}
-                        className="rounded-lg p-1.5 text-text-secondary hover:bg-red-50 hover:text-red-600"
+                        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-text-secondary hover:bg-red-50 hover:text-red-600"
                         aria-label={`Remove ${product.name}`}
                       >
                         <Trash2 size={16} aria-hidden="true" />
                       </button>
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 sm:mt-4 sm:gap-3">
                       <QuantitySelector
                         size="sm"
                         value={quantity}
@@ -160,7 +163,7 @@ export default function CartPage() {
                           dispatch(updateCartQuantity({ productId: product.id, quantity: value }))
                         }
                       />
-                      <p className="font-bold text-text-primary">
+                      <p className="ml-auto shrink-0 text-right font-bold tabular-nums text-text-primary">
                         {formatCurrency((product.discountPrice || product.price) * quantity)}
                       </p>
                     </div>
@@ -173,6 +176,7 @@ export default function CartPage() {
           <OrderSummary
             subtotal={subtotal}
             deliveryCharge={deliveryCharge}
+            actionClassName="hidden lg:block"
             action={
               <div className="space-y-2">
                 <Button as={Link} to="/checkout" className="w-full" size="lg">
@@ -190,19 +194,31 @@ export default function CartPage() {
               </div>
             }
             note="Cash on delivery and verified Razorpay payments are available at checkout."
+            noteClassName="hidden lg:block"
           />
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-4 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
-          <div className="min-w-0">
-            <p className="text-xs text-text-secondary">{items.length} items · total</p>
-            <p className="text-lg font-bold text-text-primary">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-3 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur sm:px-4 lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1 sm:flex-none">
+            <p className="truncate text-xs text-text-secondary">
+              {items.length} item{items.length === 1 ? '' : 's'} · total
+            </p>
+            <p className="truncate text-lg font-bold tabular-nums text-text-primary">
               {formatCurrency(total)}
             </p>
           </div>
-          <Button as={Link} to="/checkout" className="ml-auto flex-1 sm:max-w-xs" size="lg">
+          <button
+            type="button"
+            onClick={shareCart}
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-app-border bg-surface text-[#25D366] transition hover:border-[#25D366] hover:bg-green-50"
+            aria-label="Share cart on WhatsApp"
+            title="Share cart on WhatsApp"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+          </button>
+          <Button as={Link} to="/checkout" className="min-w-0 flex-1 sm:max-w-xs" size="lg">
             Checkout
           </Button>
         </div>

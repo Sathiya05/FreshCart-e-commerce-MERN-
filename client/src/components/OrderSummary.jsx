@@ -8,7 +8,9 @@ export default function OrderSummary({
   delivery = null,
   address = null,
   action,
+  actionClassName = '',
   note,
+  noteClassName = '',
 }) {
   const total = Math.max(subtotal - discount, 0) + deliveryCharge
 
@@ -83,8 +85,10 @@ export default function OrderSummary({
         Free delivery on orders above ₹499.
       </div>
 
-      {action && <div className="mt-5">{action}</div>}
-      {note && <p className="mt-4 text-center text-xs text-text-secondary">{note}</p>}
+      {action && <div className={`mt-5 ${actionClassName}`}>{action}</div>}
+      {note && (
+        <p className={`mt-4 text-center text-xs text-text-secondary ${noteClassName}`}>{note}</p>
+      )}
     </aside>
   )
 }
