@@ -9,6 +9,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import QuantitySelector from '../../components/QuantitySelector.jsx'
 import WhatsAppIcon from '../../components/WhatsAppIcon.jsx'
 import useWhatsAppCartShare from '../../hooks/useWhatsAppCartShare.js'
+import { selectCurrentUser } from '../../redux/authSlice.js'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
 import {
   clearCart,
@@ -31,6 +32,7 @@ export default function CartPage() {
   const deliveryCharge = useAppSelector(selectCartDeliveryFee)
   const total = useAppSelector(selectCartTotal)
   const cartStatus = useAppSelector(selectCartStatus)
+  const user = useAppSelector(selectCurrentUser)
   const { shareCart } = useWhatsAppCartShare()
 
   const [itemToRemove, setItemToRemove] = useState(null)
@@ -46,10 +48,14 @@ export default function CartPage() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <EmptyState
             icon={ShoppingCart}
-            title="Your cart is empty"
-            description="Add fresh groceries from the shop to see them here."
-            actionLabel="Start shopping"
-            actionTo="/shop"
+            title={user ? 'Your cart is empty' : 'Sign in to view your cart'}
+            description={
+              user
+                ? 'Add fresh groceries from the shop to see them here.'
+                : 'Sign in with your FreshCart account to save items and place orders.'
+            }
+            actionLabel={user ? 'Start shopping' : 'Sign in'}
+            actionTo={user ? '/shop' : '/login'}
           />
         </div>
       </>

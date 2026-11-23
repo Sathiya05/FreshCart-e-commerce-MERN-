@@ -1,8 +1,10 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
-import { selectCurrentUser } from './authSlice.js'
+import { logoutUser, selectCurrentUser, signOut } from './authSlice.js'
 import { pushToast } from './uiSlice.js'
 import * as commerce from '../services/commerce.service.js'
 import { getDeliveryFee } from '../utils/commerce.js'
+
+export const AUTH_REQUIRED = 'AUTH_REQUIRED'
 
 const initialState = {
   items: [],
@@ -65,45 +67,6 @@ const cartSlice = createSlice({
     setCart(state, action) {
       applyCart(state, { payload: action.payload })
     },
-    addToCartLocal: {
-      reducer(state, action) {
-        state.summary = null
-        const { product, quantity } = action.payload
-        const existing = state.items.find((item) => item.product.id === product.id)
-
-        if (existing) {
-          existing.quantity = Math.min(
-            existing.quantity + quantity,
-            product.stock || 99,
-          )
-          return
-        }
-
-        state.items.push({
-          product,
-          quantity: Math.min(quantity, product.stock || 99),
-        })
-      },
-      prepare(product, quantity = 1) {
-        return { payload: { product, quantity } }
-      },
-    },
-    updateCartQuantityLocal(state, action) {
-      state.summary = null
-      const { productId, quantity } = action.payload
-      const item = state.items.find((entry) => entry.product.id === productId)
-      if (!item) return
-      item.quantity = Math.max(
-        1,
-        Math.min(Number(quantity) || 1, item.product.stock || 99),
-      )
-    },
-    removeFromCartLocal(state, action) {
-      state.summary = null
-      state.items = state.items.filter(
-        (item) => item.product.id !== action.payload,
-      )
-    },
     clearCartLocal(state) {
       state.items = []
       state.summary = null
@@ -128,16 +91,16 @@ const cartSlice = createSlice({
           state.error = action.error.message || 'Could not update your cart.'
         })
     }
+
+    // A cart belongs to the signed-in customer. Never leave one user's cart in
+    // memory after they sign out.
+    builder
+      .addCase(logoutUser.fulfilled, () => initialState)
+      .addCase(signOut, () => initialState)
   },
 })
 
-export const {
-  setCart,
-  addToCartLocal,
-  updateCartQuantityLocal,
-  removeFromCartLocal,
-  clearCartLocal,
-} = cartSlice.actions
+export const { setCart, clearCartLocal } = cartSlice.actions
 
 const isCustomer = (state) => {
   const user = selectCurrentUser(state)
@@ -154,12 +117,21 @@ const notifyCartError = (dispatch, error) => {
   )
 }
 
-export const addToCart = (product, quantity = 1) => async (dispatch, getState) => {
-  try {
-    if (!isCustomer(getState())) {
-      return dispatch(addToCartLocal(product, quantity))
-    }
+const requireLogin = (dispatch) => {
+  dispatch(
+    pushToast({
+      type: 'info',
+      title: 'Sign in to continue',
+      message: 'Please sign in to add items, save your cart and place an order.',
+    }),
+  )
+  return AUTH_REQUIRED
+}
 
+export const addToCart = (product, quantity = 1) => async (dispatch, getState) => {
+  if (!isCustomer(getState())) return requireLogin(dispatch)
+
+  try {
     return await dispatch(
       addCartItemAsync({ productId: product.id, quantity }),
     ).unwrap()
@@ -170,11 +142,9 @@ export const addToCart = (product, quantity = 1) => async (dispatch, getState) =
 }
 
 export const updateCartQuantity = (payload) => async (dispatch, getState) => {
-  try {
-    if (!isCustomer(getState())) {
-      return dispatch(updateCartQuantityLocal(payload))
-    }
+  if (!isCustomer(getState())) return requireLogin(dispatch)
 
+  try {
     return await dispatch(updateCartItemAsync(payload)).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -183,11 +153,9 @@ export const updateCartQuantity = (payload) => async (dispatch, getState) => {
 }
 
 export const removeFromCart = (productId) => async (dispatch, getState) => {
-  try {
-    if (!isCustomer(getState())) {
-      return dispatch(removeFromCartLocal(productId))
-    }
+  if (!isCustomer(getState())) return requireLogin(dispatch)
 
+  try {
     return await dispatch(removeCartItemAsync(productId)).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -196,11 +164,9 @@ export const removeFromCart = (productId) => async (dispatch, getState) => {
 }
 
 export const clearCart = () => async (dispatch, getState) => {
-  try {
-    if (!isCustomer(getState())) {
-      return dispatch(clearCartLocal())
-    }
+  if (!isCustomer(getState())) return requireLogin(dispatch)
 
+  try {
     return await dispatch(clearCartAsync()).unwrap()
   } catch (error) {
     notifyCartError(dispatch, error)
@@ -208,21 +174,20 @@ export const clearCart = () => async (dispatch, getState) => {
   }
 }
 
-export const syncGuestCart = () => async (dispatch, getState) => {
+/** MongoDB is the single source of truth for a signed-in customer's cart. */
+export const fetchCustomerCart = () => async (dispatch, getState) => {
+  if (!isCustomer(getState())) {
+    dispatch(clearCartLocal())
+    return null
+  }
+
   try {
-    if (!isCustomer(getState())) return
-
-    const guestItems = [...getState().cart.items]
-
-    for (const item of guestItems) {
-      if (item.product?.id) {
-        await commerce.addCartItem(item.product.id, item.quantity)
-      }
-    }
     const cart = await commerce.getCart()
     dispatch(setCart(cart))
+    return cart
   } catch (error) {
     notifyCartError(dispatch, error)
+    return null
   }
 }
 

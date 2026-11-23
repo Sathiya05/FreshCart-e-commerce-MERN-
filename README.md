@@ -3,7 +3,7 @@
 A production-oriented, full-stack grocery e-commerce platform built with the MERN stack.
 
 > **Current status: Phase 7, Gemini AI assistant and manual WhatsApp handoff are implemented.** Auth,
-> catalog, admin catalog, persistent carts, address book, server-owned delivery
+> catalog, admin catalog, sign-in-required persistent carts, address book, server-owned delivery
 > slots with a 20–30 min instant option, server-calculated checkout, COD orders,
 > verified online payments, order
 > history/tracking and admin order status updates use real APIs. The website

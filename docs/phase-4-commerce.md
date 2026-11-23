@@ -133,9 +133,10 @@ refund API is not connected.
 | Tracking | `OrderTrackingPage.jsx` | `/orders/:id/track` |
 | Admin orders | `AdminOrdersPage.jsx` | `/admin/orders` |
 
-Guest carts remain local in Redux. On sign-in, `syncGuestCart()` merges the local
-items into the server cart through the cart API, then replaces local state with
-the authoritative cart. Checkout is protected and redirects to sign-in.
+Customers must sign in before adding items, buying, or checkout. Carts are stored
+in MongoDB and loaded with `fetchCustomerCart()` after session restore, so a page
+refresh keeps the signed-in customer's cart. Checkout is protected and redirects
+to sign-in.
 
 ## Still preview-only
 

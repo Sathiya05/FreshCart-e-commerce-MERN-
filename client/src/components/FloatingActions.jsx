@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Sparkles } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AIChatPanel from './ai/AIChatPanel.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import { askAssistant, getAiStatus } from '../services/ai.service.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
-import { addToCart, setCart } from '../redux/cartSlice.js'
+import { addToCart, AUTH_REQUIRED, setCart } from '../redux/cartSlice.js'
 import { pushToast, selectToasts } from '../redux/uiSlice.js'
 import { resolveWhatsAppPhone } from '../utils/whatsapp.js'
 
@@ -82,6 +82,7 @@ const saveSession = (messages, history, pendingConfirmation) => {
 
 export default function FloatingActions() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const toastCount = useAppSelector(selectToasts).length
   const initialSession = useRef(readSession()).current
@@ -217,8 +218,11 @@ export default function FloatingActions() {
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank', 'noopener,noreferrer')
   }
 
-  const handleAddProduct = (product, quantity = 1) => {
-    dispatch(addToCart(product, quantity))
+  const handleAddProduct = async (product, quantity = 1) => {
+    const result = await dispatch(addToCart(product, quantity))
+    if (result === AUTH_REQUIRED) {
+      navigate('/login', { state: { from: { pathname } } })
+    }
   }
 
   return (

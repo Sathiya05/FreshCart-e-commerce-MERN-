@@ -6,7 +6,7 @@ import Footer from '../components/Footer.jsx'
 import Navbar from '../components/Navbar.jsx'
 import ToastHost from '../components/ToastHost.jsx'
 import { selectAuthInitialized, selectCurrentUser } from '../redux/authSlice.js'
-import { syncGuestCart } from '../redux/cartSlice.js'
+import { fetchCustomerCart } from '../redux/cartSlice.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 
 export default function CustomerLayout() {
@@ -16,9 +16,8 @@ export default function CustomerLayout() {
   const initialized = useAppSelector(selectAuthInitialized)
 
   useEffect(() => {
-    if (initialized && user?.role === 'customer') {
-      dispatch(syncGuestCart())
-    }
+    if (!initialized) return
+    dispatch(fetchCustomerCart())
   }, [dispatch, initialized, user?.id, user?.role])
 
   return (

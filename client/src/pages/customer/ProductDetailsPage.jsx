@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Heart, RotateCcw, ShieldCheck, ShoppingCart, Truck, Zap } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Badge from '../../components/Badge.jsx'
 import Breadcrumbs from '../../components/Breadcrumbs.jsx'
 import Button from '../../components/Button.jsx'
@@ -11,7 +11,7 @@ import QuantitySelector from '../../components/QuantitySelector.jsx'
 import Rating from '../../components/Rating.jsx'
 import { SkeletonLine } from '../../components/Skeleton.jsx'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
-import { addToCart } from '../../redux/cartSlice.js'
+import { addToCart, AUTH_REQUIRED } from '../../redux/cartSlice.js'
 import { selectIsWishlisted, toggleWishlist } from '../../redux/wishlistSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { formatCurrency, formatDiscount, getGalleryImages } from '../../utils/format.js'
@@ -26,6 +26,7 @@ export default function ProductDetailsPage() {
   const { id } = useParams()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
 
@@ -88,8 +89,11 @@ export default function ProductDetailsPage() {
   const gallery = getGalleryImages(product.image)
   const discount = formatDiscount(product.price, product.discountPrice)
 
+  const redirectToLogin = () => navigate('/login', { state: { from: location } })
+
   const handleAddToCart = async () => {
     const result = await dispatch(addToCart(product, quantity))
+    if (result === AUTH_REQUIRED) return redirectToLogin()
     if (result === null) return
     dispatch(
       pushToast({
@@ -102,6 +106,7 @@ export default function ProductDetailsPage() {
   const handleBuyNow = async () => {
     if (product.stock <= 0) return
     const result = await dispatch(addToCart(product, quantity))
+    if (result === AUTH_REQUIRED) return redirectToLogin()
     if (result === null) return
     dispatch(
       pushToast({

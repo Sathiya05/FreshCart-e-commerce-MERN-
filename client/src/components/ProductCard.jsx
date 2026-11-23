@@ -1,7 +1,7 @@
 import { Heart, ShoppingCart, Zap } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
-import { addToCart } from '../redux/cartSlice.js'
+import { addToCart, AUTH_REQUIRED } from '../redux/cartSlice.js'
 import { selectIsWishlisted, toggleWishlist } from '../redux/wishlistSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
 import { formatCurrency, formatDiscount } from '../utils/format.js'
@@ -12,12 +12,16 @@ import Rating from './Rating.jsx'
 export default function ProductCard({ product }) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const isWishlisted = useAppSelector(selectIsWishlisted(product.id))
   const discount = formatDiscount(product.price, product.discountPrice)
+
+  const redirectToLogin = () => navigate('/login', { state: { from: location } })
 
   const handleAddToCart = async () => {
     if (product.stock <= 0) return
     const result = await dispatch(addToCart(product, 1))
+    if (result === AUTH_REQUIRED) return redirectToLogin()
     if (result === null) return
     dispatch(
       pushToast({
@@ -30,6 +34,7 @@ export default function ProductCard({ product }) {
   const handleBuyNow = async () => {
     if (product.stock <= 0) return
     const result = await dispatch(addToCart(product, 1))
+    if (result === AUTH_REQUIRED) return redirectToLogin()
     if (result === null) return
     dispatch(
       pushToast({

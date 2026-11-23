@@ -1,5 +1,5 @@
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -8,7 +8,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import ProductGrid from '../../components/ProductGrid.jsx'
 import { ProductGridSkeleton } from '../../components/Skeleton.jsx'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
-import { addToCart } from '../../redux/cartSlice.js'
+import { addToCart, AUTH_REQUIRED } from '../../redux/cartSlice.js'
 import { clearWishlist, removeFromWishlist, selectWishlistIds } from '../../redux/wishlistSlice.js'
 import { pushToast } from '../../redux/uiSlice.js'
 import { useAsync } from '../../hooks/useAsync.js'
@@ -17,6 +17,8 @@ import { useState } from 'react'
 
 export default function WishlistPage() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const location = useLocation()
   const ids = useAppSelector(selectWishlistIds)
   const [clearOpen, setClearOpen] = useState(false)
   const idsKey = ids.join(',')
@@ -32,7 +34,11 @@ export default function WishlistPage() {
     const results = await Promise.all(
       products.map((product) => dispatch(addToCart(product, 1))),
     )
-    const added = results.filter((result) => result !== null).length
+    if (results.includes(AUTH_REQUIRED)) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+    const added = results.filter(Boolean).length
     if (!added) return
     dispatch(
       pushToast({
