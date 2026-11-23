@@ -21,7 +21,7 @@ export default function PaymentSuccessPage() {
 
   if (status === 'loading') {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
         <SkeletonLine className="h-80 w-full rounded-2xl" />
       </div>
     )
@@ -31,7 +31,7 @@ export default function PaymentSuccessPage() {
     return (
       <>
         <PageHeader title="Payment confirmation" breadcrumbs={[{ label: 'Payment' }]} />
-        <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
           <ErrorState message={error} onRetry={refetch} />
         </div>
       </>
@@ -46,9 +46,9 @@ export default function PaymentSuccessPage() {
         title={paid ? 'Payment successful' : 'Payment confirmation'}
         breadcrumbs={[{ label: 'Checkout', to: '/checkout' }, { label: 'Payment' }]}
       />
-      <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
         <div
-          className={`rounded-2xl border bg-surface p-8 text-center shadow-sm ${
+          className={`rounded-2xl border bg-surface p-5 text-center shadow-sm sm:p-8 ${
             paid ? 'border-app-border' : 'border-amber-200'
           }`}
         >
@@ -70,18 +70,18 @@ export default function PaymentSuccessPage() {
           </p>
 
           <div className="mt-6 min-w-0 rounded-xl bg-app-background p-4 text-left">
-            <div className="flex min-w-0 justify-between gap-4">
+            <div className="flex min-w-0 justify-between gap-3 sm:gap-4">
               <span className="shrink-0 text-xs text-text-secondary">Order</span>
               <span className="min-w-0 break-all text-right font-semibold text-text-primary">
                 {order?.orderNumber || order?.id || '—'}
               </span>
             </div>
-            <div className="mt-2 flex min-w-0 justify-between gap-4">
+            <div className="mt-2 flex min-w-0 justify-between gap-3 sm:gap-4">
               <span className="shrink-0 text-xs text-text-secondary">Payment status</span>
               <span className="min-w-0 break-words text-right font-medium text-text-primary">{order?.paymentStatus}</span>
             </div>
             {paid && (
-              <div className="mt-2 flex min-w-0 justify-between gap-4">
+              <div className="mt-2 flex min-w-0 justify-between gap-3 sm:gap-4">
                 <span className="shrink-0 text-xs text-text-secondary">Amount paid</span>
                 <span className="min-w-0 shrink-0 text-right font-semibold text-text-primary">
                   {formatCurrency(order.totalAmount)}
@@ -90,7 +90,7 @@ export default function PaymentSuccessPage() {
             )}
           </div>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:[&>*]:w-auto [&>*]:w-full">
             <Button as={Link} to={`/account/orders/${order.id}`}>
               View order details
             </Button>

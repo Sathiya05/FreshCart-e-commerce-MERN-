@@ -189,12 +189,18 @@ export default function CheckoutPage() {
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           <div className="space-y-8">
             <section>
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
                   <MapPin size={18} className="text-brand-primary" aria-hidden="true" />
                   1. Delivery address
                 </h2>
-                <Button as={Link} to="/account/addresses" size="sm" variant="outline">
+                <Button
+                  as={Link}
+                  to="/account/addresses"
+                  size="sm"
+                  variant="outline"
+                  className="h-11 sm:h-9"
+                >
                   Manage
                 </Button>
               </div>
@@ -277,7 +283,7 @@ export default function CheckoutPage() {
                   id="delivery-instructions"
                   value={deliveryInstructions}
                   onChange={(event) => setDeliveryInstructions(event.target.value)}
-                  className="mt-1.5 h-10 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary"
+                  className="mt-1.5 h-11 w-full min-w-0 rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary sm:h-10"
                 >
                   <option value="">No instructions</option>
                   <option value="Leave at the door">Leave at the door</option>
@@ -375,12 +381,12 @@ export default function CheckoutPage() {
               <div className="mt-4 space-y-3">
                 {items.map(({ product, quantity }) => (
                   <div key={product.id} className="flex items-center gap-3">
-                    <img src={product.image} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                    <img src={product.image} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text-primary">{product.name}</p>
-                      <p className="text-xs text-text-secondary">{quantity} × {product.unit}</p>
+                      <p className="truncate text-xs text-text-secondary">{quantity} × {product.unit}</p>
                     </div>
-                    <p className="text-sm font-semibold">
+                    <p className="shrink-0 text-right text-sm font-semibold tabular-nums">
                       {formatCurrency((product.discountPrice || product.price) * quantity)}
                     </p>
                   </div>
@@ -395,6 +401,8 @@ export default function CheckoutPage() {
               deliveryCharge={deliveryCharge}
               delivery={selectedSlot}
               address={selectedAddress}
+              actionClassName="hidden lg:block"
+              noteClassName="hidden lg:block"
               action={
                 <div className="space-y-2">
                   <Button
@@ -429,7 +437,7 @@ export default function CheckoutPage() {
               }
             />
             {orderError && (
-              <p className="mt-3 text-center text-sm text-red-600" role="alert">
+              <p className="mt-3 hidden text-center text-sm text-red-600 lg:block" role="alert">
                 {orderError}
               </p>
             )}
@@ -438,28 +446,43 @@ export default function CheckoutPage() {
       </div>
 
       {/* Sticky mobile CTA so payment is always reachable without scrolling past every step. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-4 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
-          <div className="min-w-0">
-            <p className="text-xs text-text-secondary">Order total</p>
-            <p className="text-lg font-bold text-text-primary">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-app-border bg-surface/95 px-3 pb-safe pt-3 shadow-[0_-8px_24px_rgba(16,92,54,0.08)] backdrop-blur sm:px-4 lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 shrink sm:flex-none">
+            <p className="truncate text-xs text-text-secondary">Order total</p>
+            <p className="truncate text-lg font-bold tabular-nums text-text-primary">
               {formatCurrency(total)}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={shareCart}
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-app-border bg-surface text-[#25D366] transition hover:border-[#25D366] hover:bg-green-50"
+            aria-label="Share cart on WhatsApp"
+            title="Share cart on WhatsApp"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+          </button>
           <Button
-            className="ml-auto flex-1 sm:max-w-xs"
-            size="lg"
+            className="min-w-0 shrink-0 grow whitespace-nowrap sm:max-w-xs"
+            size="cta"
             onClick={handlePlaceOrder}
             disabled={placeOrderDisabled}
           >
-            <ShieldCheck size={16} aria-hidden="true" />
+            <ShieldCheck size={16} className="hidden sm:block" aria-hidden="true" />
             {placeOrderLabel}
           </Button>
         </div>
-        {orderError && (
-          <p className="mx-auto mt-1 max-w-7xl text-center text-xs text-red-600" role="alert">
+        {orderError ? (
+          <p className="mx-auto mt-1 line-clamp-2 max-w-7xl text-center text-xs text-red-600" role="alert">
             {orderError}
           </p>
+        ) : (
+          !addressConfirmed && (
+            <p className="mx-auto mt-1 line-clamp-1 max-w-7xl text-center text-xs text-amber-700">
+              Confirm your delivery address to place the order.
+            </p>
+          )
         )}
       </div>
     </>

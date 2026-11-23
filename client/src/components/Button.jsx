@@ -13,6 +13,8 @@ const sizes = {
   compact: 'h-11 px-2 text-[13px] whitespace-nowrap min-[360px]:px-3',
   md: 'h-11 px-5 text-sm',
   lg: 'h-12 px-6 text-base',
+  // Compact, shrink-safe primary CTA for the mobile checkout bar.
+  cta: 'h-12 px-4 text-sm sm:px-6 sm:text-base',
   icon: 'h-10 w-10',
 }
 

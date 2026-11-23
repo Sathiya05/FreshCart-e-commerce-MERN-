@@ -21,7 +21,7 @@ export default function PaymentFailurePage() {
 
   if (status === 'loading') {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
         <SkeletonLine className="h-72 w-full rounded-2xl" />
       </div>
     )
@@ -31,7 +31,7 @@ export default function PaymentFailurePage() {
     return (
       <>
         <PageHeader title="Payment status" breadcrumbs={[{ label: 'Payment' }]} />
-        <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
           <ErrorState message={error} onRetry={refetch} />
         </div>
       </>
@@ -46,9 +46,9 @@ export default function PaymentFailurePage() {
         title={paid ? 'Payment confirmed' : 'Payment failed'}
         breadcrumbs={[{ label: 'Checkout', to: '/checkout' }, { label: 'Payment' }]}
       />
-      <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
         <div
-          className={`rounded-2xl border bg-surface p-8 text-center shadow-sm ${
+          className={`rounded-2xl border bg-surface p-5 text-center shadow-sm sm:p-8 ${
             paid ? 'border-app-border' : 'border-red-200'
           }`}
         >
@@ -66,11 +66,11 @@ export default function PaymentFailurePage() {
           <p className="mt-3 text-sm leading-6 text-text-secondary">
             {paid
               ? 'The server has verified this payment. Your order is confirmed.'
-              : reason}
+              : <span className="break-words">{reason}</span>}
           </p>
 
           {!paid && order?.paymentFailureReason && (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <div className="mt-4 break-words rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               {order.paymentFailureReason}
             </div>
           )}
@@ -85,7 +85,7 @@ export default function PaymentFailurePage() {
             </p>
           </div>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:[&>*]:w-auto [&>*]:w-full">
             {paid ? (
               <Button as={Link} to={`/payment/success?order=${order.id}`}>
                 View confirmation

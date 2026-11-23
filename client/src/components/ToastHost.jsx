@@ -55,7 +55,7 @@ export default function ToastHost({ avoidFloatingDock = false, className = '' })
   const positionClasses = className
     ? ''
     : avoidFloatingDock
-      ? `left-3 right-32 sm:left-auto sm:right-36 ${
+      ? `left-3 right-20 sm:left-auto sm:right-36 ${
           hasBottomCta ? 'toast-bottom-cta' : 'toast-bottom'
         }`
       : 'inset-x-3 toast-bottom sm:inset-x-auto sm:right-6'

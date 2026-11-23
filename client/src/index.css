@@ -59,7 +59,7 @@
   }
 
   .floating-actions--raised {
-    bottom: calc(6.25rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(8rem + var(--dock-lift, 0rem) + env(safe-area-inset-bottom, 0px));
   }
 
   .toast-bottom {
@@ -67,7 +67,7 @@
   }
 
   .toast-bottom-cta {
-    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   @media (min-width: 1024px) {
