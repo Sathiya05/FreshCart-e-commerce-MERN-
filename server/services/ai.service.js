@@ -9,6 +9,16 @@ export const getAiStatus = () => ({
   model: env.aiConfigured ? env.aiModel : '',
 })
 
+// GPT-4.1 family supports tool calling but has no reasoning step. Sending
+// `reasoning` or `include: reasoning.encrypted_content` to those models makes
+// the provider reject the request.
+const REASONING_MODEL_PATTERN = /^(gpt-(?:5|6)|o(?:1|3|4))(?:[-.]|$)/i
+const supportsReasoning = (model) =>
+  REASONING_MODEL_PATTERN.test(String(model || '').toLowerCase())
+
+const normalizeReasoningEffort = (effort) =>
+  String(effort || '').trim().toLowerCase() === 'none' ? 'low' : String(effort || '').trim()
+
 const sanitizeHistory = (history) =>
   (Array.isArray(history) ? history : [])
     .slice(-AI_LIMITS.HISTORY_MAX)
@@ -76,11 +86,13 @@ const callProvider = async (input) => {
     tools: responseTools,
     tool_choice: 'auto',
     store: false,
-    include: ['reasoning.encrypted_content'],
   }
 
-  if (env.aiReasoningEffort) {
-    body.reasoning = { effort: env.aiReasoningEffort }
+  if (supportsReasoning(env.aiModel)) {
+    body.include = ['reasoning.encrypted_content']
+
+    const effort = normalizeReasoningEffort(env.aiReasoningEffort)
+    if (effort) body.reasoning = { effort }
   }
 
   try {
