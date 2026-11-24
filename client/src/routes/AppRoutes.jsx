@@ -33,6 +33,7 @@ import ManageAddressesPage from '../pages/customer/ManageAddressesPage.jsx'
 import MyOrdersPage from '../pages/customer/MyOrdersPage.jsx'
 import MyProfilePage from '../pages/customer/MyProfilePage.jsx'
 import NotFoundPage from '../pages/customer/NotFoundPage.jsx'
+import OrderConfirmationPage from '../pages/customer/OrderConfirmationPage.jsx'
 import OrderDetailsPage from '../pages/customer/OrderDetailsPage.jsx'
 import OrderTrackingPage from '../pages/customer/OrderTrackingPage.jsx'
 import PaymentFailurePage from '../pages/customer/PaymentFailurePage.jsx'
@@ -85,6 +86,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <PaymentFailurePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="order-confirmation/:id"
+          element={
+            <ProtectedRoute>
+              <OrderConfirmationPage />
             </ProtectedRoute>
           }
         />

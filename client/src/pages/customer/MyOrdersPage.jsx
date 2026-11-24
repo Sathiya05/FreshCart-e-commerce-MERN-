@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, RotateCcw } from 'lucide-react'
+import { Package, Truck } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import ErrorState from '../../components/ErrorState.jsx'
@@ -76,32 +76,62 @@ export default function MyOrdersPage() {
                   </div>
                   <OrderStatusBadge status={order.status} />
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-4">
-                  <div className="flex max-w-full flex-wrap overflow-hidden -space-x-2">
-                    {order.items.slice(0, 5).map((item) => (
-                      <img
-                        key={item.productId}
-                        src={item.image}
-                        alt={item.name}
-                        className="h-11 w-11 shrink-0 rounded-full border-2 border-surface object-cover"
-                      />
-                    ))}
-                    {order.items.length > 5 && (
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-surface bg-app-background text-xs font-semibold text-text-secondary">
-                        +{order.items.length - 5}
-                      </span>
-                    )}
-                  </div>
-                  <div className="ml-auto min-w-0 text-right">
-                    <p className="text-xs text-text-secondary">Total</p>
-                    <p className="break-words font-bold text-text-primary">{formatCurrency(order.totalAmount)}</p>
-                  </div>
+
+                <ul className="mt-4 divide-y divide-app-border">
+                  {order.items.map((item) => (
+                    <li key={item.productId || item.id} className="flex min-w-0 gap-3 py-3 first:pt-0 last:pb-0">
+                      <Link to={`/products/${item.productId || item.id}`} className="shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-16 w-16 rounded-xl border border-app-border object-cover"
+                        />
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={`/products/${item.productId || item.id}`}
+                          className="block break-words text-sm font-medium text-text-primary hover:text-brand-primary"
+                        >
+                          {item.name}
+                        </Link>
+                        <p className="mt-1 text-xs text-text-secondary">
+                          {item.unit} · Qty {item.quantity}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold text-text-primary">
+                          {formatCurrency(item.lineTotal || item.price * item.quantity)}
+                        </p>
+                        {item.quantity > 1 && (
+                          <p className="mt-1 text-xs text-text-secondary">
+                            {formatCurrency(item.price)} each
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-app-border pt-4">
+                  <p className="flex min-w-0 items-center gap-2 text-xs text-text-secondary">
+                    <Truck size={15} className="shrink-0 text-brand-primary" aria-hidden="true" />
+                    <span className="min-w-0">
+                      {order.deliveryDate ? `${order.deliveryDate} · ` : ''}
+                      {order.deliverySlot || 'Delivery slot to be confirmed'}
+                    </span>
+                  </p>
+                  <p className="shrink-0 text-sm font-bold text-text-primary">
+                    Total {formatCurrency(order.totalAmount)}
+                  </p>
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <Button as={Link} to={`/account/orders/${order.id}`} size="sm" className="h-11 sm:h-9">View details</Button>
-                  <Button as={Link} to={`/account/orders/${order.id}/track`} size="sm" variant="outline" className="h-11 sm:h-9">
-                    <RotateCcw size={14} aria-hidden="true" />
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button as={Link} to={`/account/orders/${order.id}/track`} size="sm" className="h-11 sm:h-9">
+                    <Truck size={14} aria-hidden="true" />
                     Track order
+                  </Button>
+                  <Button as={Link} to={`/account/orders/${order.id}`} size="sm" variant="outline" className="h-11 sm:h-9">
+                    View details
                   </Button>
                 </div>
               </article>

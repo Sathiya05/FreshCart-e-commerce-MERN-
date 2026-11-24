@@ -147,7 +147,7 @@ export default function CheckoutPage() {
           message: `${order.orderNumber} is confirmed.`,
         }),
       )
-      navigate(`/account/orders/${order.id}`)
+      navigate(`/order-confirmation/${order.id}`)
     } catch (error) {
       const message = error?.message || 'Could not place your order.'
       setOrderError(message)

@@ -30,7 +30,7 @@ export default function useRazorpayCheckout() {
               message: `${order.orderNumber || payment.orderNumber} is paid.`,
             }),
           )
-          navigate(`/payment/success?order=${payment.orderId}`)
+          navigate(`/order-confirmation/${order.id || payment.orderId}`)
           return order
         },
         onFailure: (error) => {
