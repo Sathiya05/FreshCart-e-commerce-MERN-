@@ -64,6 +64,7 @@ api.interceptors.response.use(
       status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
+      !originalRequest.skipAuthRefresh &&
       !isAuthEndpoint(originalRequest.url)
     ) {
       originalRequest._retry = true

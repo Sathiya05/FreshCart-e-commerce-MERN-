@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthFormCard from '../../components/AuthFormCard.jsx'
 import Button from '../../components/Button.jsx'
 import { useAppDispatch } from '../../redux/hooks.js'
 import { clearAuthError, googleSignInUser, loginUser } from '../../redux/authSlice.js'
-import { getGoogleAuthConfig } from '../../services/auth.service.js'
+import { getApiErrorMessage } from '../../services/api.js'
+import { getGoogleConfig, loadGoogleIdentity } from '../../services/googleIdentity.js'
 import { pushToast } from '../../redux/uiSlice.js'
 
 const normalizeDestination = (from) => {
@@ -42,47 +43,24 @@ const GoogleIcon = () => (
   </svg>
 )
 
-const loadGoogleIdentityScript = () =>
-  new Promise((resolve, reject) => {
-    if (window.google?.accounts?.id) {
-      resolve()
-      return
-    }
-
-    let script = document.getElementById('google-identity-services')
-    if (!script) {
-      script = document.createElement('script')
-      script.id = 'google-identity-services'
-      script.src = 'https://accounts.google.com/gsi/client'
-      script.async = true
-      script.defer = true
-      document.head.appendChild(script)
-    }
-
-    script.addEventListener('load', () => resolve(), { once: true })
-    script.addEventListener(
-      'error',
-      () => reject(new Error('Could not load Google sign-in.')),
-      { once: true },
-    )
-  })
-
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [googleConfig, setGoogleConfig] = useState(null)
+  const [googleStatus, setGoogleStatus] = useState('loading')
   const [googleError, setGoogleError] = useState('')
   const [googleBusy, setGoogleBusy] = useState(false)
+  const [googleAttempt, setGoogleAttempt] = useState(0)
   const googleButtonRef = useRef(null)
   const googleCallbackRef = useRef(null)
+  const credentialHandledRef = useRef(false)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
 
   const destination = normalizeDestination(location.state?.from)
-  const googleEnabled = Boolean(googleConfig?.enabled && googleConfig?.clientId)
   const googleClientId = googleConfig?.clientId || ''
 
   useEffect(() => {
@@ -160,46 +138,70 @@ export default function LoginPage() {
 
   useEffect(() => {
     let active = true
-    getGoogleAuthConfig()
+    setGoogleStatus('loading')
+    setGoogleError('')
+    getGoogleConfig({ force: googleAttempt > 0 })
       .then((config) => {
-        if (active) setGoogleConfig(config || null)
+        if (!active) return
+        setGoogleConfig(config)
+        setGoogleStatus('ready')
       })
-      .catch(() => {
-        if (active) setGoogleConfig(null)
+      .catch((error) => {
+        if (!active) return
+        setGoogleConfig(null)
+        setGoogleError(getApiErrorMessage(error, 'Google sign-in is unavailable right now.'))
+        setGoogleStatus('error')
       })
     return () => {
       active = false
     }
-  }, [])
+  }, [googleAttempt])
 
   useEffect(() => {
-    if (!googleEnabled) return undefined
+    if (googleStatus !== 'ready') return undefined
 
     let cancelled = false
-    loadGoogleIdentityScript()
+    loadGoogleIdentity()
       .then(() => {
         if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return
 
         window.google.accounts.id.initialize({
           client_id: googleClientId,
-          callback: (response) => googleCallbackRef.current?.(response),
+          ux_mode: 'popup',
+          callback: (response) => {
+            // Google can fire the callback more than once for a single tap.
+            if (credentialHandledRef.current) return
+            credentialHandledRef.current = true
+            googleCallbackRef.current?.(response)
+            setTimeout(() => {
+              credentialHandledRef.current = false
+            }, 1500)
+          },
+          error_callback: () => {
+            if (!cancelled) setGoogleError('Google sign-in could not open. Please try again.')
+          },
         })
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
+
+        const container = googleButtonRef.current
+        const width = Math.max(220, Math.min(320, container.clientWidth || 320))
+        window.google.accounts.id.renderButton(container, {
           theme: 'outline',
           size: 'large',
-          width: 320,
+          width,
           text: 'continue_with',
           shape: 'pill',
         })
       })
-      .catch(() => {
-        if (!cancelled) setGoogleConfig(null)
+      .catch((error) => {
+        if (cancelled) return
+        setGoogleError(getApiErrorMessage(error, 'Could not load Google sign-in.'))
+        setGoogleStatus('error')
       })
 
     return () => {
       cancelled = true
     }
-  }, [googleEnabled, googleClientId])
+  }, [googleStatus, googleClientId])
 
   return (
     <AuthFormCard
@@ -284,16 +286,28 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-4">
-          {googleEnabled ? (
+          {googleStatus === 'ready' && (
             <div ref={googleButtonRef} className="flex min-h-11 justify-center" />
-          ) : (
+          )}
+
+          {googleStatus === 'loading' && (
+            <div
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-app-border bg-surface text-sm text-text-secondary"
+              role="status"
+            >
+              <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+              Preparing Google sign-in…
+            </div>
+          )}
+
+          {googleStatus === 'error' && (
             <button
               type="button"
-              disabled
-              className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-app-border bg-surface text-sm font-semibold text-text-secondary opacity-70"
+              onClick={() => setGoogleAttempt((attempt) => attempt + 1)}
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-app-border bg-surface text-sm font-semibold text-text-primary transition-colors hover:bg-app-background"
             >
               <GoogleIcon />
-              Continue with Google
+              Retry Google sign-in
             </button>
           )}
 
@@ -305,11 +319,6 @@ export default function LoginPage() {
           {googleError && (
             <p className="mt-2 text-center text-sm text-red-600" role="alert">
               {googleError}
-            </p>
-          )}
-          {!googleEnabled && (
-            <p className="mt-2 text-center text-xs leading-5 text-text-secondary">
-              Google sign-in is not configured yet. Use your email and password.
             </p>
           )}
         </div>

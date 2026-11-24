@@ -72,16 +72,25 @@ const apiLimiter = rateLimit({
   },
 })
 
+// Only credential-submitting endpoints should be limited. Session maintenance
+// (/me, /refresh, /logout) and the public Google config are called on every
+// page load; counting them here caused real users to hit the limit and see
+// "try again later" during a perfectly normal Google sign-in.
+const routineAuthPaths = new Set(['/me', '/google/config', '/refresh', '/logout'])
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: (req) => routineAuthPaths.has(req.path),
+  // A successful sign-in should never eat into the next attempt's allowance.
+  skipSuccessfulRequests: true,
   message: {
     success: false,
     error: {
       code: 'RATE_LIMITED',
-      message: 'Too many authentication attempts. Please try again later.',
+      message: 'Too many sign-in attempts. Please wait a few minutes and try again.',
     },
   },
 })
