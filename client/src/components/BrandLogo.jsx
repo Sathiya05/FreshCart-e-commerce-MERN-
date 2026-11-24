@@ -11,11 +11,11 @@ export default function BrandLogo({
   return (
     <Link
       to={to}
-      className={`group inline-flex items-center gap-3 ${className}`}
+      className={`group inline-flex items-center gap-2 sm:gap-3 ${className}`}
       aria-label="FreshCart home"
     >
       <FreshCartMark
-        className={`h-10 w-10 shrink-0 rounded-xl transition-shadow ${
+        className={`h-9 w-9 shrink-0 rounded-xl transition-shadow sm:h-10 sm:w-10 ${
           light ? 'shadow-[0_0_0_2px_rgba(255,255,255,0.22)]' : 'shadow-sm group-hover:shadow-md'
         }`}
       />

@@ -120,7 +120,7 @@ export default function Navbar() {
           {mobileOpen ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
         </button>
 
-        <BrandLogo compact className="shrink-0" wordmarkClassName="hidden sm:block" />
+        <BrandLogo compact className="shrink-0" />
 
         <nav className="ml-2 hidden min-w-0 items-center gap-4 lg:flex xl:ml-4 xl:gap-6" aria-label="Main navigation">
           {links.map((link) => (
