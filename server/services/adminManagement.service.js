@@ -214,9 +214,19 @@ export const updateStoreSettings = async (body) => {
   settingKeys.forEach((key) => {
     if (body[key] !== undefined) update[key] = body[key]
   })
+
+  // MongoDB rejects a path that appears in both $set and $setOnInsert. When the
+  // document already exists, repeating every default in $setOnInsert produced
+  // "Updating the path 'storeName' would create a conflict" (code 40) -> HTTP 500.
+  // Only insert the defaults for fields this request is not updating.
+  const onInsert = { key: 'store' }
+  settingKeys.forEach((key) => {
+    if (update[key] === undefined) onInsert[key] = defaultSettings[key]
+  })
+
   const settings = await Setting.findOneAndUpdate(
     { key: 'store' },
-    { $set: update, $setOnInsert: { key: 'store', ...defaultSettings } },
+    { $set: update, $setOnInsert: onInsert },
     { returnDocument: 'after', upsert: true, runValidators: true },
   ).lean()
   return serializeSettings(settings)
