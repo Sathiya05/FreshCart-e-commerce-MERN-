@@ -75,8 +75,8 @@ export default function HomePage() {
                 Shop vegetables, fruits, dairy, bakery and pantry essentials from
                 trusted sources — delivered on your schedule.
               </p>
-              <div className="mt-8 flex flex-col gap-3 min-[380px]:flex-row">
-                <Button as={Link} to="/shop" size="lg" variant="accent" className="w-full min-[380px]:w-auto">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button as={Link} to="/shop" size="lg" variant="accent" className="w-full sm:w-auto">
                   Start shopping
                   <ArrowRight size={18} aria-hidden="true" />
                 </Button>
@@ -84,7 +84,7 @@ export default function HomePage() {
                   as={Link}
                   to="/categories"
                   size="lg"
-                  className="w-full border border-white/25 bg-white/10 text-white hover:bg-white/20 min-[380px]:w-auto"
+                  className="w-full border border-white/25 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
                 >
                   Browse categories
                 </Button>
