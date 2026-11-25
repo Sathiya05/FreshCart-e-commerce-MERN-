@@ -10,6 +10,10 @@ const connectionStates = [
   'disconnecting',
 ]
 
+// Cache the connection across Vercel serverless invocations / warm reloads.
+const cached = globalThis.__freshcartMongoose || { conn: null, promise: null }
+globalThis.__freshcartMongoose = cached
+
 export const getDatabaseState = () =>
   connectionStates[mongoose.connection.readyState] || 'unknown'
 
@@ -22,27 +26,41 @@ export const connectDatabase = async () => {
     return false
   }
 
-  try {
-    await mongoose.connect(env.mongodbUri, {
+  if (mongoose.connection.readyState === 1) {
+    cached.conn = mongoose.connection
+    return true
+  }
+
+  if (cached.promise) {
+    return cached.promise
+  }
+
+  cached.promise = mongoose
+    .connect(env.mongodbUri, {
       dbName: env.mongoDbName,
       serverSelectionTimeoutMS: 10000,
     })
+    .then(() => {
+      cached.conn = mongoose.connection
+      console.log(`[db] MongoDB connected to database "${env.mongoDbName}".`)
+      return true
+    })
+    .catch((error) => {
+      cached.promise = null
+      console.error(`[db] MongoDB connection failed: ${error.message}`)
 
-    console.log(`[db] MongoDB connected to database "${env.mongoDbName}".`)
-    return true
-  } catch (error) {
-    console.error(`[db] MongoDB connection failed: ${error.message}`)
+      if (env.nodeEnv === 'production') {
+        throw error
+      }
 
-    if (env.nodeEnv === 'production') {
-      throw error
-    }
+      console.warn(
+        '[db] Continuing in development mode without a database. ' +
+          'Check the URI, database user password, and Atlas IP allowlist.',
+      )
+      return false
+    })
 
-    console.warn(
-      '[db] Continuing in development mode without a database. ' +
-        'Check the URI, database user password, and Atlas IP allowlist.',
-    )
-    return false
-  }
+  return cached.promise
 }
 
 mongoose.connection.on('error', (error) => {

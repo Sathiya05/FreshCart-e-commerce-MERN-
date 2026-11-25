@@ -3,6 +3,7 @@ import cors from 'cors'
 import express from 'express'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
+import { pathToFileURL } from 'node:url'
 import { connectDatabase } from './config/database.js'
 import { env } from './config/env.js'
 import { errorHandler } from './middleware/error.middleware.js'
@@ -23,9 +24,7 @@ app.set('trust proxy', 1)
 app.use(helmet())
 
 app.use(
-  
   cors({
-    
     credentials: true,
     origin(origin, callback) {
       console.log('[CORS] Incoming origin:', origin)
@@ -113,6 +112,18 @@ const aiLimiter = rateLimit({
 app.use('/api', apiLimiter)
 app.use('/api/auth', authLimiter)
 app.use('/api/ai', aiLimiter)
+
+// Vercel serverless functions do not run the listen/startup path below.
+// Connect on demand so every /api request has a database before handlers run.
+app.use('/api', async (_req, res, next) => {
+  try {
+    await connectDatabase()
+    return next()
+  } catch (error) {
+    return next(error)
+  }
+})
+
 app.use('/api', routes)
 
 app.get('/', (_req, res) => {
@@ -136,9 +147,17 @@ const startServer = async () => {
   })
 }
 
-startServer().catch((error) => {
-  console.error('[server] Failed to start:', error.message)
-  process.exitCode = 1
-})
+const isDirectRun =
+  typeof process.argv[1] === 'string' &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+
+// Preserve local dev and Render startup; Vercel imports the app as a module.
+if (isDirectRun && !process.env.VERCEL) {
+  startServer().catch((error) => {
+    console.error('[server] Failed to start:', error.message)
+    process.exitCode = 1
+  })
+}
 
 export { app }
+export default app
