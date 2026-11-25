@@ -28,11 +28,22 @@ const api = axios.create({
 let refreshRequest = null
 let sessionCleanup = null
 let unauthorizedHandler = null
+let accessToken = null
 
 /** Lets the app drop its auth state when a session cannot be renewed. */
 export const setUnauthorizedHandler = (handler) => {
   unauthorizedHandler = handler
 }
+
+/**
+ * In-memory access token fallback. Used when cross-site cookies are blocked in
+ * production; the backend also accepts Authorization: Bearer <token>.
+ */
+export const setAccessToken = (token) => {
+  accessToken = typeof token === 'string' && token ? token : null
+}
+
+export const getAccessToken = () => accessToken
 
 const isAuthEndpoint = (url = '') =>
   /\/(login|register|refresh|logout|google)(\?|$)/.test(url)
@@ -40,6 +51,7 @@ const isAuthEndpoint = (url = '') =>
 const clearExpiredSession = () => {
   if (sessionCleanup) return sessionCleanup
 
+  setAccessToken(null)
   // HttpOnly cookies can only be removed by the API. This also avoids a refresh
   // loop when several requests fail at the same time.
   sessionCleanup = api
@@ -52,6 +64,14 @@ const clearExpiredSession = () => {
   unauthorizedHandler?.()
   return sessionCleanup
 }
+
+api.interceptors.request.use((config) => {
+  if (accessToken && !config.headers?.Authorization) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${accessToken}`
+  }
+  return config
+})
 
 api.interceptors.response.use(
   (response) => response,
@@ -72,7 +92,11 @@ api.interceptors.response.use(
       if (!refreshRequest) {
         refreshRequest = api
           .post('/auth/refresh')
-          .then(() => true)
+          .then((response) => {
+            const nextToken = response?.data?.data?.accessToken
+            if (nextToken) setAccessToken(nextToken)
+            return true
+          })
           .catch(() => false)
           .finally(() => {
             refreshRequest = null

@@ -1,9 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { setAccessToken } from '../services/api.js'
 import {
   getCurrentUser,
   googleSignInAccount,
   loginAccount,
   logoutAccount,
+  refreshSession,
   registerAccount,
   updateCurrentUser,
 } from '../services/auth.service.js'
@@ -17,7 +19,17 @@ export const restoreSession = createAsyncThunk(
     try {
       return await getCurrentUser()
     } catch (error) {
-      if (error.response?.status === 401) return null
+      if (error.response?.status === 401) {
+        try {
+          const refreshed = await refreshSession()
+          const token = refreshed?.accessToken
+          if (token) setAccessToken(token)
+          return refreshed?.user || null
+        } catch {
+          setAccessToken(null)
+          return null
+        }
+      }
       return rejectWithValue(getErrorMessage(error, 'Could not restore your session.'))
     }
   },
@@ -87,6 +99,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     signOut(state) {
+      setAccessToken(null)
       state.user = null
       state.status = 'unauthenticated'
       state.error = null
@@ -101,11 +114,16 @@ const authSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(restoreSession.fulfilled, (state, action) => {
-        state.user = action.payload
-        state.status = action.payload ? 'authenticated' : 'unauthenticated'
+        const payload = action.payload
+        const user = payload?.user ?? payload
+        const token = payload?.accessToken
+        if (token) setAccessToken(token)
+        state.user = user
+        state.status = user ? 'authenticated' : 'unauthenticated'
         state.initialized = true
       })
       .addCase(restoreSession.rejected, (state, action) => {
+        setAccessToken(null)
         state.user = null
         state.status = 'unauthenticated'
         state.initialized = true
@@ -116,6 +134,7 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        if (action.payload?.accessToken) setAccessToken(action.payload.accessToken)
         state.user = action.payload.user
         state.status = 'authenticated'
         state.initialized = true
@@ -129,6 +148,7 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(googleSignInUser.fulfilled, (state, action) => {
+        if (action.payload?.accessToken) setAccessToken(action.payload.accessToken)
         state.user = action.payload.user
         state.status = 'authenticated'
         state.initialized = true
@@ -142,6 +162,7 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(registerUser.fulfilled, (state, action) => {
+        if (action.payload?.accessToken) setAccessToken(action.payload.accessToken)
         state.user = action.payload.user
         state.status = 'authenticated'
         state.initialized = true
@@ -151,6 +172,7 @@ const authSlice = createSlice({
         state.error = action.payload
       })
       .addCase(logoutUser.fulfilled, (state) => {
+        setAccessToken(null)
         state.user = null
         state.status = 'unauthenticated'
         state.error = null
