@@ -272,6 +272,7 @@ npm run test:ai
 npm run test:whatsapp-share
 npm run test:delivery
 npm run test:google-auth
+npm run test:product-sku
 cd ../client
 npm run build
 ```

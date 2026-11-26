@@ -11,7 +11,8 @@
     "test:ai": "node scripts/test-ai-confirmation.mjs && node scripts/test-ai-tool-loop.mjs && node scripts/test-ai-cart-flow.mjs",
     "test:whatsapp-share": "node scripts/test-whatsapp-share.mjs",
     "test:delivery": "node scripts/test-delivery-slots.mjs",
-    "test:google-auth": "node scripts/test-google-session.mjs"
+    "test:google-auth": "node scripts/test-google-session.mjs",
+    "test:product-sku": "node scripts/test-product-sku.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1172.0",

@@ -203,7 +203,9 @@ curl -X POST http://localhost:5000/api/admin/products \
   }'
 ```
 
-Slugs are generated automatically from names. Category deletion returns
+Slugs are generated automatically from names. Product SKUs are also generated
+server-side as the next `FC-P-NNN` value after the highest existing numeric SKU;
+a client-supplied `sku` is ignored on create. Category deletion returns
 `409 CATEGORY_IN_USE` if any product still references it. Duplicate names,
 slugs, or SKUs return `409 DUPLICATE_VALUE`.
 

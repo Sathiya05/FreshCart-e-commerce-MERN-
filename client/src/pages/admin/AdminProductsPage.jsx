@@ -174,8 +174,15 @@ export default function AdminProductsPage() {
         await updateAdminProduct(editing.id, toPayload(form))
         dispatch(pushToast({ title: 'Product updated', message: `${form.name} was saved.` }))
       } else {
-        await createAdminProduct(toPayload(form))
-        dispatch(pushToast({ title: 'Product added', message: `${form.name} was created.` }))
+        const created = await createAdminProduct(toPayload(form))
+        // Show the server-generated SKU without waiting for the list refetch.
+        setProducts((current) => [created, ...current])
+        dispatch(pushToast({
+          title: 'Product added',
+          message: created?.sku
+            ? `${form.name} was created with SKU ${created.sku}.`
+            : `${form.name} was created.`,
+        }))
       }
       setModalOpen(false)
       productsState.refetch()
@@ -325,6 +332,11 @@ export default function AdminProductsPage() {
           <div>
             <label htmlFor="product-name" className="mb-1.5 block text-sm font-medium">Product name</label>
             <input id="product-name" required value={form.name} onChange={update('name')} className="h-11 w-full rounded-xl border border-app-border px-3 text-sm outline-none focus:border-brand-primary" />
+            {!editing && (
+              <p className="mt-1.5 text-xs text-text-secondary">
+                A unique SKU is generated automatically when the product is saved.
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="product-category" className="mb-1.5 block text-sm font-medium">Category</label>

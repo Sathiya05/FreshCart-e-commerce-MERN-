@@ -7,6 +7,7 @@ import {
   findProductByIdentifier,
   listProducts as queryProducts,
 } from '../services/catalog.service.js'
+import { createProductWithGeneratedSku } from '../services/sku.service.js'
 
 const writableFields = [
   'name',
@@ -30,8 +31,10 @@ const writableFields = [
   'dailyDeal',
 ]
 
-const pickFields = (body) =>
-  writableFields.reduce((result, field) => {
+const createWritableFields = writableFields.filter((field) => field !== 'sku')
+
+const pickFields = (body, allowedFields = writableFields) =>
+  allowedFields.reduce((result, field) => {
     if (body[field] !== undefined) result[field] = body[field]
     return result
   }, {})
@@ -66,10 +69,12 @@ export const getAdminProduct = asyncHandler(async (req, res) => {
 })
 
 export const createProduct = asyncHandler(async (req, res) => {
-  const fields = pickFields(req.body)
+  // SKUs are server-owned. A client-supplied sku is ignored so the FC-P-NNN
+  // sequence cannot be broken or duplicated through the API.
+  const fields = pickFields(req.body, createWritableFields)
   await assertActiveCategory(fields.category)
 
-  const product = await Product.create(fields)
+  const product = await createProductWithGeneratedSku(fields)
   await product.populate('category', 'name slug isActive')
 
   res.status(201).json({ success: true, data: serializeProduct(product) })
