@@ -330,6 +330,14 @@ Health should report `"database": "connected"`. `ai/status` reports non-secret b
 3. Add an SPA rewrite so all paths serve `index.html`.
 4. Deploy **after** Render is verified, purge cache and hard-refresh.
 
+### Vercel (frontend)
+
+1. Set the project Root Directory to `client` and use the Vite preset.
+2. Set `VITE_API_URL` to the Render API base.
+3. `client/vercel.json` rewrites unmatched paths to `index.html`, so deep links
+   like `/admin/products` work after a hard refresh. Do not remove it.
+4. Redeploy after changing routing config, then hard-refresh the dashboard.
+
 ---
 
 ## Fixes and work completed (delivery history)
@@ -379,7 +387,7 @@ S3 uploads, Buy Now, cart hardening and initial responsive work.
 | `AI_RATE_LIMITED` / "assistant is busy" | Gemini free-tier quota reached | Retry later; no billing is configured |
 | `configured: false` in `/api/ai/status` | Missing/incorrect Gemini variables on Render | Set exact `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`; remove OpenAI variables |
 | CORS or cookie problems in production | `CLIENT_URL` missing the Pages origin, or cookie flags wrong | Include the Pages origin; production uses `Secure; SameSite=None` |
-| 404 on a deep link | Pages SPA rewrite missing | Rewrite all paths to `index.html` |
+| 404 on a deep link / admin hard refresh | SPA rewrite missing on the host | Vercel: keep `client/vercel.json`; Pages: add a rewrite to `index.html` |
 | Layout shifts or overflow at 360/393px | Old hero/menu/checkout code | Already fixed in `0c9b6bf`, `ca30986`, `9cb609a`; hard-refresh after deploy |
 
 ---
