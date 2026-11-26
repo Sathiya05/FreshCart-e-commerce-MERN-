@@ -18,15 +18,18 @@ A production-oriented, full-stack grocery e-commerce platform built with the MER
 
 | Layer | URL / value |
 | --- | --- |
-| Storefront (Cloudflare Pages) | `https://freshcart-e-commerce-mern.pages.dev` |
+| Storefront (Vercel, primary) | `https://fresh-cart-e-commerce-mern.vercel.app` |
+| Storefront (Cloudflare Pages, older) | `https://freshcart-e-commerce-mern.pages.dev` |
 | API base (Render) | `https://freshcart-e-commerce-mern.onrender.com/api` |
 | AI status | `https://freshcart-e-commerce-mern.onrender.com/api/ai/status` |
 | Delivery slots | `https://freshcart-e-commerce-mern.onrender.com/api/delivery/slots` |
 | Google sign-in config | `https://freshcart-e-commerce-mern.onrender.com/api/auth/google/config` |
 | Health | `https://freshcart-e-commerce-mern.onrender.com/api/health` |
 
-**Deploy order:** Render API first, then Cloudflare Pages, then hard-refresh the storefront.
-Render's free tier can take several seconds to wake from cold start; this is normal.
+**Deploy order:** Render API first, then the frontend host(s), then hard-refresh the storefront.
+Render's free tier can take several seconds to wake from cold start; this is normal. Both
+frontend origins must be present in the backend `CLIENT_URL`, and the Vercel origin must be in
+the S3 bucket CORS `AllowedOrigins` for image uploads.
 
 ---
 
@@ -273,11 +276,17 @@ npm run test:whatsapp-share
 npm run test:delivery
 npm run test:google-auth
 npm run test:product-sku
+npm run test:order-lifecycle
 cd ../client
 npm run build
 ```
 
-`git diff --check` should also be clean.
+`test:order-lifecycle` needs `ADMIN_EMAIL`/`ADMIN_PASSWORD` in `server/.env`, creates a
+temporary customer/product/order, and verifies idempotent double submit, purchased-items-only
+cart removal, admin filters, status transitions and COD confirmation. It removes its own
+records afterwards. None of these checks place a real Razorpay order.
+
+`git diff --check` should also be clean. (This workspace is not currently a git repository.)
 
 ### API checks
 
@@ -316,7 +325,7 @@ Health should report `"database": "connected"`. `ai/status` reports non-secret b
 
 1. Node runtime **22+**.
 2. Set every server variable above that applies, especially
-   `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL` (include the Pages origin),
+   `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL` (include both Vercel and Pages origins),
    `GOOGLE_CLIENT_ID`, `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` and Razorpay keys.
 3. Remove obsolete `AI_API_KEY`, `AI_MODEL`, `AI_API_BASE_URL`, `AI_REASONING_EFFORT`.
 4. Use `npm start` / `node server.js` and deploy.
@@ -327,16 +336,21 @@ Health should report `"database": "connected"`. `ai/status` reports non-secret b
 
 1. Build command `npm run build`, output directory `dist`, root `client`.
 2. Set `VITE_API_URL` to the Render API base and `VITE_WHATSAPP_PHONE` if overriding.
-3. Add an SPA rewrite so all paths serve `index.html`.
+3. `client/public/_redirects` adds an SPA rewrite so all paths serve `index.html`.
+   Keep it in the build output even if the host also has a dashboard rewrite rule.
 4. Deploy **after** Render is verified, purge cache and hard-refresh.
 
 ### Vercel (frontend)
 
-1. Set the project Root Directory to `client` and use the Vite preset.
-2. Set `VITE_API_URL` to the Render API base.
-3. `client/vercel.json` rewrites unmatched paths to `index.html`, so deep links
-   like `/admin/products` work after a hard refresh. Do not remove it.
-4. Redeploy after changing routing config, then hard-refresh the dashboard.
+1. Preferred: set the project Root Directory to `client` and use the Vite preset.
+   If the project is deployed from `freshcart` instead, the root `vercel.json`
+   supplies the same rewrite and build settings.
+2. Set `VITE_API_URL` to the Render API base at build time. A build without it
+   uses `/api`, which makes `/api/*` requests hit Vercel and return `404 NOT_FOUND`.
+3. Both `client/vercel.json` and root `vercel.json` rewrite unmatched paths to
+   `index.html`, so deep links like `/admin/products` work after a hard refresh.
+4. Add `https://fresh-cart-e-commerce-mern.vercel.app` to backend `CLIENT_URL`
+   and S3 CORS `AllowedOrigins`, then redeploy and hard-refresh.
 
 ---
 
@@ -383,11 +397,13 @@ S3 uploads, Buy Now, cart hardening and initial responsive work.
 | Google button does not appear | GSI script load race or blocked script | Fixed by attaching listeners before insertion, 15s timeout and Retry button; check browser network access to `https://accounts.google.com/gsi/client` |
 | "Your session has expired" toast on a fresh visit | `/auth/me` 401 triggered refresh/logout | `/auth/me` now skips the refresh interceptor |
 | Admin settings save → 500 / "Could not save settings" | MongoDB error 40: same path in `$set` and `$setOnInsert` | Fixed in `adminManagement.service.js`; redeploy Render |
-| Cart appears empty after ordering | Cart is deliberately cleared after server creates the order | Confirmation page with products and tracking now replaces the empty-cart view |
+| Cart appears empty after ordering | Old client cleared local cart before the order/payment was confirmed | Server removes only purchased items after confirmation; client refetches MongoDB. Check Network for `POST /orders` errors before assuming a UI bug |
 | `AI_RATE_LIMITED` / "assistant is busy" | Gemini free-tier quota reached | Retry later; no billing is configured |
 | `configured: false` in `/api/ai/status` | Missing/incorrect Gemini variables on Render | Set exact `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`; remove OpenAI variables |
-| CORS or cookie problems in production | `CLIENT_URL` missing the Pages origin, or cookie flags wrong | Include the Pages origin; production uses `Secure; SameSite=None` |
-| 404 on a deep link / admin hard refresh | SPA rewrite missing on the host | Vercel: keep `client/vercel.json`; Pages: add a rewrite to `index.html` |
+| CORS or cookie problems in production | `CLIENT_URL` missing the active frontend origin, or cookie flags wrong | Include both `https://fresh-cart-e-commerce-mern.vercel.app` and the Pages origin; production uses `Secure; SameSite=None` |
+| S3 image upload returns `403 CORSResponse` | Bucket CORS allows only the old Pages origin | Add the Vercel origin to the S3 bucket CORS `AllowedOrigins` |
+| `API returned HTML instead of JSON` or `/api/*` 404 on Vercel | `VITE_API_URL` was not set when the frontend bundle was built | Set it to `https://freshcart-e-commerce-mern.onrender.com/api` and redeploy the frontend |
+| 404 on a deep link / admin hard refresh | SPA rewrite missing on the host | Vercel: keep `vercel.json`; Pages/Cloudflare: keep `client/public/_redirects` or add a rewrite to `index.html` |
 | Layout shifts or overflow at 360/393px | Old hero/menu/checkout code | Already fixed in `0c9b6bf`, `ca30986`, `9cb609a`; hard-refresh after deploy |
 
 ---

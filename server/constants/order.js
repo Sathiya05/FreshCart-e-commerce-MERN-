@@ -30,3 +30,17 @@ export const ORDER_STATUS_LABELS = {
   Delivered: 'Delivered',
   Cancelled: 'Cancelled',
 }
+
+/**
+ * Backend-enforced fulfilment rules. Cancelled can only be moved back to
+ * Processing by an admin correction; a delivered order is terminal.
+ */
+export const ALLOWED_ORDER_TRANSITIONS = {
+  Pending: ['Processing', 'Packed', 'Cancelled'],
+  Processing: ['Packed', 'Shipped', 'Cancelled'],
+  Packed: ['Shipped', 'Cancelled'],
+  Shipped: ['Out for delivery', 'Cancelled'],
+  'Out for delivery': ['Delivered', 'Cancelled'],
+  Delivered: [],
+  Cancelled: ['Processing'],
+}

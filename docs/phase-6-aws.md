@@ -56,6 +56,7 @@ Never commit real keys. `server/.env` is git-ignored.
     "AllowedMethods": ["PUT", "GET", "HEAD"],
     "AllowedOrigins": [
       "http://localhost:5173",
+      "https://fresh-cart-e-commerce-mern.vercel.app",
       "https://freshcart-e-commerce-mern.pages.dev"
     ],
     "ExposeHeaders": ["ETag"],
@@ -64,7 +65,10 @@ Never commit real keys. `server/.env` is git-ignored.
 ]
 ```
 
-Add your custom storefront domain to `AllowedOrigins` when you use one.
+The Vercel origin above is required: without it the browser receives
+`403 Forbidden ... CORSResponse: This CORS request is not allowed` on presigned PUTs.
+Add any custom storefront domain to `AllowedOrigins` as well. `AllowedHeaders` may be
+`["*"]`; an explicit `x-amz-acl` entry is not needed by this client.
 
 4. If you are **not** using CloudFront, either enable public read access for the
    bucket or attach a bucket policy allowing `s3:GetObject` to everyone for

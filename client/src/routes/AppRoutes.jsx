@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import ErrorBoundary from '../components/ErrorBoundary.jsx'
 import AdminLayout from '../layouts/AdminLayout.jsx'
 import AdminRoute from '../layouts/AdminRoute.jsx'
 import AuthLayout from '../layouts/AuthLayout.jsx'
@@ -55,7 +56,8 @@ export default function AppRoutes() {
         </div>
       }
     >
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
       <Route element={<CustomerLayout />}>
         <Route index element={<HomePage />} />
         <Route path="shop" element={<ShopPage />} />
@@ -68,7 +70,7 @@ export default function AppRoutes() {
         <Route
           path="checkout"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['customer']}>
               <CheckoutPage />
             </ProtectedRoute>
           }
@@ -76,7 +78,7 @@ export default function AppRoutes() {
         <Route
           path="payment/success"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['customer']}>
               <PaymentSuccessPage />
             </ProtectedRoute>
           }
@@ -84,7 +86,7 @@ export default function AppRoutes() {
         <Route
           path="payment/failure"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['customer']}>
               <PaymentFailurePage />
             </ProtectedRoute>
           }
@@ -92,7 +94,7 @@ export default function AppRoutes() {
         <Route
           path="order-confirmation/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['customer']}>
               <OrderConfirmationPage />
             </ProtectedRoute>
           }
@@ -115,7 +117,7 @@ export default function AppRoutes() {
       <Route
         path="account"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['customer']}>
             <CustomerLayout />
           </ProtectedRoute>
         }
@@ -148,7 +150,8 @@ export default function AppRoutes() {
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </Suspense>
   )
 }

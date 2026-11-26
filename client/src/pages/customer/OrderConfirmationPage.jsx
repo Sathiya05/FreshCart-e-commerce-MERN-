@@ -45,6 +45,21 @@ export default function OrderConfirmationPage() {
   }
 
   const paid = order.paymentStatus === 'Paid'
+  const failed = order.paymentStatus === 'Failed'
+  const awaitingOnlinePayment =
+    order.paymentMethodValue === 'razorpay' && order.paymentStatus === 'Pending'
+  const heading = failed
+    ? 'Your payment needs attention'
+    : awaitingOnlinePayment
+      ? 'Your order is awaiting payment'
+      : 'Your order has been placed!'
+  const subtext = paid
+    ? 'Your payment is confirmed. We are getting your fresh groceries ready.'
+    : failed
+      ? order.paymentFailureReason || 'Your payment was not completed. You can retry it from the order details page.'
+      : awaitingOnlinePayment
+        ? 'Open the order to finish paying securely with Razorpay.'
+        : 'We have received your order. You can track it any time from your orders.'
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -54,12 +69,10 @@ export default function OrderConfirmationPage() {
             <CheckCircle2 size={34} aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
-            Your order has been placed!
+            {heading}
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
-            {paid
-              ? 'Your payment is confirmed. We are getting your fresh groceries ready.'
-              : 'We have received your order. You can track it any time from your orders.'}
+            {subtext}
           </p>
           <p className="mt-4 break-all text-sm font-semibold text-brand-dark">
             Order {order.orderNumber || order.id}
@@ -77,7 +90,7 @@ export default function OrderConfirmationPage() {
               <p className="mt-1 font-medium text-text-primary">{order.paymentStatus}</p>
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-text-secondary">Total paid</p>
+              <p className="text-xs text-text-secondary">{paid ? 'Total paid' : 'Order total'}</p>
               <p className="mt-1 font-semibold text-text-primary">
                 {formatCurrency(order.totalAmount)}
               </p>

@@ -42,21 +42,42 @@ const applyCart = (state, action) => {
   state.error = null
 }
 
-export const fetchCart = createAsyncThunk('cart/fetch', () => commerce.getCart())
+// Hydration responses are applied only if they are still the newest request.
+// A slow /cart response must never overwrite a newer mutation, and a stale
+// error must never show a toast for a request the customer no longer cares about.
+let cartRequestId = 0
+const nextCartRequestId = () => {
+  cartRequestId += 1
+  return cartRequestId
+}
+const invalidateCartRequests = () => {
+  cartRequestId += 1
+}
 
-export const addCartItemAsync = createAsyncThunk('cart/addItem', (payload) =>
+const cartThunk = (type, request) =>
+  createAsyncThunk(type, async (arg, { rejectWithValue }) => {
+    const requestId = nextCartRequestId()
+    try {
+      return { data: await request(arg), requestId }
+    } catch (error) {
+      return rejectWithValue({
+        message: error?.message || 'Could not update your cart.',
+        requestId,
+      })
+    }
+  })
+
+export const fetchCart = cartThunk('cart/fetch', () => commerce.getCart())
+export const addCartItemAsync = cartThunk('cart/addItem', (payload) =>
   commerce.addCartItem(payload.productId, payload.quantity),
 )
-
-export const updateCartItemAsync = createAsyncThunk('cart/updateItem', (payload) =>
+export const updateCartItemAsync = cartThunk('cart/updateItem', (payload) =>
   commerce.updateCartItem(payload.productId, payload.quantity),
 )
-
-export const removeCartItemAsync = createAsyncThunk('cart/removeItem', (productId) =>
+export const removeCartItemAsync = cartThunk('cart/removeItem', (productId) =>
   commerce.removeCartItem(productId),
 )
-
-export const clearCartAsync = createAsyncThunk('cart/clear', () =>
+export const clearCartAsync = cartThunk('cart/clear', () =>
   commerce.clearCartItems(),
 )
 
@@ -65,9 +86,11 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     setCart(state, action) {
+      invalidateCartRequests()
       applyCart(state, { payload: action.payload })
     },
     clearCartLocal(state) {
+      invalidateCartRequests()
       state.items = []
       state.summary = null
     },
@@ -85,18 +108,28 @@ const cartSlice = createSlice({
           state.status = 'loading'
           state.error = null
         })
-        .addCase(thunk.fulfilled, applyCart)
+        .addCase(thunk.fulfilled, (state, action) => {
+          if (action.payload?.requestId !== cartRequestId) return
+          applyCart(state, { payload: action.payload.data })
+        })
         .addCase(thunk.rejected, (state, action) => {
+          if (action.payload?.requestId !== cartRequestId) return
           state.status = 'failed'
-          state.error = action.error.message || 'Could not update your cart.'
+          state.error = action.payload?.message || 'Could not update your cart.'
         })
     }
 
     // A cart belongs to the signed-in customer. Never leave one user's cart in
     // memory after they sign out.
     builder
-      .addCase(logoutUser.fulfilled, () => initialState)
-      .addCase(signOut, () => initialState)
+      .addCase(logoutUser.fulfilled, () => {
+        invalidateCartRequests()
+        return initialState
+      })
+      .addCase(signOut, () => {
+        invalidateCartRequests()
+        return initialState
+      })
   },
 })
 
@@ -132,9 +165,10 @@ export const addToCart = (product, quantity = 1) => async (dispatch, getState) =
   if (!isCustomer(getState())) return requireLogin(dispatch)
 
   try {
-    return await dispatch(
+    const result = await dispatch(
       addCartItemAsync({ productId: product.id, quantity }),
     ).unwrap()
+    return result.data
   } catch (error) {
     notifyCartError(dispatch, error)
     return null
@@ -145,7 +179,8 @@ export const updateCartQuantity = (payload) => async (dispatch, getState) => {
   if (!isCustomer(getState())) return requireLogin(dispatch)
 
   try {
-    return await dispatch(updateCartItemAsync(payload)).unwrap()
+    const result = await dispatch(updateCartItemAsync(payload)).unwrap()
+    return result.data
   } catch (error) {
     notifyCartError(dispatch, error)
     return null
@@ -156,7 +191,8 @@ export const removeFromCart = (productId) => async (dispatch, getState) => {
   if (!isCustomer(getState())) return requireLogin(dispatch)
 
   try {
-    return await dispatch(removeCartItemAsync(productId)).unwrap()
+    const result = await dispatch(removeCartItemAsync(productId)).unwrap()
+    return result.data
   } catch (error) {
     notifyCartError(dispatch, error)
     return null
@@ -167,7 +203,8 @@ export const clearCart = () => async (dispatch, getState) => {
   if (!isCustomer(getState())) return requireLogin(dispatch)
 
   try {
-    return await dispatch(clearCartAsync()).unwrap()
+    const result = await dispatch(clearCartAsync()).unwrap()
+    return result.data
   } catch (error) {
     notifyCartError(dispatch, error)
     return null
@@ -182,11 +219,12 @@ export const fetchCustomerCart = () => async (dispatch, getState) => {
   }
 
   try {
-    const cart = await commerce.getCart()
-    dispatch(setCart(cart))
-    return cart
+    const result = await dispatch(fetchCart()).unwrap()
+    return result.requestId === cartRequestId ? result.data : null
   } catch (error) {
-    notifyCartError(dispatch, error)
+    if (error?.payload?.requestId === cartRequestId) {
+      notifyCartError(dispatch, error.payload)
+    }
     return null
   }
 }

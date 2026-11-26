@@ -37,7 +37,7 @@ export default function ProductDetailsPage() {
     if (!product) return null
     const [reviews, related] = await Promise.all([
       getReviewsByProduct(product.id),
-      getRelatedProducts(product.id),
+      getRelatedProducts(product),
     ])
     return { product, reviews, related }
   }, [id])
@@ -86,7 +86,7 @@ export default function ProductDetailsPage() {
   }
 
   const { product, reviews, related } = data
-  const gallery = getGalleryImages(product.image)
+  const gallery = getGalleryImages(product)
   const discount = formatDiscount(product.price, product.discountPrice)
 
   const redirectToLogin = () => navigate('/login', { state: { from: location } })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CreditCard, MapPin, Truck } from 'lucide-react'
 import Badge from '../../components/Badge.jsx'
@@ -20,6 +20,7 @@ export default function OrderDetailsPage() {
   const dispatch = useAppDispatch()
   const pay = useRazorpayCheckout()
   const [paying, setPaying] = useState(false)
+  const payingRef = useRef(false)
   const { status, data: order, error, refetch } = useAsync(
     () => getOrderById(id),
     [id],
@@ -61,6 +62,8 @@ export default function OrderDetailsPage() {
     order.status !== 'Cancelled'
 
   const handlePayNow = async () => {
+    if (payingRef.current) return
+    payingRef.current = true
     setPaying(true)
     try {
       const payment = await retryPayment(order.id)
@@ -74,6 +77,7 @@ export default function OrderDetailsPage() {
         }),
       )
     } finally {
+      payingRef.current = false
       setPaying(false)
     }
   }
@@ -148,8 +152,9 @@ export default function OrderDetailsPage() {
             <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-text-secondary">
               <MapPin size={16} className="mt-1 shrink-0 text-brand-primary" aria-hidden="true" />
               <span className="min-w-0 break-words">
-                {order.address.fullName}, {order.address.addressLine}, {order.address.city},
-                {' '}{order.address.state} - {order.address.pincode}
+                {order.address
+                  ? `${order.address.fullName}, ${order.address.addressLine}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}`
+                  : 'Address on file'}
               </span>
             </div>
           </section>

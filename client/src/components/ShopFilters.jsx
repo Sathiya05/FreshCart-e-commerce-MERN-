@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { RotateCcw, SlidersHorizontal, X } from 'lucide-react'
 import Button from './Button.jsx'
 
@@ -11,6 +12,18 @@ const sortOptions = [
 
 export default function ShopFilters({ filters, categories, onChange, onReset, onApply, resultCount }) {
   const update = (patch) => onChange(patch)
+  const [searchText, setSearchText] = useState(filters.q)
+
+  useEffect(() => setSearchText(filters.q), [filters.q])
+
+  // Typing updates the URL (and therefore the API query) only after a short
+  // pause, instead of firing one request per keystroke.
+  useEffect(() => {
+    if (searchText === filters.q) return undefined
+    const timer = setTimeout(() => update({ q: searchText }), 300)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText, filters.q])
 
   return (
     <aside className="rounded-2xl border border-app-border bg-surface p-5 shadow-sm lg:sticky lg:top-24">
@@ -51,8 +64,8 @@ export default function ShopFilters({ filters, categories, onChange, onReset, on
           <input
             id="filter-search"
             type="search"
-            value={filters.q}
-            onChange={(event) => update({ q: event.target.value })}
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
             placeholder=" tomatoes, milk…"
             className="h-10 w-full rounded-xl border border-app-border bg-surface px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
           />

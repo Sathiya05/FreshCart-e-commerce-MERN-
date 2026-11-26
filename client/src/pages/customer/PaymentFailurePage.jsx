@@ -44,7 +44,7 @@ export default function PaymentFailurePage() {
     <>
       <PageHeader
         title={paid ? 'Payment confirmed' : 'Payment failed'}
-        breadcrumbs={[{ label: 'Checkout', to: '/checkout' }, { label: 'Payment' }]}
+        breadcrumbs={[{ label: 'Orders', to: '/account/orders' }, { label: 'Payment' }]}
       />
       <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
         <div
@@ -91,7 +91,10 @@ export default function PaymentFailurePage() {
                 View confirmation
               </Button>
             ) : (
-              <Button as={Link} to={`/account/orders/${order.id}`}>
+              <Button
+                as={Link}
+                to={order?.id ? `/account/orders/${order.id}` : '/account/orders'}
+              >
                 <RotateCcw size={16} aria-hidden="true" />
                 Review and retry payment
               </Button>

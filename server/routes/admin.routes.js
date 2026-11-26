@@ -23,10 +23,12 @@ import {
   updateCategory,
 } from '../controllers/category.controller.js'
 import {
+  confirmCodPayment,
   getAdminOrder,
   listAdminOrders,
   updateAdminOrderStatus,
 } from '../controllers/order.controller.js'
+import { refundOrderPayment } from '../controllers/payment.controller.js'
 import {
   createProduct,
   deleteProduct,
@@ -57,7 +59,9 @@ import {
   updateSettingsValidator,
 } from '../validators/admin.validator.js'
 import {
+  listOrdersValidator,
   orderIdValidator,
+  refundOrderValidator,
   updateOrderStatusValidator,
 } from '../validators/order.validator.js'
 import { createUploadTicketValidator } from '../validators/upload.validator.js'
@@ -94,13 +98,25 @@ router.post('/products', createProductValidator, validate, createProduct)
 router.patch('/products/:id', updateProductValidator, validate, updateProduct)
 router.delete('/products/:id', productIdValidator, validate, deleteProduct)
 
-router.get('/orders', listAdminOrders)
+router.get('/orders', listOrdersValidator, validate, listAdminOrders)
 router.get('/orders/:id', orderIdValidator, validate, getAdminOrder)
 router.patch(
   '/orders/:id/status',
   updateOrderStatusValidator,
   validate,
   updateAdminOrderStatus,
+)
+router.patch(
+  '/orders/:id/confirm-cod-payment',
+  orderIdValidator,
+  validate,
+  confirmCodPayment,
+)
+router.post(
+  '/orders/:id/refund',
+  refundOrderValidator,
+  validate,
+  refundOrderPayment,
 )
 
 router.get('/customers', listCustomers)

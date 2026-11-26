@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, Trash2, Truck } from 'lucide-react'
+import { LoaderCircle, ShoppingCart, Trash2, Truck } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import ConfirmDialog from '../../components/ConfirmDialog.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -40,6 +40,22 @@ export default function CartPage() {
 
   const remainingForFreeDelivery = Math.max(FREE_DELIVERY_THRESHOLD - subtotal, 0)
   const freeDeliveryProgress = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100)
+
+  // While the server cart hydrates, an empty Redux array is not evidence that
+  // the cart is empty. Show a loading state instead of a misleading empty page.
+  if (user && cartStatus === 'loading' && items.length === 0) {
+    return (
+      <>
+        <PageHeader title="Your cart" breadcrumbs={[{ label: 'Cart' }]} />
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6" role="status">
+          <p className="flex items-center gap-2 text-sm text-text-secondary">
+            <LoaderCircle className="animate-spin text-brand-primary" size={18} aria-hidden="true" />
+            Syncing your cart…
+          </p>
+        </div>
+      </>
+    )
+  }
 
   if (items.length === 0) {
     return (
@@ -125,7 +141,7 @@ export default function CartPage() {
             )}
 
             <div className="space-y-4">
-              {items.map(({ product, quantity }) => (
+              {items.map(({ product, quantity, lineTotal }) => (
                 <article key={product.id} className="flex gap-3 rounded-2xl border border-app-border bg-surface p-3 shadow-sm sm:gap-4 sm:p-4">
                   <img
                     src={product.image}
@@ -164,7 +180,7 @@ export default function CartPage() {
                         }
                       />
                       <p className="ml-auto shrink-0 text-right font-bold tabular-nums text-text-primary">
-                        {formatCurrency((product.discountPrice || product.price) * quantity)}
+                        {formatCurrency(lineTotal ?? (product.discountPrice || product.price) * quantity)}
                       </p>
                     </div>
                   </div>

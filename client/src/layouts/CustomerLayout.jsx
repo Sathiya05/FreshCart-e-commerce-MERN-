@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AnnouncementBar from '../components/AnnouncementBar.jsx'
 import FloatingActions from '../components/FloatingActions.jsx'
@@ -14,10 +14,28 @@ export default function CustomerLayout() {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
   const initialized = useAppSelector(selectAuthInitialized)
+  const hydratedFor = useRef(null)
 
   useEffect(() => {
-    if (!initialized) return
+    if (!initialized || !user) return
+    const key = `${user.id}:${user.role}`
+    if (hydratedFor.current === key) return
+    hydratedFor.current = key
     dispatch(fetchCustomerCart())
+  }, [dispatch, initialized, user?.id, user?.role])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        initialized &&
+        user?.role === 'customer'
+      ) {
+        dispatch(fetchCustomerCart())
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [dispatch, initialized, user?.id, user?.role])
 
   const hasBottomCta = location.pathname === '/cart' || location.pathname === '/checkout'
@@ -27,7 +45,7 @@ export default function CustomerLayout() {
       <AnnouncementBar />
       <Navbar />
       <main className="flex-1">
-        <div key={location.pathname} className="animate-page-in">
+        <div className="min-w-0 animate-page-in">
           <Outlet />
         </div>
       </main>

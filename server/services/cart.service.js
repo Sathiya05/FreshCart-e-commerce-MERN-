@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../constants/delivery.js'
 import { Cart } from '../models/Cart.js'
 import { Product } from '../models/Product.js'
@@ -33,11 +34,14 @@ const withTotals = (data) => {
   }
 }
 
-export const getOrCreateCart = async (userId) => {
-  const cart = await Cart.findOne({ user: userId })
-  if (cart) return cart
-  return Cart.create({ user: userId, items: [] })
-}
+export const getOrCreateCart = async (userId) =>
+  // Atomic upsert: two simultaneous first adds cannot both try to create the
+  // single unique-per-user cart document.
+  Cart.findOneAndUpdate(
+    { user: userId },
+    { $setOnInsert: { user: userId, items: [] } },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
+  )
 
 const loadCart = async (userId) => {
   const cart = await getOrCreateCart(userId)
@@ -95,6 +99,32 @@ export const clearCart = async (userId) => {
   const cart = await getOrCreateCart(userId)
   cart.items = []
   await cart.save()
+  return loadCart(userId)
+}
+
+/**
+ * Remove only the products that were actually ordered. Items added to the cart
+ * while checkout was open are preserved. MongoDB is the source of truth, so
+ * stale client state cannot bring them back later.
+ */
+export const removePurchasedItemsFromCart = async (userId, orderedItems = []) => {
+  const purchasedIds = [
+    ...new Set(
+      orderedItems
+        .map((item) => String(item?.product || item?.productId || ''))
+        .filter((id) => mongoose.isValidObjectId(id)),
+    ),
+  ].map((id) => new mongoose.Types.ObjectId(id))
+
+  if (!purchasedIds.length) return loadCart(userId)
+
+  // Atomic pull: two simultaneous checkouts with the same idempotency key must
+  // not both load/save the cart and trigger Mongoose optimistic-concurrency
+  // (VersionError) failures. A repeated pull is a safe no-op.
+  await Cart.updateOne(
+    { user: userId },
+    { $pull: { items: { product: { $in: purchasedIds } } } },
+  )
   return loadCart(userId)
 }
 

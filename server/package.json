@@ -12,7 +12,8 @@
     "test:whatsapp-share": "node scripts/test-whatsapp-share.mjs",
     "test:delivery": "node scripts/test-delivery-slots.mjs",
     "test:google-auth": "node scripts/test-google-session.mjs",
-    "test:product-sku": "node scripts/test-product-sku.mjs"
+    "test:product-sku": "node scripts/test-product-sku.mjs",
+    "test:order-lifecycle": "node scripts/test-order-lifecycle.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1172.0",

@@ -21,8 +21,11 @@ import SectionHeading from '../../components/SectionHeading.jsx'
 import { useAsync } from '../../hooks/useAsync.js'
 import { getHomePageData } from '../../services/catalog.service.js'
 
-const heroImage =
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1400&q=85'
+const heroImageBase = 'https://images.unsplash.com/photo-1542838132-92c53300491e'
+const heroImage = `${heroImageBase}?auto=format&fit=crop&w=1400&q=82`
+const heroSrcSet = [640, 960, 1400]
+  .map((width) => `${heroImageBase}?auto=format&fit=crop&w=${width}&q=82 ${width}w`)
+  .join(', ')
 
 const promises = [
   { icon: Leaf, title: 'Farm fresh daily', text: 'Picked and packed at peak freshness.' },
@@ -97,8 +100,13 @@ export default function HomePage() {
             <div className="relative h-64 sm:h-80 lg:h-full lg:min-h-[520px]">
               <img
                 src={heroImage}
+                srcSet={heroSrcSet}
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 alt="Fresh grocery produce at a market"
                 className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/20 to-transparent lg:from-brand-dark/20" />
               <div className="absolute bottom-6 right-6 hidden rounded-2xl bg-white/95 p-4 text-text-primary shadow-lg sm:block">

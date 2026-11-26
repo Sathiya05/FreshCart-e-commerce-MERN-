@@ -103,6 +103,9 @@ const authSlice = createSlice({
       state.user = null
       state.status = 'unauthenticated'
       state.error = null
+      // A forced sign-out (expired session or slow restore) must never leave
+      // the app stuck on its initial loading screen.
+      state.initialized = true
     },
     clearAuthError(state) {
       state.error = null

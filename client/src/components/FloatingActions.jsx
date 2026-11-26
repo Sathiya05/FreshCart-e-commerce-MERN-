@@ -5,7 +5,7 @@ import AIChatPanel from './ai/AIChatPanel.jsx'
 import WhatsAppIcon from './WhatsAppIcon.jsx'
 import { askAssistant, getAiStatus } from '../services/ai.service.js'
 import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
-import { addToCart, AUTH_REQUIRED, setCart } from '../redux/cartSlice.js'
+import { addToCart, AUTH_REQUIRED, fetchCustomerCart } from '../redux/cartSlice.js'
 import { pushToast, selectToasts } from '../redux/uiSlice.js'
 import { resolveWhatsAppPhone } from '../utils/whatsapp.js'
 
@@ -149,7 +149,9 @@ export default function FloatingActions() {
 
       if (currentRequest !== requestId.current) return
 
-      if (result.cart) dispatch(setCart(result.cart))
+      // The AI tool returns a compact summary. Reload the full cart from
+      // MongoDB so product records and totals stay normalised.
+      if (result.cart) await dispatch(fetchCustomerCart())
       setPendingConfirmation(result.pendingConfirmation)
 
       setMessages((current) => [

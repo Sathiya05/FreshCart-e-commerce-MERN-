@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Clock3, CreditCard, Info, LockKeyhole, MapPin, ShieldCheck, Wallet } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import AddressCard from '../../components/AddressCard.jsx'
@@ -14,7 +14,7 @@ import WhatsAppIcon from '../../components/WhatsAppIcon.jsx'
 import useWhatsAppCartShare from '../../hooks/useWhatsAppCartShare.js'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
 import {
-  clearCartLocal,
+  fetchCustomerCart,
   selectCartDeliveryFee,
   selectCartItems,
   selectCartSubtotal,
@@ -52,6 +52,17 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('cod')
   const [submitting, setSubmitting] = useState(false)
   const [orderError, setOrderError] = useState('')
+  // React state updates are asynchronous; two clicks in one tick can both pass
+  // a `submitting` check. A ref closes that window synchronously.
+  const submittingRef = useRef(false)
+  // One key per checkout attempt makes POST /orders safe to retry after a
+  // network hiccup without creating a duplicate order.
+  const idempotencyKeyRef = useRef(null)
+  if (!idempotencyKeyRef.current) {
+    idempotencyKeyRef.current =
+      globalThis.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
 
   const addresses = addressesState.data || []
   const slots = slotsState.data || []
@@ -110,9 +121,17 @@ export default function CheckoutPage() {
       : 'Place order'
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId || !selectedSlot || !addressConfirmed || submitting) return
+    if (
+      submittingRef.current ||
+      !selectedAddressId ||
+      !selectedSlot ||
+      !addressConfirmed
+    ) {
+      return
+    }
     if (paymentMethod === 'razorpay' && !paymentEnabled) return
 
+    submittingRef.current = true
     setSubmitting(true)
     setOrderError('')
 
@@ -123,24 +142,28 @@ export default function CheckoutPage() {
       deliverySlot: selectedSlot.label,
       deliveryInstructions,
       addressConfirmed: true,
+      idempotencyKey: idempotencyKeyRef.current,
     }
 
     try {
       if (paymentMethod === 'razorpay') {
         const payment = await createPaymentOrder(payload)
-        dispatch(clearCartLocal())
         dispatch(
           pushToast({
             title: 'Order created',
             message: `${payment.orderNumber} is waiting for payment.`,
           }),
         )
+        // The cart stays intact until Razorpay confirms; useRazorpayCheckout
+        // synchronises it from MongoDB after a successful verification.
         await pay(payment)
         return
       }
 
       const order = await createOrder(payload)
-      dispatch(clearCartLocal())
+      // The backend removed only the purchased items. Pull the authoritative
+      // cart back so unrelated items remain visible after checkout.
+      await dispatch(fetchCustomerCart())
       dispatch(
         pushToast({
           title: 'Order placed',
@@ -153,6 +176,7 @@ export default function CheckoutPage() {
       setOrderError(message)
       dispatch(pushToast({ type: 'error', title: 'Order failed', message }))
     } finally {
+      submittingRef.current = false
       setSubmitting(false)
     }
   }
@@ -358,6 +382,14 @@ export default function CheckoutPage() {
                   </span>
                 </button>
               </div>
+              {paymentConfigState.isError && (
+                <div className="mt-3">
+                  <ErrorState
+                    message={paymentConfigState.error}
+                    onRetry={paymentConfigState.refetch}
+                  />
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge tone="success">COD available</Badge>
                 {paymentEnabled ? (
@@ -379,7 +411,7 @@ export default function CheckoutPage() {
             <section className="rounded-2xl border border-app-border bg-surface p-5">
               <h2 className="font-semibold text-text-primary">Items in this order</h2>
               <div className="mt-4 space-y-3">
-                {items.map(({ product, quantity }) => (
+                {items.map(({ product, quantity, lineTotal }) => (
                   <div key={product.id} className="flex items-center gap-3">
                     <img src={product.image} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
@@ -387,7 +419,9 @@ export default function CheckoutPage() {
                       <p className="truncate text-xs text-text-secondary">{quantity} × {product.unit}</p>
                     </div>
                     <p className="shrink-0 text-right text-sm font-semibold tabular-nums">
-                      {formatCurrency((product.discountPrice || product.price) * quantity)}
+                      {formatCurrency(
+                        lineTotal ?? (product.discountPrice || product.price) * quantity,
+                      )}
                     </p>
                   </div>
                 ))}

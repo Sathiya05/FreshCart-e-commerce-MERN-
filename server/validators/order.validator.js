@@ -1,5 +1,9 @@
-import { body, param } from 'express-validator'
-import { ORDER_STATUSES } from '../constants/order.js'
+import { body, param, query } from 'express-validator'
+import {
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+} from '../constants/order.js'
 import { findDeliverySlot, isDeliveryDateAllowed } from '../constants/delivery.js'
 
 const idParam = param('id').isMongoId().withMessage('Invalid ID')
@@ -38,12 +42,20 @@ const deliveryFields = [
     .withMessage('Confirm your delivery address before placing the order'),
 ]
 
+const idempotencyField = body('idempotencyKey')
+  .optional({ nullable: true })
+  .isString()
+  .withMessage('Invalid idempotency key')
+  .isLength({ max: 100 })
+  .withMessage('Invalid idempotency key')
+
 export const createOrderValidator = [
   body('addressId').isMongoId().withMessage('Select a valid delivery address'),
   ...deliveryFields,
   body('paymentMethod')
     .isIn(['cod'])
     .withMessage('Only cash on delivery is available on this endpoint'),
+  idempotencyField,
 ]
 
 export const createPaymentOrderValidator = [
@@ -52,6 +64,7 @@ export const createPaymentOrderValidator = [
   body('paymentMethod')
     .isIn(['razorpay'])
     .withMessage('This endpoint creates online payment orders'),
+  idempotencyField,
 ]
 
 const razorpayResponseFields = [
@@ -94,6 +107,7 @@ export const createAliasPaymentOrderValidator = [
     .notEmpty()
     .isLength({ max: 40 })
     .withMessage('Receipt is required'),
+  idempotencyField,
 ]
 
 export const verifyAliasPaymentValidator = [
@@ -103,9 +117,44 @@ export const verifyAliasPaymentValidator = [
 
 export const orderIdValidator = [idParam]
 
+export const listOrdersValidator = [
+  query('page').optional().isInt({ min: 1, max: 100000 }),
+  query('limit').optional().isInt({ min: 1, max: 60 }),
+  query('status')
+    .optional()
+    .custom((value) => {
+      const requested = String(value).split(',')
+      return (
+        requested.length > 0 && requested.every((status) => ORDER_STATUSES.includes(status))
+      )
+    })
+    .withMessage('Invalid order status'),
+  query('paymentStatus').optional().isIn(PAYMENT_STATUSES),
+  query('paymentMethod').optional().isIn(PAYMENT_METHODS),
+  query('sort').optional().isIn(['newest', 'oldest', 'total']),
+  query('q').optional().isString().isLength({ max: 120 }),
+  query('from').optional().isISO8601(),
+  query('to').optional().isISO8601(),
+]
+
+export const refundOrderValidator = [
+  idParam,
+  body('note')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 300 })
+    .withMessage('Note cannot exceed 300 characters'),
+]
+
 export const updateOrderStatusValidator = [
   idParam,
   body('status')
     .isIn(ORDER_STATUSES)
     .withMessage('Invalid order status'),
+  body('note')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Note must be text')
+    .isLength({ max: 300 })
+    .withMessage('Note cannot exceed 300 characters'),
 ]

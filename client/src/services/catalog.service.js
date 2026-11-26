@@ -89,8 +89,13 @@ export const getProductById = async (id) => {
 /** Reviews are not part of the Phase 3 API; empty means "not available yet". */
 export const getReviewsByProduct = async () => []
 
-export const getRelatedProducts = async (productId) => {
-  const product = await getProductById(productId)
+export const getRelatedProducts = async (productOrId) => {
+  // Accept the already-loaded product so the details page does not fetch it
+  // a second time just to find its category.
+  const product =
+    productOrId && typeof productOrId === 'object'
+      ? productOrId
+      : await getProductById(productOrId)
   if (!product) return []
 
   const params = product.categoryId

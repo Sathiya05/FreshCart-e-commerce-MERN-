@@ -26,7 +26,6 @@ const api = axios.create({
 })
 
 let refreshRequest = null
-let sessionCleanup = null
 let unauthorizedHandler = null
 let accessToken = null
 
@@ -46,23 +45,16 @@ export const setAccessToken = (token) => {
 export const getAccessToken = () => accessToken
 
 const isAuthEndpoint = (url = '') =>
-  /\/(login|register|refresh|logout|google)(\?|$)/.test(url)
+  /\/(login|register|refresh|logout|google)(\/|\?|$)/.test(url)
 
+/**
+ * An expired session only needs local cleanup. Calling /auth/logout here used
+ * to bump tokenVersion asynchronously and could invalidate a newer session
+ * created in another tab before the logout request finished.
+ */
 const clearExpiredSession = () => {
-  if (sessionCleanup) return sessionCleanup
-
   setAccessToken(null)
-  // HttpOnly cookies can only be removed by the API. This also avoids a refresh
-  // loop when several requests fail at the same time.
-  sessionCleanup = api
-    .post('/auth/logout')
-    .catch(() => {})
-    .finally(() => {
-      sessionCleanup = null
-    })
-
   unauthorizedHandler?.()
-  return sessionCleanup
 }
 
 api.interceptors.request.use((config) => {
@@ -74,7 +66,21 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // A misconfigured static host returns index.html for /api/*. Fail loudly
+    // instead of letting services unwrap `undefined` into a signed-in user.
+    if (
+      typeof response.data === 'string' &&
+      /^\s*(<!doctype html|<html)/i.test(response.data)
+    ) {
+      const error = new Error(
+        'The API returned HTML instead of JSON. Check the VITE_API_URL build setting.',
+      )
+      error.code = 'NON_JSON_API_RESPONSE'
+      return Promise.reject(error)
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
     const status = error.response?.status
@@ -85,6 +91,7 @@ api.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry &&
       !originalRequest.skipAuthRefresh &&
+      !originalRequest.skipSessionCleanup &&
       !isAuthEndpoint(originalRequest.url)
     ) {
       originalRequest._retry = true

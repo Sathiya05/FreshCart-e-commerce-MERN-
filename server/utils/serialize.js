@@ -1,4 +1,4 @@
-import { ORDER_FLOW } from '../constants/order.js'
+import { ORDER_FLOW, ORDER_STATUS_LABELS } from '../constants/order.js'
 
 const toPlainObject = (value) =>
   value && typeof value.toObject === 'function'
@@ -116,19 +116,25 @@ export const serializeOrderItem = (item) => {
 }
 
 const buildOrderTimeline = (events = [], status, createdAt) => {
-  const dateFor = (eventStatus) =>
-    events.find((event) => event.status === eventStatus)?.date || null
+  const eventFor = (eventStatus) =>
+    events.find((event) => event.status === eventStatus)
+  const dateFor = (eventStatus) => eventFor(eventStatus)?.date || null
+  const noteFor = (eventStatus) => eventFor(eventStatus)?.note || ''
 
   if (status === 'Cancelled') {
     return [
       {
+        status: 'Pending',
         label: 'Order placed',
         date: dateFor('Pending') || createdAt || null,
+        note: noteFor('Pending'),
         complete: true,
       },
       {
+        status: 'Cancelled',
         label: 'Cancelled',
         date: dateFor('Cancelled') || null,
+        note: noteFor('Cancelled'),
         complete: true,
       },
     ]
@@ -137,8 +143,10 @@ const buildOrderTimeline = (events = [], status, createdAt) => {
   const currentIndex = ORDER_FLOW.findIndex((step) => step.status === status)
 
   return ORDER_FLOW.map((step, index) => ({
+    status: step.status,
     label: step.label,
     date: dateFor(step.status) || (index === 0 ? createdAt || null : null),
+    note: noteFor(step.status),
     complete: currentIndex >= 0 ? index <= currentIndex : index === 0,
   }))
 }
@@ -155,6 +163,10 @@ export const serializeOrder = (order) => {
     timeline = [],
     deliveryFee = 0,
     razorpaySignature,
+    idempotencyKey,
+    idempotencyHash,
+    refundRequestToken,
+    processedWebhookEvents,
     ...rest
   } = plain
   const address = serializeAddress(shippingAddress)
@@ -170,6 +182,7 @@ export const serializeOrder = (order) => {
           id: toId(customerDoc),
           name: customerDoc.name || '',
           email: customerDoc.email || '',
+          phone: customerDoc.phone || '',
         }
       : null,
     items: items.map(serializeOrderItem),
@@ -180,5 +193,27 @@ export const serializeOrder = (order) => {
     deliveryCharge: deliveryFee,
     date: rest.createdAt || null,
     timeline: buildOrderTimeline(timeline, rest.status, rest.createdAt),
+    // Full chronological audit trail, including every admin note and the
+    // actor who made each change. The `timeline` field above stays compatible
+    // with the customer-facing progress UI.
+    statusEvents: timeline.map((event) => ({
+      status: event.status,
+      label: event.label || ORDER_STATUS_LABELS[event.status] || event.status,
+      date: event.date || null,
+      note: event.note || '',
+      updatedBy: toId(event.updatedBy) || null,
+    })),
+  }
+}
+
+/** Customer-facing view: internal admin notes and actor ids stay private. */
+export const serializeCustomerOrder = (order) => {
+  const data = serializeOrder(order)
+  return {
+    ...data,
+    timeline: (data.timeline || []).map(({ note, ...step }) => step),
+    statusEvents: (data.statusEvents || []).map(
+      ({ note, updatedBy, ...event }) => event,
+    ),
   }
 }

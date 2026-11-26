@@ -1,14 +1,17 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import Razorpay from 'razorpay'
 import { ORDER_STATUS_LABELS } from '../constants/order.js'
 import { env } from '../config/env.js'
 import { Order } from '../models/Order.js'
 import { ApiError } from '../utils/apiError.js'
-import { serializeOrder } from '../utils/serialize.js'
+import { serializeCustomerOrder, serializeOrder } from '../utils/serialize.js'
+import { removePurchasedItemsFromCart } from './cart.service.js'
 import { createOrderFromCart } from './order.service.js'
 
-const CAPTURED_EVENTS = new Set(['payment.captured', 'payment.authorized'])
-const SUCCESSFUL_PAYMENT_STATUSES = new Set(['captured', 'authorized'])
+// "Authorized" is not money in the account. Only a captured payment may mark
+// an order Paid, whether the update arrives by webhook or by explicit verify.
+const CAPTURED_EVENTS = new Set(['payment.captured'])
+const SUCCESSFUL_PAYMENT_STATUSES = new Set(['captured'])
 
 const toPaise = (amount) => Math.round(Number(amount) * 100)
 
@@ -89,37 +92,71 @@ const assertPaymentMatchesOrder = (order, payment) => {
   }
 }
 
-const markPaid = async (order, paymentId, signature) => {
-  if (order.paymentStatus === 'Paid') return order
-
-  if (order.status === 'Cancelled') {
-    order.paymentStatus = 'Refunded'
-    order.razorpayPaymentId = paymentId
-    order.paymentFailureReason =
-      'Payment arrived after cancellation. A manual refund is required.'
-    await order.save()
-    return order
-  }
-
-  order.paymentStatus = 'Paid'
-  order.paymentMethod = 'razorpay'
-  order.paymentProvider = 'razorpay'
+/** Money arrived for an already-cancelled order: refund it, never keep it. */
+const refundLatePayment = async (order, paymentId) => {
   order.razorpayPaymentId = paymentId
-  if (signature) order.razorpaySignature = signature
-  order.paymentFailureReason = ''
-  order.paidAt = new Date()
-
-  if (order.status === 'Pending') {
-    order.status = 'Processing'
-    order.timeline.push({
-      status: 'Processing',
-      label: ORDER_STATUS_LABELS.Processing,
-      note: 'Online payment confirmed',
-      date: new Date(),
+  let autoRefunded = false
+  try {
+    const razorpay = requireRazorpay()
+    const refund = await razorpay.payments.refund(paymentId, {
+      notes: {
+        orderId: String(order.id),
+        orderNumber: order.orderNumber,
+        reason: 'Payment received after cancellation',
+      },
     })
+    order.razorpayRefundId = refund?.id || ''
+    order.razorpayRefundStatus = refund?.status || 'processed'
+    autoRefunded = Boolean(refund?.id)
+  } catch {
+    // Keep the payment id so an admin can retry the refund from the order page.
   }
 
+  order.paymentStatus = 'Refunded'
+  order.paymentFailureReason = autoRefunded
+    ? 'Payment arrived after cancellation and was refunded automatically.'
+    : 'Payment arrived after cancellation. Refund is required; retry it from the admin order page.'
+  order.timeline.push({
+    status: order.status,
+    label: ORDER_STATUS_LABELS[order.status],
+    date: new Date(),
+    note: order.paymentFailureReason,
+  })
   await order.save()
+  return order
+}
+
+const markPaid = async (order, paymentId, signature) => {
+  if (order.status === 'Cancelled' && order.paymentStatus !== 'Paid') {
+    return refundLatePayment(order, paymentId)
+  }
+
+  // Repeated webhooks/verification calls must still reconcile the cart if a
+  // previous attempt saved the Paid flag but failed to update MongoDB.
+  if (order.paymentStatus !== 'Paid') {
+    order.paymentStatus = 'Paid'
+    order.paymentMethod = 'razorpay'
+    order.paymentProvider = 'razorpay'
+    order.razorpayPaymentId = paymentId
+    if (signature) order.razorpaySignature = signature
+    order.paymentFailureReason = ''
+    order.paidAt = new Date()
+
+    if (order.status === 'Pending') {
+      order.status = 'Processing'
+      order.timeline.push({
+        status: 'Processing',
+        label: ORDER_STATUS_LABELS.Processing,
+        note: 'Online payment confirmed',
+        date: new Date(),
+      })
+    }
+    await order.save()
+  }
+
+  // Only now that Razorpay has confirmed the money is the cart reduced. Removing
+  // only the purchased products preserves anything added during checkout.
+  await removePurchasedItemsFromCart(order.user, order.items)
   return order
 }
 
@@ -247,7 +284,9 @@ export const createRazorpayOrderFromCart = async (userId, payload) => {
   const order = await createOrderFromCart(
     userId,
     { ...payload, paymentMethod: 'razorpay' },
-    { onOrderCreated: createProviderOrder },
+    // The cart must survive a dismissed or failed payment so the customer can
+    // retry. markPaid() removes the purchased items after confirmation.
+    { onOrderCreated: createProviderOrder, clearCartOnCreate: false },
   )
   return buildPaymentPayload(order)
 }
@@ -284,6 +323,103 @@ export const retryRazorpayPayment = async (userId, orderId) => {
   return buildPaymentPayload(order)
 }
 
+/** Claim a refund atomically so a double-click cannot reach Razorpay twice. */
+const claimRefund = async (orderId) => {
+  const token = randomBytes(16).toString('hex')
+  const order = await Order.findOneAndUpdate(
+    {
+      _id: orderId,
+      paymentStatus: { $in: ['Paid', 'Refunded'] },
+      razorpayRefundId: { $in: [null, ''] },
+      refundRequestToken: { $in: [null, ''] },
+    },
+    { $set: { refundRequestToken: token } },
+    { returnDocument: 'after' },
+  )
+  return order ? { order, token } : null
+}
+
+/** Admin-initiated Razorpay refund. Never trust a client to change this status. */
+export const refundOrderPayment = async (orderId, adminId, note = '') => {
+  const razorpay = requireRazorpay()
+  const existing = await Order.findById(orderId)
+  if (!existing) throw new ApiError(404, 'Order not found.', 'NOT_FOUND')
+  if (existing.paymentMethod !== 'razorpay' || !existing.razorpayPaymentId) {
+    throw new ApiError(
+      400,
+      'This order has no online payment to refund.',
+      'INVALID_PAYMENT_METHOD',
+    )
+  }
+  if (existing.paymentStatus === 'Refunded' && existing.razorpayRefundId) {
+    return serializeOrder(existing)
+  }
+  // A marked-Refunded order with no refund id is a late-payment case where the
+  // automatic refund failed. Allow the admin to retry it here.
+  if (!['Paid', 'Refunded'].includes(existing.paymentStatus)) {
+    throw new ApiError(409, 'Only a paid order can be refunded.', 'PAYMENT_NOT_PAID')
+  }
+
+  const claim = await claimRefund(orderId)
+  if (!claim) {
+    throw new ApiError(
+      409,
+      'A refund is already in progress or has been processed for this order.',
+      'REFUND_IN_PROGRESS',
+    )
+  }
+  const { order, token } = claim
+
+  let refund
+  try {
+    refund = await razorpay.payments.refund(order.razorpayPaymentId, {
+      notes: {
+        orderId: String(order.id),
+        orderNumber: order.orderNumber,
+        requestedBy: String(adminId || ''),
+        requestToken: token,
+      },
+    })
+  } catch (error) {
+    await Order.updateOne(
+      { _id: orderId, refundRequestToken: token },
+      { $set: { refundRequestToken: '' } },
+    )
+    throw new ApiError(
+      502,
+      error?.error?.description || 'Razorpay could not process the refund.',
+      'RAZORPAY_REFUND_FAILED',
+    )
+  }
+
+  order.razorpayRefundId = refund?.id || order.razorpayRefundId
+  order.razorpayRefundStatus = refund?.status || 'processed'
+  order.paymentStatus = 'Refunded'
+  order.refundRequestToken = ''
+  order.timeline.push({
+    status: order.status,
+    label: ORDER_STATUS_LABELS[order.status],
+    date: new Date(),
+    note: String(note || `Refund ${refund?.id || ''} processed`).slice(0, 300),
+    updatedBy: adminId,
+  })
+
+  try {
+    await order.save()
+  } catch (error) {
+    await Order.updateOne(
+      { _id: orderId, refundRequestToken: token },
+      { $set: { refundRequestToken: '' } },
+    )
+    throw new ApiError(
+      502,
+      'The refund was processed but could not be saved. Contact support with the order number.',
+      'REFUND_RECORD_FAILED',
+    )
+  }
+  return serializeOrder(order)
+}
+
 export const verifyCustomerPayment = async (userId, payload) => {
   const razorpay = requireRazorpay()
   const order = await Order.findOne({ _id: payload.orderId, user: userId })
@@ -308,7 +444,12 @@ export const verifyCustomerPayment = async (userId, payload) => {
     )
   }
 
-  if (order.paymentStatus === 'Paid') return serializeOrder(order)
+  if (order.paymentStatus === 'Paid') {
+    // A previous attempt may have committed the Paid flag but not the cart
+    // cleanup; retry that idempotent step before answering the customer.
+    await removePurchasedItemsFromCart(order.user, order.items)
+    return serializeCustomerOrder(order)
+  }
 
   let payment
   try {
@@ -331,7 +472,7 @@ export const verifyCustomerPayment = async (userId, payload) => {
   }
 
   await markPaid(order, payload.razorpay_payment_id, payload.razorpay_signature)
-  return serializeOrder(order)
+  return serializeCustomerOrder(order)
 }
 
 export const processPaymentWebhook = async (rawBody, signature) => {
@@ -365,15 +506,54 @@ export const processPaymentWebhook = async (rawBody, signature) => {
   const order = await Order.findOne({ razorpayOrderId: payment.order_id })
   if (!order) return { ignored: true }
 
+  // Razorpay retries webhooks. Remember processed event ids so repeated
+  // deliveries do not append duplicate timeline entries or repeat refund work.
+  if (
+    event?.id &&
+    (await Order.exists({
+      _id: order._id,
+      processedWebhookEvents: event.id,
+    }))
+  ) {
+    return { ignored: true, duplicate: true }
+  }
+
+  const markProcessed = async () => {
+    if (!event?.id) return
+    await Order.updateOne(
+      { _id: order._id },
+      { $addToSet: { processedWebhookEvents: event.id } },
+    )
+  }
+
   if (CAPTURED_EVENTS.has(event.event)) {
     assertPaymentMatchesOrder(order, payment)
     await markPaid(order, payment.id)
+    await markProcessed()
     return { processed: true, orderId: String(order._id) }
   }
 
   if (event.event === 'payment.failed') {
     await markFailed(order, payment.error_description || payment.error_reason)
+    await markProcessed()
     return { processed: true, orderId: String(order._id) }
+  }
+
+  if (event.event.startsWith('refund.')) {
+    const refund = event?.payload?.refund?.entity
+    if (
+      refund?.payment_id &&
+      String(refund.payment_id) === String(order.razorpayPaymentId || '')
+    ) {
+      order.razorpayRefundId = refund.id || order.razorpayRefundId
+      order.razorpayRefundStatus = refund.status || order.razorpayRefundStatus
+      if (String(refund.status || '').toLowerCase() === 'processed') {
+        order.paymentStatus = 'Refunded'
+      }
+      await order.save()
+      await markProcessed()
+      return { processed: true, orderId: String(order._id) }
+    }
   }
 
   return { ignored: true }

@@ -40,14 +40,22 @@ export default function AdminDashboardPage() {
   }, [overview.data])
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    // A second overview request every 20s competed with the notification
+    // poller and could exhaust the shared API rate limit.
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return
       getAdminOverview()
         .then((updated) => setLiveOverview(updated))
         .catch(() => {
           // Keep the last known numbers if a background refresh fails.
         })
-    }, 20000)
-    return () => clearInterval(timer)
+    }
+    const timer = setInterval(refresh, 120_000)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', refresh)
+    }
   }, [])
 
   const syncPayments = async () => {

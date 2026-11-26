@@ -24,14 +24,34 @@ export default function OrderTrackingPage() {
 
   useEffect(() => {
     if (!id) return undefined
-    const timer = setInterval(() => {
+    let active = true
+
+    const refresh = () => {
+      // Avoid polling hidden tabs and burning through the API rate limit.
+      if (document.visibilityState !== 'visible') return
       getOrderTracking(id)
-        .then((updated) => setLiveOrder(updated))
+        .then((updated) => {
+          if (!active) return
+          setLiveOrder((current) => {
+            const unchanged =
+              current?.status === updated.status &&
+              current?.paymentStatus === updated.paymentStatus &&
+              current?.timeline?.length === updated.timeline?.length
+            return unchanged ? current : updated
+          })
+        })
         .catch(() => {
           // Keep showing the last known status if a background refresh fails.
         })
-    }, 15000)
-    return () => clearInterval(timer)
+    }
+
+    const timer = setInterval(refresh, 60000)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      active = false
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', refresh)
+    }
   }, [id])
 
   const order = liveOrder || data
@@ -131,8 +151,9 @@ export default function OrderTrackingPage() {
             <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-text-secondary">
               <MapPin size={16} className="mt-1 shrink-0 text-brand-primary" aria-hidden="true" />
               <span className="min-w-0 break-words">
-                {order.address.fullName}, {order.address.addressLine}, {order.address.city},
-                {' '}{order.address.state} - {order.address.pincode}
+                {order.address
+                  ? `${order.address.fullName}, ${order.address.addressLine}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}`
+                  : 'Address on file'}
               </span>
             </div>
             {order.deliveryDate && (

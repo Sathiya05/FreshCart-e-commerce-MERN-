@@ -27,7 +27,6 @@ app.use(
   cors({
     credentials: true,
     origin(origin, callback) {
-      console.log('[CORS] Incoming origin:', origin)
       // Non-browser clients (curl, server-to-server) omit the Origin header.
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true)
@@ -46,9 +45,10 @@ app.use(
     limit: '1mb',
     // Keep a raw body for Razorpay webhook signature verification.
     verify: (req, _res, buffer) => {
+      const requestPath = (req.originalUrl || req.url || '').split('?')[0]
       const signedWebhook =
-        req.path === '/payments/webhook' ||
-        req.originalUrl === '/api/payments/webhook'
+        requestPath === '/api/payments/webhook' ||
+        requestPath === '/payments/webhook'
 
       if (signedWebhook) req.rawBody = Buffer.from(buffer)
     },

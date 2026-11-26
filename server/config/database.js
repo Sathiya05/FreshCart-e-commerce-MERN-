@@ -14,6 +14,29 @@ const connectionStates = [
 const cached = globalThis.__freshcartMongoose || { conn: null, promise: null }
 globalThis.__freshcartMongoose = cached
 
+/**
+ * The idempotency index changed from sparse to partial because legacy orders
+ * store `idempotencyKey: null` (sparse indexes do not skip explicit nulls).
+ * Replace a stale index definition in place; no order documents are modified.
+ */
+const ensureCriticalIndexes = async () => {
+  try {
+    const { Order } = await import('../models/Order.js')
+    const existing = await Order.collection.indexes()
+    const stale = existing.find(
+      (index) =>
+        index.name === 'user_1_idempotencyKey_1' &&
+        !index.partialFilterExpression,
+    )
+    if (stale) await Order.collection.dropIndex(stale.name)
+    await Order.init()
+  } catch (error) {
+    // Do not take the API down for an index migration. The in-process checkout
+    // lock still prevents duplicate orders within one server instance.
+    console.warn(`[db] Could not verify order indexes: ${error.message}`)
+  }
+}
+
 export const getDatabaseState = () =>
   connectionStates[mongoose.connection.readyState] || 'unknown'
 
@@ -40,9 +63,10 @@ export const connectDatabase = async () => {
       dbName: env.mongoDbName,
       serverSelectionTimeoutMS: 10000,
     })
-    .then(() => {
+    .then(async () => {
       cached.conn = mongoose.connection
       console.log(`[db] MongoDB connected to database "${env.mongoDbName}".`)
+      await ensureCriticalIndexes()
       return true
     })
     .catch((error) => {

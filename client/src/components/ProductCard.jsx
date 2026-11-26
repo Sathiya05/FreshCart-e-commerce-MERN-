@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks.js'
 import { addToCart, AUTH_REQUIRED } from '../redux/cartSlice.js'
 import { selectIsWishlisted, toggleWishlist } from '../redux/wishlistSlice.js'
 import { pushToast } from '../redux/uiSlice.js'
-import { formatCurrency, formatDiscount } from '../utils/format.js'
+import { formatCurrency, formatDiscount, getImageSrcSet } from '../utils/format.js'
 import Badge from './Badge.jsx'
 import Button from './Button.jsx'
 import Rating from './Rating.jsx'
@@ -64,8 +64,11 @@ export default function ProductCard({ product }) {
         <Link to={`/products/${product.id}`} aria-label={`View ${product.name}`}>
           <img
             src={product.image}
+            srcSet={getImageSrcSet(product.image)}
+            sizes="(min-width: 1280px) 240px, (min-width: 640px) 45vw, 90vw"
             alt={product.name}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </Link>

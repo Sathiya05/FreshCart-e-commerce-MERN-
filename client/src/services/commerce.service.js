@@ -42,6 +42,10 @@ const normalizeOrder = (order = {}) => ({
     ...step,
     date: step.date ? formatDate(step.date) : 'Pending',
   })),
+  statusEvents: (order.statusEvents || []).map((event) => ({
+    ...event,
+    date: event.date ? formatDate(event.date) : 'Pending',
+  })),
 })
 
 const normalizeOrderPage = (data = {}) => ({
@@ -119,9 +123,21 @@ export const getAdminOrder = (id) =>
     .then(getData)
     .then(normalizeOrder)
 
-export const updateAdminOrderStatus = (id, status) =>
+export const updateAdminOrderStatus = (id, status, note = '') =>
   api
-    .patch(`/admin/orders/${encodeURIComponent(id)}/status`, { status })
+    .patch(`/admin/orders/${encodeURIComponent(id)}/status`, { status, note })
+    .then(getData)
+    .then(normalizeOrder)
+
+export const confirmCodPayment = (id) =>
+  api
+    .patch(`/admin/orders/${encodeURIComponent(id)}/confirm-cod-payment`)
+    .then(getData)
+    .then(normalizeOrder)
+
+export const refundAdminOrder = (id, note = '') =>
+  api
+    .post(`/admin/orders/${encodeURIComponent(id)}/refund`, { note })
     .then(getData)
     .then(normalizeOrder)
 

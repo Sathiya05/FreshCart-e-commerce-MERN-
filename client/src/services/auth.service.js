@@ -20,8 +20,11 @@ export const refreshSession = () => api.post('/auth/refresh').then(getData)
 
 // A 401 here simply means "no session yet". restoreSession handles it quietly;
 // do not let the interceptor turn a normal first visit into a "session expired"
-// toast by attempting a refresh first.
-export const getCurrentUser = () => api.get('/auth/me', { skipAuthRefresh: true }).then(getData)
+// toast by attempting a refresh or clearing the session first.
+export const getCurrentUser = () =>
+  api
+    .get('/auth/me', { skipAuthRefresh: true, skipSessionCleanup: true })
+    .then(getData)
 
 export const updateCurrentUser = (payload) =>
   api.patch('/auth/me', payload).then(getData)

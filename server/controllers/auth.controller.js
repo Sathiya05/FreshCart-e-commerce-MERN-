@@ -179,7 +179,7 @@ export const updateMe = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(req.user.id, updates, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   })
 

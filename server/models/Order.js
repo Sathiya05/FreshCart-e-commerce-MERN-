@@ -47,7 +47,8 @@ const timelineEventSchema = new Schema(
     },
     label: { type: String, required: true, trim: true },
     date: { type: Date, default: Date.now },
-    note: { type: String, trim: true },
+    note: { type: String, trim: true, maxlength: 300 },
+    updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { _id: false },
 )
@@ -61,6 +62,10 @@ const orderSchema = new Schema(
       trim: true,
       index: true,
     },
+    idempotencyKey: { type: String, trim: true },
+    // Hash of the checkout request. Reusing a key with different details is
+    // rejected instead of silently returning the first order.
+    idempotencyHash: { type: String, trim: true },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -106,6 +111,13 @@ const orderSchema = new Schema(
     paymentFailureReason: { type: String, trim: true },
     paymentAttempts: { type: Number, default: 0, min: 0 },
     paidAt: { type: Date },
+    paymentConfirmedAt: { type: Date },
+    paymentConfirmedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    razorpayRefundId: { type: String, trim: true },
+    razorpayRefundStatus: { type: String, trim: true },
+    // Atomic lock so two refund requests cannot reach Razorpay together.
+    refundRequestToken: { type: String, trim: true },
+    processedWebhookEvents: { type: [String], default: [] },
     subtotal: { type: Number, required: true, min: 0 },
     discount: { type: Number, default: 0, min: 0 },
     deliveryFee: { type: Number, default: 0, min: 0 },
@@ -125,5 +137,12 @@ const orderSchema = new Schema(
 
 orderSchema.index({ user: 1, createdAt: -1 })
 orderSchema.index({ createdAt: -1 })
+// Sparse indexes still include explicit `null` values, and legacy orders have
+// `idempotencyKey: null`. A partial index covers only real string keys, so it
+// can be built without modifying a single existing order.
+orderSchema.index(
+  { user: 1, idempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } },
+)
 
 export const Order = mongoose.model('Order', orderSchema)

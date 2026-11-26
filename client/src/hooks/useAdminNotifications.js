@@ -6,7 +6,9 @@ import { getAdminOrders } from '../services/commerce.service.js'
 import { formatCurrency } from '../utils/format.js'
 
 const STORAGE_KEY = 'freshcart-admin-seen-notifications'
-const POLL_INTERVAL = 60_000
+// Each refresh issues three API calls. Keep well below the shared rate limit
+// and do not poll a hidden tab.
+const POLL_INTERVAL = 120_000
 
 const readSeen = () => {
   try {
@@ -105,48 +107,64 @@ export default function useAdminNotifications() {
   const [loading, setLoading] = useState(true)
   const firstLoad = useRef(true)
   const previousIds = useRef(new Set())
+  const inFlight = useRef(false)
 
   const refresh = useCallback(async () => {
+    if (inFlight.current) return
+    inFlight.current = true
     setLoading(true)
 
-    const [overviewResult, productsResult, ordersResult] = await Promise.allSettled([
-      getAdminOverview(),
-      getAdminProducts(),
-      getAdminOrders({ limit: 12 }),
-    ])
+    try {
+      const [overviewResult, productsResult, ordersResult] = await Promise.allSettled([
+        getAdminOverview(),
+        getAdminProducts(),
+        getAdminOrders({ limit: 12 }),
+      ])
 
-    const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : null
-    const products = productsResult.status === 'fulfilled' ? productsResult.value.items : []
-    const orders = ordersResult.status === 'fulfilled' ? ordersResult.value.items : []
+      const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : null
+      const products = productsResult.status === 'fulfilled' ? productsResult.value.items : []
+      const orders = ordersResult.status === 'fulfilled' ? ordersResult.value.items : []
 
-    const next = buildNotifications(overview, products, orders)
-    setNotifications(next)
-    setLoading(false)
+      const next = buildNotifications(overview, products, orders)
+      setNotifications(next)
 
-    const ids = new Set(next.map((item) => item.id))
-    if (firstLoad.current) {
-      firstLoad.current = false
-    } else {
-      next
-        .filter((item) => !previousIds.current.has(item.id))
-        .slice(0, 3)
-        .forEach((item) => {
-          dispatch(
-            pushToast({
-              type: item.tone === 'danger' ? 'error' : 'info',
-              title: 'Admin alert',
-              message: item.message,
-            }),
-          )
-        })
+      const ids = new Set(next.map((item) => item.id))
+      if (firstLoad.current) {
+        firstLoad.current = false
+      } else {
+        next
+          .filter((item) => !previousIds.current.has(item.id))
+          .slice(0, 3)
+          .forEach((item) => {
+            dispatch(
+              pushToast({
+                type: item.tone === 'danger' ? 'error' : 'info',
+                title: 'Admin alert',
+                message: item.message,
+              }),
+            )
+          })
+      }
+      previousIds.current = ids
+    } finally {
+      setLoading(false)
+      inFlight.current = false
     }
-    previousIds.current = ids
   }, [dispatch])
 
   useEffect(() => {
     refresh()
-    const timer = setInterval(refresh, POLL_INTERVAL)
-    return () => clearInterval(timer)
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
+    }, POLL_INTERVAL)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [refresh])
 
   const unreadCount = useMemo(
