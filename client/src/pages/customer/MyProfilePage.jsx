@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { KeyRound, Save, UserRound } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, KeyRound, Package, Save, UserRound } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks.js'
@@ -63,6 +64,22 @@ export default function MyProfilePage() {
         breadcrumbs={[{ label: 'Account', to: '/account/profile' }, { label: 'Profile' }]}
       />
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <Link
+          to="/account/orders"
+          className="mb-6 flex items-center gap-4 rounded-2xl border border-brand-primary/30 bg-brand-secondary/40 p-5 transition-colors hover:border-brand-primary"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface text-brand-primary">
+            <Package size={20} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-text-primary">My orders</span>
+            <span className="mt-0.5 block text-xs text-text-secondary">
+              View past orders, details and live tracking.
+            </span>
+          </span>
+          <ArrowRight size={18} className="shrink-0 text-brand-primary" aria-hidden="true" />
+        </Link>
+
         <form onSubmit={handleSubmit} className="rounded-2xl border border-app-border bg-surface p-6 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
             <UserRound size={18} className="text-brand-primary" aria-hidden="true" />

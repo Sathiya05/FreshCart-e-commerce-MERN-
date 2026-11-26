@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Package,
   Search,
   ShoppingCart,
   UserRound,
@@ -190,6 +191,12 @@ export default function Navbar() {
                   <Link to="/account/profile" className="block rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
                     My profile
                   </Link>
+                  {user.role === 'customer' && (
+                    <Link to="/account/orders" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
+                      <Package size={15} aria-hidden="true" />
+                      My orders
+                    </Link>
+                  )}
                   {user.role === 'admin' && (
                     <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-app-background">
                       <LayoutDashboard size={15} aria-hidden="true" />
@@ -267,6 +274,12 @@ export default function Navbar() {
                       <Link to="/account/profile" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary">
                         My profile
                       </Link>
+                      {user.role === 'customer' && (
+                        <Link to="/account/orders" className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-text-secondary">
+                          <Package size={16} aria-hidden="true" />
+                          My orders
+                        </Link>
+                      )}
                       {user.role === 'admin' && (
                         <Link to="/admin" className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-text-secondary">
                           <LayoutDashboard size={16} aria-hidden="true" />

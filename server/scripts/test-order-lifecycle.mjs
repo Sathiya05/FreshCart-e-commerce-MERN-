@@ -192,6 +192,14 @@ const run = async () => {
     assert.equal(first.body.data.paymentStatus, 'Pending')
     assert.equal(first.body.data.paymentMethod, 'cod')
 
+    const { body: myOrdersBody } = await api('/api/orders', {
+      cookies: customerCookies,
+    })
+    assert.ok(
+      myOrdersBody.data.items.some((order) => order.id === orderId),
+      'My Orders did not list the newly placed order.',
+    )
+
     const { response: reuseResponse, body: reuseBody } = await api('/api/orders', {
       method: 'POST',
       cookies: customerCookies,
